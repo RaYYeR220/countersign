@@ -1,4 +1,4 @@
-[EVIDENCE] stage=2 wi=oracle-align sha=<filled at commit>
+[EVIDENCE] stage=2 wi=oracle-align sha=ea0bea8
 
 # Evidence — Oracle kit aligned with the stage-2 master ledger and rulings R-29 … R-40
 
