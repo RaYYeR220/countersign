@@ -765,6 +765,130 @@ def test_O12_import_refusals(c, ada, bob):
     assert c.import_(exp).status == 204
 
 
+def _stage3_tampers(exp: dict, anchor_ref: str, sibling_ref: str):
+    """O-14: tampered stage-3 records (policies, revisions/terms, history, series), located structurally."""
+    from test_hardening import _records, _reservation_records, _walk
+    def fresh():
+        e = copy.deepcopy(exp)
+        s = e["state"]
+        pol_rec = _records(s, id="r_anker")[0][2]
+        anchor = _reservation_records(s, reference=anchor_ref)[0][2]
+        sib = _reservation_records(s, reference=sibling_ref)[0][2]
+        return e, s, pol_rec, anchor, sib
+
+    def policies_of(r):
+        return next((v for key_, v in r.items() if isinstance(v, list) and v and isinstance(v[0], dict) and "policy_version" in v[0]), None)
+
+    def terms_of(rec):
+        return next((v for key_, v in rec.items() if isinstance(v, dict) and "policy_version" in v and "capacities" in v), None)
+
+    def history_of(rec):
+        return next((v for key_, v in rec.items() if isinstance(v, list) and v and isinstance(v[0], dict) and "seq" in v[0]), None)
+
+    def series_of(s):
+        for key_, v in s.items():
+            if isinstance(v, list) and v and isinstance(v[0], dict) and "occurrences" in v[0]:
+                return v[0]
+            if isinstance(v, dict):
+                for vv in v.values():
+                    if isinstance(vv, dict) and "occurrences" in vv:
+                        return vv
+        return None
+
+    # --- policies
+    for name, fn in (("policy version gap", lambda p: p[0].__setitem__("policy_version", 7)),
+                     ("policy version duplicate", lambda p: p.append(copy.deepcopy(p[0]))),
+                     ("policy slot_minutes 0", lambda p: p[0].__setitem__("slot_minutes", 0)),
+                     ("policy capacities unknown table", lambda p: p[0].__setitem__("capacities", {"zzz": 2})),
+                     ("policy effective_from invalid", lambda p: p[0].__setitem__("effective_from", "2027-02-30")),
+                     ("policy duplicate weekday", lambda p: p[0].__setitem__("opening_hours", [p[0]["opening_hours"][0]] * 2)),
+                     ("policy cutoff string", lambda p: p[0].__setitem__("cancellation_cutoff_minutes", "60"))):
+        e, s, r, _, _ = fresh()
+        pols = policies_of(r)
+        if pols:
+            fn(pols)
+            yield name, e
+    # --- revisions and terms
+    for name, fn in (("revision 0", lambda rec: rec.__setitem__("revision", 0)),
+                     ("revision string", lambda rec: rec.__setitem__("revision", "2")),
+                     ("revision negative", lambda rec: rec.__setitem__("revision", -1)),
+                     ("terms missing capacities", lambda rec: terms_of(rec).pop("capacities")),
+                     ("terms policy_version beyond published", lambda rec: terms_of(rec).__setitem__("policy_version", 99)),
+                     ("terms policy_version string", lambda rec: terms_of(rec).__setitem__("policy_version", "0")),
+                     ("terms capacities wrong tables", lambda rec: terms_of(rec).__setitem__("capacities", {"zzz": 1})),
+                     ("terms duration 0", lambda rec: terms_of(rec).__setitem__("reservation_duration_minutes", 0)),
+                     ("terms not an object", lambda rec: rec.__setitem__([key_ for key_, v in rec.items() if isinstance(v, dict) and "capacities" in v][0], "x"))):
+        e, s, _, anchor, _ = fresh()
+        if "revision" in anchor and terms_of(anchor) is not None:
+            fn(anchor)
+            yield name, e
+    # --- history
+    for name, fn in (("history empty", lambda h: h.clear()),
+                     ("history seq gap", lambda h: h[-1].__setitem__("seq", h[-1]["seq"] + 1)),
+                     ("history seq duplicate", lambda h: h.append(copy.deepcopy(h[-1]))),
+                     ("history bad event", lambda h: h[0].__setitem__("event", "edited")),
+                     ("history bad at", lambda h: h[0].__setitem__("at", "yesterday")),
+                     ("history changes not a list", lambda h: h[0].__setitem__("changes", "none")),
+                     ("history revision above record", lambda h: h[-1].__setitem__("revision", 99)),
+                     ("history first entry not created", lambda h: h[0].__setitem__("event", "changed")),
+                     ("history terms missing", lambda h: h[0].pop("accepted_terms")),
+                     ("history not a list", None)):
+        e, s, _, anchor, _ = fresh()
+        hist = history_of(anchor)
+        if hist is None:
+            continue
+        if fn is None:
+            anchor[[key_ for key_, v in anchor.items() if v is hist][0]] = "none"
+        else:
+            fn(hist)
+        yield name, e
+    # --- series
+    for name, fn in (("series revision 0", lambda ser, s: ser.__setitem__("revision", 0)),
+                     ("series interval 5", lambda ser, s: ser.__setitem__("interval_weeks", 5)),
+                     ("series occurrence unknown reservation", lambda ser, s: ser["occurrences"][1].__setitem__(
+                         [key_ for key_ in ser["occurrences"][1] if "reservation" in key_ and isinstance(ser["occurrences"][1][key_], str)][0], "res_nope")),
+                     ("series index gap", lambda ser, s: ser["occurrences"][1].__setitem__("index", 5)),
+                     ("series exception not boolean", lambda ser, s: ser["occurrences"][0].__setitem__("exception", "yes")),
+                     ("series occurrence duplicated", lambda ser, s: ser["occurrences"].append(copy.deepcopy(ser["occurrences"][1]))),
+                     ("series user unknown", lambda ser, s: ser.__setitem__("user_id", "u_nobody") if "user_id" in ser else ser.__setitem__("revision", 0)),
+                     ("series id empty", lambda ser, s: ser.__setitem__("series_id", "")),
+                     ("series occurrences not a list", lambda ser, s: ser.__setitem__("occurrences", "none"))):
+        e, s, _, _, _ = fresh()
+        ser = series_of(s)
+        if ser is None:
+            continue
+        fn(ser, s)
+        yield name, e
+    e, s, _, _, sib = fresh()
+    sid_key = next((key_ for key_, v in sib.items() if isinstance(v, str) and "series" in key_), None)
+    if sid_key:
+        sib[sid_key] = "ser_nope"
+        yield "reservation claims an unknown series", e
+
+
+def test_C3_28_O14_tampered_stage3_records_are_refused(c, ada, bob, mia):
+    from test_hardening import _snapshot
+    assert publish(c, mia, "r_anker", policy("2027-09-01")).status == 201
+    o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
+    assert c.patch(f"/reservations/{o['reference']}", {"party_size": 1}, token=ada).status == 200
+    s = adopt(c, ada, o["reference"], 3, 1).json
+    sib = s["occurrences"][1]["reference"]
+    exp = c.export().json
+    before = _snapshot(c, [ada, bob]) | {"hist": history(c, ada, o["reference"]), "series": c.get(f"/series/{s['series_id']}", token=ada).json,
+                                         "policies": c.get("/restaurants/r_anker/policies").json}
+    applied = 0
+    for name, doc in _stage3_tampers(exp, o["reference"], sib):
+        r = c.import_(doc)
+        assert r.status == 422 and r.code == "validation_failed", (name, r)
+        after = _snapshot(c, [ada, bob]) | {"hist": history(c, ada, o["reference"]), "series": c.get(f"/series/{s['series_id']}", token=ada).json,
+                                            "policies": c.get("/restaurants/r_anker/policies").json}
+        assert after == before, name
+        applied += 1
+    assert applied >= 25, applied
+    assert c.import_(exp).status == 204
+    assert c.get(f"/series/{s['series_id']}", token=ada).json == before["series"]
+
+
 def test_O13_party_size_2_pow_53(c, ada):
     body = {"restaurant_id": "r_all", "table_id": "a_3", "starts_at_local": f"{FUT_DAY}T12:00"}
     for v in (2 ** 53, 2 ** 53 - 1, 2 ** 53 + 1):
