@@ -1,4 +1,4 @@
-[EVIDENCE] stage=2 wi=oracle-r41-r42 sha=<filled at commit>
+[EVIDENCE] stage=2 wi=oracle-r41-r42 sha=1a60a80
 
 # Evidence — R-41, R-42 and the R-35 order fix (stage-2 verdict-1 items)
 
