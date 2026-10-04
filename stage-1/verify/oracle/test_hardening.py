@@ -101,64 +101,93 @@ def _top_key_of(state: dict, needle: dict) -> str:
     raise AssertionError("record not under a top-level key")
 
 
+OWNER_KEYS = ("user_id", "owner", "owner_id", "user", "diner_id", "account_id", "customer_id")
+
+
+def _reservation_records(state, **match):
+    """The reservation records (not copies of them inside stored responses) matching the key/value pairs.
+
+    A stored idempotency receipt carries the original 201 body, which has the same reference as the record; the
+    response shape never carries an owner, so dicts with an owner key are the records. Falls back to every match
+    when the implementation names the owner differently, so a tamper is still applied somewhere meaningful.
+    """
+    found = _records(state, **match)
+    owned = [x for x in found if any(k_ in x[2] for k_ in OWNER_KEYS)]
+    return owned or found
+
+
 def _tampers(exp: dict, second_ref: str):
-    """Yield (name, tampered export) pairs. Each is built from a deep copy of the real export."""
+    """Yield (name, tampered export) pairs. Each is built from a deep copy of the real export.
+
+    Every tamper is applied to *all* reservation records that match, so an implementation that stores a record
+    in more than one place still ends up with an inconsistent state.
+    """
     state0 = exp["state"]
-    seed = _records(state0, reference="SEED01")
-    other = _records(state0, reference=second_ref)
-    rest = _records(state0, id="r_anker")
-    user = _records(state0, email="ada@example.com")
-    assert seed and other and rest and user, "could not locate the seeded reservation, a restaurant or a user in the export"
+    assert _reservation_records(state0, reference="SEED01") and _reservation_records(state0, reference=second_ref) \
+        and _records(state0, id="r_anker") and _records(state0, email="ada@example.com"), \
+        "could not locate the seeded reservation, a restaurant or a user in the export"
 
     def fresh():
         e = copy.deepcopy(exp)
         s = e["state"]
-        return e, _records(s, reference="SEED01")[0], _records(s, reference=second_ref)[0], \
-            _records(s, id="r_anker")[0], _records(s, email="ada@example.com")[0]
+        return (e, _reservation_records(s, reference="SEED01"), _reservation_records(s, reference=second_ref),
+                _records(s, id="r_anker")[0][2], _records(s, email="ada@example.com")[0][2])
 
-    # duplicate reservation (same id and reference)
-    e, (p, key, rec), *_ = fresh()
+    # duplicate reservation record (same id and reference), appended beside the record itself
+    e, seeds, _, _, _ = fresh()
+    p, key, rec = seeds[0]
     if isinstance(p, list):
         p.append(copy.deepcopy(rec))
     else:
         p[str(key) + "_dup"] = copy.deepcopy(rec)
     yield "duplicate reservation record", e
     # duplicate reference on a different record
-    e, (_, _, rec), (_, _, rec2), *_ = fresh()
-    rec2["reference"] = "SEED01"
+    e, _, others, _, _ = fresh()
+    for _, _, rec2 in others:
+        rec2["reference"] = "SEED01"
     yield "duplicate reference", e
     # duplicate id of a different record, where the id is a field of the record
-    e, (_, _, rec), (_, _, rec2), *_ = fresh()
+    e, seeds, others, _, _ = fresh()
+    rec = seeds[0][2]
     for idf in ("reservation_id", "id"):
-        if idf in rec and idf in rec2:
-            rec2[idf] = rec[idf]
+        if idf in rec and all(idf in r2 for _, _, r2 in others):
+            for _, _, rec2 in others:
+                rec2[idf] = rec[idf]
             yield "duplicate reservation id", e
             break
     # missing collections
     for which, locate in (("users", lambda s: _records(s, email="ada@example.com")[0][2]),
                           ("restaurants", lambda s: _records(s, id="r_anker")[0][2]),
-                          ("reservations", lambda s: _records(s, reference="SEED01")[0][2])):
+                          ("reservations", lambda s: _reservation_records(s, reference="SEED01")[0][2])):
         e = copy.deepcopy(exp)
         del e["state"][_top_key_of(e["state"], locate(e["state"]))]
         yield f"missing {which} collection", e
     # invalid restaurant
     for field, value in (("timezone", "Nope/Zone"), ("slot_minutes", -5), ("reservation_duration_minutes", 0),
-                         ("name", 5), ("tables", "none")):
-        e, _, _, (_, _, r), _ = fresh()
+                         ("name", 5), ("tables", "none"), ("slot_minutes", 0), ("reservation_duration_minutes", -1),
+                         ("slot_minutes", -30)):
+        e, _, _, r, _ = fresh()
         if field in r:
             r[field] = value
             yield f"invalid restaurant ({field}={value!r})", e
-    e, _, _, (_, _, r), _ = fresh()
+    e, _, _, r, _ = fresh()
     if isinstance(r.get("tables"), list) and r["tables"] and isinstance(r["tables"][0], dict) and "capacity" in r["tables"][0]:
         r["tables"][0]["capacity"] = 0
         yield "invalid restaurant (table capacity 0)", e
-    # invalid reservation record
+    e, _, _, r, _ = fresh()
+    if isinstance(r.get("tables"), list) and len(r["tables"]) >= 2 and all(isinstance(t, dict) and "id" in t for t in r["tables"]):
+        r["tables"][1]["id"] = r["tables"][0]["id"]
+        yield "duplicate table id inside one restaurant", e
+    # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
-                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref")):
-        e, (_, _, rec), *_ = fresh()
-        if field in rec:
-            rec[field] = value
-            yield f"invalid reservation ({field}={value!r})", e
+                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref"),
+                         ("reference", ""), ("reference", "X" * 65), ("reservation_id", ""), ("reservation_id", "X" * 65),
+                         ("id", ""), ("id", "X" * 65)):
+        e, seeds, _, _, _ = fresh()
+        if all(field in rec for _, _, rec in seeds):
+            for _, _, rec in seeds:
+                rec[field] = value
+            yield f"invalid reservation ({field}={str(value)[:8]!r}{'…' if len(str(value)) > 8 else ''})", e
     # wrong JSON types
     for which, locate in (("users", lambda s: _records(s, email="ada@example.com")[0][2]),
                           ("restaurants", lambda s: _records(s, id="r_anker")[0][2])):
@@ -166,12 +195,21 @@ def _tampers(exp: dict, second_ref: str):
             e = copy.deepcopy(exp)
             e["state"][_top_key_of(e["state"], locate(e["state"]))] = value
             yield f"{which} collection replaced by {value!r}", e
-    e, _, _, _, (_, _, u) = fresh()
+    e, _, _, _, u = fresh()
     u["email"] = 12
     yield "user email is a number", e
-    e, (_, _, rec), *_ = fresh()
-    rec["reservation_id" if "reservation_id" in rec else "id"] = False
+    e, seeds, _, _, _ = fresh()
+    for _, _, rec in seeds:
+        rec["reservation_id" if "reservation_id" in rec else "id"] = False
     yield "reservation id is a boolean", e
+    # a boolean field holding a non-boolean (only when the implementation's state has one)
+    e = copy.deepcopy(exp)
+    for parent, key, v in _walk(e["state"]):
+        if isinstance(v, bool) and parent is not None:
+            parent[key] = "yes"
+            yield f"boolean field {key!r} holds a string", e
+            break
+
 
 
 def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
@@ -187,7 +225,7 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
         assert r.status == 422 and r.code == "validation_failed", (name, r)
         assert _snapshot(c, [ada, bob]) == before, f"destination changed after refused import: {name}"
         applied += 1
-    assert applied >= 15, applied
+    assert applied >= 25, applied
     # the untouched export still imports, and receipts survive
     assert c.import_(exp.json).status == 204
     assert c.book(ada, key, "r_all", "a_2", f"{FUT_DAY}T13:00", 2).status == 200
@@ -260,6 +298,66 @@ def test_C1_107_C1_18_round_trip_edge_values(c, second_base_url):
         assert c2.get("/reservations", token=edge).json == before["edge"]
         assert c2.availability(LONG_R, FUT_DAY, 1).json == before["avail"]
         assert c2.book(edge, key, LONG_R, LONG_T, f"{FUT_DAY}T23:00", 1).status == 200
+
+
+# ============================================================ O-6
+def test_C1_107_round_trip_duration_one_and_nines(c, second_base_url):
+    fx = base_fixture()
+    fx["restaurants"].append({
+        "id": "r_min", "name": "Minute", "timezone": "Europe/Berlin", "slot_minutes": 20,
+        "reservation_duration_minutes": 1, "cancellation_cutoff_minutes": 9,
+        "opening_hours": [{"weekday": d, "opens": "23:00", "closes": "24:00"} for d in ALL_DAYS],
+        "tables": [{"id": "m_9", "label": "nine", "capacity": 9}, {"id": "m_99", "label": "ninety-nine", "capacity": 99}],
+    })
+    assert c.reset(fx).status == 204
+    ada = c.login("ada@example.com", "correct horse")
+    r = c.get("/restaurants/r_min").json
+    assert r["reservation_duration_minutes"] == 1 and r["cancellation_cutoff_minutes"] == 9
+    assert [t["capacity"] for t in r["tables"]] == [9, 99]
+    sl = [s["starts_at_local"][-5:] for s in c.availability("r_min", FUT_DAY, 99).json["slots"]]
+    assert sl == ["23:00", "23:20", "23:40"], sl
+    assert all(s["available_table_ids"] == ["m_99"] for s in c.availability("r_min", FUT_DAY, 10).json["slots"])
+    key = k()
+    o = c.book(ada, key, "r_min", "m_9", f"{FUT_DAY}T23:40", 9)
+    assert o.status == 201 and o.json["ends_at"] == f"{FUT_DAY}T23:41:00+02:00", o
+    o2 = book_all(c, ada, "r_min", "m_99", f"{FUT_DAY}T23:00", 99)
+    assert o2["ends_at"] == f"{FUT_DAY}T23:01:00+02:00"
+    err(c.book(ada, k(), "r_min", "m_9", f"{FUT_DAY}T23:40", 1), 409, "table_unavailable")
+    assert c.book(ada, k(), "r_min", "m_9", f"{FUT_DAY}T23:20", 1).status == 201
+    snap = lambda cl: {"r": cl.get("/restaurants/r_min").json, "list": cl.get("/reservations", token=ada).json,
+                       "avail": [cl.availability("r_min", FUT_DAY, p).json for p in (1, 9, 10, 99)]}
+    before = snap(c)
+    exp = c.export()
+    assert exp.status == 200
+    assert c.post(f"/reservations/{o2['reference']}/cancel", token=ada).status == 200
+    assert c.import_(exp.json).status == 204
+    assert snap(c) == before
+    rp = c.book(ada, key, "r_min", "m_9", f"{FUT_DAY}T23:40", 9)
+    assert rp.status == 200 and rp.json == o.json
+    if second_base_url:
+        c2 = Client(second_base_url)
+        assert c2.reset(other_fixture()).status == 204
+        assert c2.import_(exp.json).status == 204
+        assert snap(c2) == before
+
+
+# ============================================================ O-7
+@pytest.mark.parametrize("name,mutate", [
+    ("closes equals opens", lambda fx: fx["restaurants"][0]["opening_hours"].__setitem__(0, {"weekday": "thu", "opens": "18:00", "closes": "18:00"})),
+    ("capacity 0", lambda fx: fx["restaurants"][0]["tables"][0].__setitem__("capacity", 0)),
+    ("slot_minutes 0", lambda fx: fx["restaurants"][0].__setitem__("slot_minutes", 0)),
+    ("reservation_duration_minutes 0", lambda fx: fx["restaurants"][0].__setitem__("reservation_duration_minutes", 0)),
+    ("capacity -1", lambda fx: fx["restaurants"][0]["tables"][0].__setitem__("capacity", -1)),
+    ("slot_minutes -30", lambda fx: fx["restaurants"][0].__setitem__("slot_minutes", -30)),
+])
+def test_C1_28_C1_12_reset_rejects_degenerate_values(c, ada, bob, name, mutate):
+    before = _snapshot(c, [ada, bob])
+    fx = base_fixture()
+    mutate(fx)
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", (name, r)
+    assert _snapshot(c, [ada, bob]) == before, name
+    assert c.get("/reservations", token=ada).status == 200
 
 
 # ============================================================ O-4
