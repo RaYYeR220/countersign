@@ -219,3 +219,23 @@ Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, th
 - Rationale: literal reading — only the documented paths exist; R-9 already maps unknown paths to 404.
   Normalising would make `/reservations/` (an empty reference) silently mean the collection. Rejected: dropping
   empty segments (the model's behaviour) and redirecting.
+
+## R-26 — Format of seeded and imported references (C1.81 scope)
+- Clauses: C1.81, C1.18, C1.30, C1.107, C1.109 (Auditor escalation on candidate 4)
+- Ambiguity: "`reference` is 6 to 12 characters of `A-Z0-9`, unique across all reservations, and never changes"
+  sits under `POST /reservations` — does it constrain references supplied in reset fixtures and carried in
+  imported state, or only references the service issues?
+- Options: (1) only issued references; seeded/imported references are opaque ids (non-empty, ≤ 64 characters,
+  unique). (2) all references; reset and import must refuse non-conforming ones.
+- Decision: (1). References the service generates satisfy `^[A-Z0-9]{6,12}$`. A reference supplied by a
+  fixture (and therefore carried through export/import) is an opaque id: non-empty, at most 64 characters,
+  unique across reservations; it is never rewritten. Import refuses (422) an empty, over-64-character or
+  duplicate reference, but accepts any other string, so every export the service produces is importable
+  (C1.107).
+- Rationale: §4 gives seeded reservations "the same fields as a POST body plus `id`, `reference` and
+  `user_id`" with no format beyond C1.18's id limit; R-16 makes seeded data trusted beyond shape checks;
+  option (2) would also need reset to refuse fixtures the spec never forbids, and "never changes" forbids
+  rewriting them. Rejected: (2).
+- Consequence for the Oracle: hardening tampers that use a non-conforming but non-empty ≤ 64-character
+  reference (e.g. 'bad ref', 'abcdef') expect 204, not 422 — replace them with empty, over-64-character or
+  duplicate references. For candidate 4, the single failing tamper case is explained by this ruling.
