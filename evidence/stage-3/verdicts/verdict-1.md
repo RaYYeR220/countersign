@@ -53,3 +53,6 @@ step 5 survivors: integrity.go:93, :153, :195, :202 (import refusals: receipt st
 
 ## Result
 result=REJECT — one product finding (F-1, R-60 → WI-21); everything else green.
+
+## Closure
+Superseded on 2026-10-04 by stage-3 candidate 2 (c4a828e341d997f00b8c078c423135fbccf6fdac): WI-21 (Stylist 0782d40) addresses F-1; WI-22 (Builder 26a8055) retitles RUN.md.
