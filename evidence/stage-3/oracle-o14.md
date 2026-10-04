@@ -1,4 +1,4 @@
-[EVIDENCE] stage=3 wi=O-14 sha=<filled at commit>
+[EVIDENCE] stage=3 wi=O-14 sha=c3a3f77
 
 # Evidence — O-14: tampered stage-3 records are refused on import (C1.109 / R-24)
 
