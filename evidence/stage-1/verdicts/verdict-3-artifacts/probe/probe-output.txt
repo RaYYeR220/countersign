@@ -1,0 +1,8 @@
+$ docker run --network auditor-s1-probe-net -v C:/countersign/seats/auditor:/aud:ro -v …/probe:/p auditor-runner-img python /p/probe.py http://auditor-s1-probe:8080
+record with reference B6CGTO7L at ['receipts', 'u_ada\x00POST /reservations\x00probe-key', 'response'] keys: ['created_at', 'ends_at', 'party_size', 'reference', 'reservation_id', 'restaurant_id', 'starts_at', 'starts_at_local', 'status', 'table_id']
+record with reference B6CGTO7L at ['reservations', 10] keys: ['created_at', 'ends_at', 'id', 'party_size', 'reference', 'restaurant_id', 'starts_at', 'starts_at_local', 'status', 'table_id', 'user_id']
+top-level state keys: ['receipts', 'reservations', 'restaurants', 'schema', 'tokens', 'users']
+import of first-hit tamper: 204
+ada reservations with reference SEED01: 1 ; with B6CGTO7L : 1
+replay after import: 200 reference in replayed body: SEED01
+reservation-like hits: 2 of 2

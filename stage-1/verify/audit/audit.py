@@ -70,7 +70,7 @@ CROSS_RULES = [(r"^no-5xx", "C1.46"), (r"^per-request-timeout", "C1.8"), (r"^err
                (r"^content-type-json", "C1.14"), (r"group ran to completion", "harness"), (r"^setup", "harness")]
 CLAUSE_RULES = {
     "core": [(r"^health", "C1.11"), (r"R-8|R-20|reset rejects|reset accepts", "C1.12,C1.18,C1.26 (R-8,R-20)"),
-             (r"reset", "C1.12,C1.13"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
+             (r"reset", "C1.12,C1.13"), (r"R-25", "C1.32,C1.38 (R-25)"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
              (r"Content-Type", "C1.14 (R-17)"), (r"ignores Authorization", "C1.53,C1.68 (R-10)"),
              (r"GET /restaurants public", "C1.68,C1.69 (R-11)"), (r"restaurants/\{id\}|restaurants/unknown", "C1.70"),
              (r"65 chars", "C1.18"), (r"seeded .*created_at|trusted", "C1.30 (R-16)"), (r"seeded reservation visible", "C1.30"),
@@ -494,6 +494,12 @@ def g_core(s: S):
 
     # R-9 routing, R-10 public endpoints ignore Authorization, R-17 Content-Type not enforced
     chk.expect("unknown path 404", c.req("GET", "/nope/zzz"), 404, "not_found")
+    # R-25: only exact documented routes match; no normalisation, empty {reference}/{id} never matched
+    for m, p, tok in (("GET", "/reservations/", s.ada), ("PATCH", "/reservations/", s.ada), ("GET", "/restaurants/", None),
+                      ("GET", "//restaurants", None), ("GET", "/restaurants//r_anker", None), ("GET", "/health/", None),
+                      ("POST", "/reservations//cancel", s.ada), ("GET", "/reservations/SEED01/", s.ada),
+                      ("GET", "/availability/", None), ("POST", "/auth//login", None)):
+        chk.expect(f"R-25 non-exact path {m} {p} -> 404", c.req(m, p, {} if m in ("POST", "PATCH") else NO_BODY, token=tok), 404, "not_found")
     chk.expect("known path, wrong method 405", c.req("DELETE", "/restaurants"), 405, "method_not_allowed")
     chk.expect("known path, wrong method 405 (PUT /reservations)", c.req("PUT", "/reservations", {}, token=s.ada), 405, "method_not_allowed")
     junk = {"Authorization": "Bearer junk-token"}
@@ -520,6 +526,8 @@ def g_core(s: S):
         ("restaurant id 65 chars", variant(lambda fx: R0(fx).update(id="r" * 65)), 422),
         ("user id 65 chars", variant(lambda fx: fx["users"][0].update(id="u" * 65)), 422),
         ("unknown timezone", variant(lambda fx: R0(fx).update(timezone="Mars/Olympus")), 422),
+        ("timezone 'Local' (not an IANA name)", variant(lambda fx: R0(fx).update(timezone="Local")), 422),
+        ("timezone empty", variant(lambda fx: R0(fx).update(timezone="")), 422),
         ("opens not HH:MM", variant(lambda fx: R0(fx)["opening_hours"][0].update(opens="6pm")), 422),
         ("weekday not mon..sun", variant(lambda fx: R0(fx)["opening_hours"][0].update(weekday="thursday")), 422),
         ("closes not later than opens", variant(lambda fx: R0(fx)["opening_hours"][0].update(closes="17:00")), 422),
@@ -533,7 +541,11 @@ def g_core(s: S):
         ("duplicate table id in a restaurant", variant(lambda fx: R0(fx)["tables"].append({"id": "t_1", "label": "x", "capacity": 2})), 422),
         ("duplicate reservation id", variant(lambda fx: fx["reservations"].append({**fx["reservations"][0], "reference": "SEEDXX"})), 422),
         ("duplicate reference", variant(lambda fx: fx["reservations"].append({**fx["reservations"][0], "id": "s_x"})), 422),
-        ("reservation of unknown user", variant(lambda fx: fx["reservations"][0].update(user_id="u_ghost")), 422),
+        ("seeded reference too short ('x')", variant(lambda fx: fx["reservations"][0].update(reference="X")), 422),
+        ("seeded reference lowercase", variant(lambda fx: fx["reservations"][0].update(reference="seed01")), 422),
+        ("seeded reference over 12 chars", variant(lambda fx: fx["reservations"][0].update(reference="ABCDEFGHJKLMN")), 422),
+        ("seeded reference with a dash", variant(lambda fx: fx["reservations"][0].update(reference="SEED-01")), 422),
+        ("reservation of unknown user",variant(lambda fx: fx["reservations"][0].update(user_id="u_ghost")), 422),
         ("reservation of unknown restaurant", variant(lambda fx: fx["reservations"][0].update(restaurant_id="r_ghost")), 422),
         ("reservation on another restaurant's table", variant(lambda fx: fx["reservations"][0].update(table_id="o_1")), 422),
         ("capacity wrong type", variant(lambda fx: R0(fx)["tables"][0].update(capacity="2")), 400),
@@ -1212,7 +1224,8 @@ def g_moves(s: S):
     for name, b in (("moves not array", {"moves": "x"}), ("moves object", {"moves": {"reference": "x"}}),
                     ("item not object", {"moves": ["SEED01"]}), ("reference number", {"moves": [{"reference": 7}]})):
         chk.expect(f"moves {name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
-    for name, b in (("moves null", {"moves": None}), ("reference null", {"moves": [{"reference": None}]})):
+    for name, b in (("moves null", {"moves": None}), ("reference null", {"moves": [{"reference": None}]}),
+                    ("moves item null", {"moves": [None]}), ("moves item null after a valid item", {"moves": [{"reference": "SEED01"}, None]})):
         chk.expect(f"{name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
     r = c.req("POST", "/reservation-moves", {"moves": [{"reference": f"SEED0{i}"} for i in range(1, 9)]}, token=s.ada, key=uuid.uuid4().hex)
     chk.expect("8 moves allowed 201", r, 201, section="§11")
@@ -1445,6 +1458,25 @@ def g_export(s: S, dest: Client | None):
             rr = d.req("POST", "/_test/import", body, timeout=12)
             chk.expect(f"[{label}] import {name} -> {st}", rr, st, None, "§10")
             chk.check(f"[{label}] import {name}: destination unchanged", d.req("GET", "/_test/export").json == snapshot_before, "unchanged", None, rr.req, "§10")
+        # tampered export: a second reservation takes SEED01's reference (every dict carrying the
+        # reference is changed, so the edit cannot land only in an opaque stored response)
+        T = json.loads(json.dumps(E))
+        other_ref = r1.json.get("reference") if isinstance(r1.json, dict) else None
+
+        def retag(v):
+            if isinstance(v, dict):
+                if v.get("reference") == other_ref:
+                    v["reference"] = "SEED01"
+                for x in v.values():
+                    retag(x)
+            elif isinstance(v, list):
+                for x in v:
+                    retag(x)
+        retag(T.get("state"))
+        rr = d.req("POST", "/_test/import", T, timeout=12)
+        chk.expect(f"[{label}] import tampered export (duplicate reference) -> 422", rr, 422, "validation_failed", "§10")
+        chk.check(f"[{label}] import tampered export: destination unchanged", d.req("GET", "/_test/export").json == snapshot_before,
+                  "unchanged", None, rr.req, "§10")
         rr = d.req("POST", "/_test/import", raw='{"track": "tablekeeper", ', timeout=12)
         chk.expect(f"[{label}] import unparseable 400", rr, 400, "malformed_request", "§10")
         rr = d.req("POST", "/_test/import", E, timeout=12)

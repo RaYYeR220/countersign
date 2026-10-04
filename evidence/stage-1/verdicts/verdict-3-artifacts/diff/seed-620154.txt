@@ -1,0 +1,2 @@
+OK: 5 runs, 405 ops, seeds 620154..620158, 2.9s
+[bg run] exit 0 after 7.4s; full output: C:\countersign\tmp\aud-bg\run-1791125111449.log

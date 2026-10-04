@@ -1,0 +1,4 @@
+{"edits": ["internal/state/store.go::func (s *Store) Read(fn func(*State)) {\\n\\ts.mu.RLock()\\n\\tdefer s.mu.RUnlock()::func (s *Store) Read(fn func(*State)) {"],
+ "groups": "readwrite", "rounds": 5,
+ "with": {"data_races": 0, "hard_failures": "0", "first_race": ""},
+ "without": {"data_races": 1, "hard_failures": "0", "first_race": " tablekeeper/internal/state.(*State).AddReservation(); tablekeeper/internal/api.(*Server).createReservation-fm.(*Server).createReservation.func1();"}}
