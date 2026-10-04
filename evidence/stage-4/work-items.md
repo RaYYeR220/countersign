@@ -24,6 +24,7 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 | 1 | 06cdcd6 | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head + WI-27 RUN.md (d2b6859) | REJECT (verdict 1: F-1 R-74 → WI-28); superseded by 2 |
 | WI-27 | Builder | RUN.md for stage 4 | C1.6 | merged |
 | WI-28 | Builder | stage-4 candidate 1: import accepts a history whose first entry is not created; R-74 | C1.109, C3.13, C3.28 | evidence 69fd2b3, merged (rework round 1 of 2 on WI-24 import validation) |
-| 2 | (this commit) | + WI-28 (69fd2b3) | pending |
-| WI-29 | Builder | R-76: stage-2 API-cancelled bookings migrate with [created] and revision 1 | C3.28, C3.48, C4.24 | handed off |
-| WI-30 | Builder | R-75: exact arithmetic for fixture integers up to 2^31−1 (durations, cutoffs, capacities) | C1.4, C1.22, C1.23, C1.74 | handed off |
+| 2 | e00f6bb | + WI-28 (69fd2b3) | superseded by 3 (Oracle findings R-75/R-76; Oracle tamper-selector defect) |
+| WI-29 | Builder | R-76: stage-2 API-cancelled bookings migrate with [created] and revision 1 | C3.28, C3.48, C4.24 | not reproducible on real images; regression test added (2fe…) |
+| WI-30 | Builder | R-75: exact arithmetic for fixture integers up to 2^31−1 (durations, cutoffs, capacities) | C1.4, C1.22, C1.23, C1.74 | evidence 6007e07, merged |
+| 3 | (this commit) | + WI-30 (6007e07), WI-29 regression test, oracle 7cca4c9 (selector fix, O-15b, O-16) | pending |
