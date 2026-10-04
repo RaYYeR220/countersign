@@ -1,4 +1,4 @@
-[EVIDENCE] stage=4 wi=O-15b,O-16 sha=<filled at commit>
+[EVIDENCE] stage=4 wi=O-15b,O-16 sha=7f3adc9
 
 # Evidence — O-15b and O-16 tests; full kit against the model and against the local stage-4 product image
 
