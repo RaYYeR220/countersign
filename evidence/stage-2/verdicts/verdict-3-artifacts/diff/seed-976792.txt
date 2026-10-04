@@ -1,0 +1,9 @@
+sequence:
+  0: {"op": "reset", "fixture": "base"}
+  1: {"op": "signup", "label": "s1", "email": "user1@example.com", "password": "password-1", "display_name": "User 1"}
+  2: {"op": "patch", "token": {"$sym": ["token", "s1"]}, "reference": "SEED01", "body": {"table_ids": ["q_1", "q_2"], "table_id": "q_1", "starts_at_local": "2027-06-15T18:30", "party_size": 3}}
+mismatch at op 2
+expected (model): {"status": 422, "error": {"code": "validation_failed"}}
+actual (service): {"status": 404, "error": {"code": "not_found"}}
+reproduce: python ../repo/stage-2/verify/oracle/diff_runner.py --base-url http://auditor-s2-diff:8080 --replay /out/diff-fail-seed976792.json
+[bg run] exit 1 after 14.1s; full output: C:\countersign\tmp\aud-bg\run-1791137851879.log

@@ -1,0 +1,371 @@
+{
+ "source": "reconstructed from mutation.log (run hit the 1700 s wrapper timeout after the 1200 s budget; one confirmation container hung)",
+ "generated": 570,
+ "evaluated": 45,
+ "killed": 39,
+ "survived": 3,
+ "invalid": 3,
+ "kill_rate": 0.929,
+ "results": [
+  {
+   "t": 85,
+   "id": 0,
+   "file": "internal/state/fixture.go",
+   "line": 40,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 168,
+   "id": 3,
+   "file": "internal/state/fixture.go",
+   "line": 217,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 168,
+   "id": 1,
+   "file": "internal/state/tables.go",
+   "line": 37,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 173,
+   "id": 2,
+   "file": "internal/state/tables.go",
+   "line": 62,
+   "op": "BOOL",
+   "status": "KILLED"
+  },
+  {
+   "t": 198,
+   "id": 7,
+   "file": "internal/state/fixture.go",
+   "line": 92,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 220,
+   "id": 4,
+   "file": "internal/api/tables.go",
+   "line": 27,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 236,
+   "id": 8,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 50,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 238,
+   "id": 10,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 121,
+   "op": "ARI",
+   "status": "INVALID"
+  },
+  {
+   "t": 280,
+   "id": 5,
+   "file": "internal/api/amend.go",
+   "line": 50,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 283,
+   "id": 6,
+   "file": "internal/state/tables.go",
+   "line": 37,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 296,
+   "id": 11,
+   "file": "internal/api/auth.go",
+   "line": 47,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 336,
+   "id": 9,
+   "file": "internal/state/fixture.go",
+   "line": 255,
+   "op": "CB",
+   "status": "KILLED"
+  },
+  {
+   "t": 398,
+   "id": 12,
+   "file": "internal/state/tables.go",
+   "line": 47,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 403,
+   "id": 13,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 106,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 419,
+   "id": 14,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 99,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 451,
+   "id": 15,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 510,
+   "id": 16,
+   "file": "internal/state/integrity.go",
+   "line": 59,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 511,
+   "id": 17,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 129,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 512,
+   "id": 21,
+   "file": "internal/state/fixture.go",
+   "line": 331,
+   "op": "ARI",
+   "status": "INVALID"
+  },
+  {
+   "t": 523,
+   "id": 18,
+   "file": "internal/state/reservations.go",
+   "line": 49,
+   "op": "BOOL",
+   "status": "KILLED"
+  },
+  {
+   "t": 544,
+   "id": 22,
+   "file": "internal/state/fixture.go",
+   "line": 189,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 551,
+   "id": 20,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 167,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 553,
+   "id": 25,
+   "file": "internal/localtime/localtime.go",
+   "line": 86,
+   "op": "ARI",
+   "status": "INVALID"
+  },
+  {
+   "t": 554,
+   "id": 19,
+   "file": "internal/api/availability.go",
+   "line": 100,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 603,
+   "id": 26,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 156,
+   "op": "LOG",
+   "status": "SURVIVED"
+  },
+  {
+   "t": 627,
+   "id": 23,
+   "file": "internal/state/integrity.go",
+   "line": 111,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 648,
+   "id": 24,
+   "file": "internal/api/moves.go",
+   "line": 22,
+   "op": "LOG",
+   "status": "KILLED"
+  },
+  {
+   "t": 655,
+   "id": 27,
+   "file": "internal/localtime/localtime.go",
+   "line": 193,
+   "op": "ARI",
+   "status": "KILLED"
+  },
+  {
+   "t": 663,
+   "id": 29,
+   "file": "internal/state/fixture.go",
+   "line": 143,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 703,
+   "id": 30,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "LOG",
+   "status": "SURVIVED"
+  },
+  {
+   "t": 722,
+   "id": 28,
+   "file": "internal/api/moves.go",
+   "line": 29,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 801,
+   "id": 32,
+   "file": "internal/api/reservations.go",
+   "line": 35,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 809,
+   "id": 31,
+   "file": "internal/api/reservations.go",
+   "line": 57,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 866,
+   "id": 33,
+   "file": "internal/api/auth.go",
+   "line": 117,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 883,
+   "id": 34,
+   "file": "internal/api/reservations.go",
+   "line": 175,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 948,
+   "id": 35,
+   "file": "internal/api/amend.go",
+   "line": 138,
+   "op": "BOOL",
+   "status": "KILLED"
+  },
+  {
+   "t": 1018,
+   "id": 37,
+   "file": "internal/api/tables.go",
+   "line": 103,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1041,
+   "id": 38,
+   "file": "internal/api/tables.go",
+   "line": 87,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1103,
+   "id": 39,
+   "file": "internal/state/fixture.go",
+   "line": 223,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1108,
+   "id": 41,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "LOG",
+   "status": "SURVIVED"
+  },
+  {
+   "t": 1157,
+   "id": 40,
+   "file": "internal/api/restaurants.go",
+   "line": 32,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1177,
+   "id": 44,
+   "file": "internal/api/respond.go",
+   "line": 31,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1213,
+   "id": 42,
+   "file": "internal/state/fixture.go",
+   "line": 226,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1217,
+   "id": 43,
+   "file": "internal/api/amend.go",
+   "line": 87,
+   "op": "NEG",
+   "status": "KILLED"
+  },
+  {
+   "t": 1278,
+   "id": 45,
+   "file": "internal/localtime/localtime.go",
+   "line": 167,
+   "op": "INV",
+   "status": "KILLED"
+  }
+ ]
+}
