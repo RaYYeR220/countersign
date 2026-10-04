@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"slices"
+	"unicode/utf8"
 
 	"tablekeeper/internal/apperr"
 	"tablekeeper/internal/jsonin"
@@ -33,8 +34,18 @@ func tableFieldTypes(o jsonin.Object) error {
 // hasTables reports whether either table field is present.
 func hasTables(o jsonin.Object) bool { return o.Has("table_id") || o.Has("table_ids") }
 
-// requestedTables is the value pass over the table fields in R-35 order: both present, an empty
-// set or a duplicate id → 422 validation_failed; more than two tables → 422 combination_not_allowed.
+// validBodyID reports whether a body id is 1 to 64 characters (C1.18, R-42).
+func validBodyID(id string) bool {
+	return id != "" && utf8.RuneCountInString(id) <= state.MaxIDLength
+}
+
+func invalidID(field string) error {
+	return apperr.Validation(field + " must be 1 to 64 characters")
+}
+
+// requestedTables is the value pass over the table fields in R-35/R-42 order: both present, an
+// empty set, an empty or over-long id, or a duplicate id → 422 validation_failed; more than two
+// tables → 422 combination_not_allowed.
 // ok is false when neither field is present.
 func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
 	single, hasSingle, _ := o.String("table_id")
@@ -44,12 +55,16 @@ func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
 	}
 	ids, _, _ = o.Strings("table_ids")
 	switch {
+	case hasSingle && !validBodyID(single):
+		return nil, false, invalidID("table_id")
 	case hasSingle:
 		return []string{single}, true, nil
 	case !hasSet:
 		return nil, false, nil
 	case len(ids) == 0:
 		return nil, false, apperr.Validation("table_ids must name at least one table")
+	case slices.ContainsFunc(ids, func(id string) bool { return !validBodyID(id) }):
+		return nil, false, invalidID("every table_ids member")
 	}
 	for i, id := range ids {
 		if slices.Contains(ids[:i], id) {
