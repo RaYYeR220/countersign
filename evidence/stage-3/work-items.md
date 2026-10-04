@@ -22,3 +22,9 @@ stage-3 rulings R-46 …. Complete clause text travels in each `[HANDOFF]`.
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
 | 1 | (this commit) | WI-17/18 (builder f052006), WI-19/20 (stylist 4c50589), oracle fbe9fd2, auditor head | pending |
+
+## Rework
+| WI | owner | from | clauses | status |
+|----|-------|------|---------|--------|
+| WI-21 | Stylist | stage-3 candidate 1 escalation; R-60 | C3.38 | handed off (rework round 1 of 2 on WI-20) |
+| WI-22 | Builder | Auditor observation: stage-3/RUN.md still stage-2 text | C1.6 | handed off (docs) |
