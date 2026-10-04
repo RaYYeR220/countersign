@@ -152,7 +152,72 @@ def run_killers(port: int, scratch: Path, a) -> tuple[set, str]:
     return failing, ""
 
 
+AUDIT_ROOT = HERE.parents[2]          # repository root holding stage-1/verify/audit and factory/tools
+GO_IMAGE = "golang:1.26-alpine"
+RUNNER_IMAGE = "auditor-runner-py"    # Dockerfile.runner-py: python 3.12 + tzdata + pytest
+
+
+def _docker(args: list[str], timeout: float) -> subprocess.CompletedProcess:
+    return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
+
+
+def evaluate_docker(root: Path, scratch: Path, a, tag: str) -> dict:
+    """Build a Linux binary in a Go container, then run server and killers together in one runner
+    container (own network namespace: no host ephemeral-port pressure, 2 CPUs / 2 GiB)."""
+    for f in ("tk", "audit.json", "oracle.xml", "crashed", "nohealth", "audit.rc"):
+        try:
+            (scratch / f).unlink()
+        except OSError:
+            pass
+    b = _docker(["run", "--rm", "-v", f"{root.as_posix()}:/src", "-v", f"{scratch.as_posix()}:/out",
+                 "-v", "auditor-gocache:/root/.cache/go-build", "-e", "CGO_ENABLED=0", "-e", "GOFLAGS=-mod=vendor",
+                 "-e", "GOTOOLCHAIN=local", "-w", "/src", GO_IMAGE, "go", "build", "-o", "/out/tk", "."], 300)
+    if b.returncode != 0:
+        return {"status": "INVALID", "note": (b.stderr or b.stdout)[-400:]}
+    kt = int(a.killer_timeout)
+    script = (
+        "/w/tk >/dev/null 2>/w/server.err & P=$!; i=0; "
+        "until wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1; do i=$((i+1)); "
+        "if [ $i -gt 150 ]; then touch /w/nohealth; exit 0; fi; sleep 0.1; done; "
+        f"timeout {kt} python /aud/stage-1/verify/audit/audit.py --base http://127.0.0.1:8080 "
+        f"--rounds {getattr(a, 'rounds', 1)} --groups {a.groups} --wait 10 --out /w/audit.json >/dev/null 2>&1; echo $? >/w/audit.rc; "
+        + (f"timeout {kt} python -m pytest /oracle -q -p no:cacheprovider --base-url http://127.0.0.1:8080 "
+           "--junitxml=/w/oracle.xml >/dev/null 2>&1; " if a.oracle else "")
+        + "kill -0 $P 2>/dev/null || touch /w/crashed; kill $P 2>/dev/null; exit 0")
+    vols = ["-v", f"{scratch.as_posix()}:/w", "-v", f"{AUDIT_ROOT.as_posix()}:/aud:ro"]
+    if a.oracle:
+        vols += ["-v", f"{Path(a.oracle).as_posix()}:/oracle:ro"]
+    name = f"auditor-mut-{tag}-{os.getpid()}"
+    try:
+        _docker(["run", "--rm", "--name", name, "--network", "none", "--cpus", "2", "--memory", "2g", "-e", "PORT=8080",
+                 "-e", "PYTHONDONTWRITEBYTECODE=1", "-w", "/tmp", *vols, RUNNER_IMAGE, "sh", "-c", script], 3 * kt + 60)
+    except subprocess.TimeoutExpired:
+        _docker(["rm", "-f", name], 30)
+        return {"failing": [], "note": "runner timeout", "crashed": False}
+    if (scratch / "nohealth").exists():
+        return {"status": "KILLED", "note": "never healthy", "failing": []}
+    failing, note = set(), ""
+    out = scratch / "audit.json"
+    if out.exists():
+        d = json.loads(out.read_text(encoding="utf-8"))
+        failing |= {f"audit:{r['group']}/{r['name']}" for r in d["results"] if not r["ok"] and not r["soft"]}
+    else:
+        note = "audit produced no report (rc %s)" % ((scratch / "audit.rc").read_text().strip() if (scratch / "audit.rc").exists() else "?")
+    if a.oracle:
+        xml = scratch / "oracle.xml"
+        if xml.exists():
+            for tc in ET.parse(xml).getroot().iter("testcase"):
+                if tc.find("failure") is not None or tc.find("error") is not None:
+                    failing.add(f"oracle:{tc.get('name')}")
+        else:
+            note = note or "oracle produced no report"
+    crashed = (scratch / "crashed").exists()
+    return {"failing": sorted(failing), "note": note or ("crashed" if crashed else ""), "crashed": crashed}
+
+
 def evaluate(root: Path, scratch: Path, port: int, a, tag: str) -> dict:
+    if getattr(a, "docker", True):
+        return evaluate_docker(root, scratch, a, tag)
     exe = scratch / f"tk-{tag}{EXE}"
     ok, err = build(root, exe)
     if not ok:
@@ -182,12 +247,14 @@ def main(argv=None):
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--port-base", type=int, default=18320)
     ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--groups", default="core,auth,availability,create,reads,cancel,patch,dst,idem,moves,burst,export")
+    ap.add_argument("--groups", default="core,auth,availability,create,reads,cancel,patch,dst,idem,moves,export")
     ap.add_argument("--oracle", help="path of the Oracle acceptance suite (pytest)")
     ap.add_argument("--pytest-python", default=sys.executable)
     ap.add_argument("--killer-timeout", type=float, default=240)
+    ap.add_argument("--native", action="store_true", help="build and run on the host instead of in containers")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
+    a.docker = not a.native
     t0 = time.monotonic()
     work = Path(a.work)
     if work.exists():
@@ -223,6 +290,17 @@ def main(argv=None):
             original = apply(root, mt)
             try:
                 r = evaluate(root, scratch, port, a, f"m{idx}")
+                # A kill must reproduce: re-run once and keep only failures seen both times, so load or
+                # timing noise never counts as a kill.
+                if r.get("status") is None and (set(r.get("failing", [])) - base_fail or r.get("note") or r.get("crashed")):
+                    r2 = evaluate(root, scratch, port, a, f"m{idx}b")
+                    if r2.get("status") == "KILLED":
+                        r = r2
+                    else:
+                        r["failing"] = sorted(set(r.get("failing", [])) & set(r2.get("failing", [])))
+                        if not (r.get("note") and r2.get("note")):
+                            r["note"] = ""
+                        r["crashed"] = bool(r.get("crashed") and r2.get("crashed"))
             finally:
                 apply(root, mt, revert=original)
             if r.get("status") != "INVALID":

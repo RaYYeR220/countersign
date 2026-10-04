@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -24,29 +23,18 @@ import mutate  # noqa: E402
 
 
 def run(root: Path, scratch: Path, port: int, a, tag: str) -> dict:
-    exe = scratch / f"tk-{tag}{mutate.EXE}"
-    ok, err = mutate.build(root, exe)
-    if not ok:
-        return {"built": False, "error": err}
-    p = subprocess.Popen([str(exe)], env={**__import__("os").environ, "PORT": str(port)}, stdin=subprocess.DEVNULL,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    try:
-        if not mutate.healthy(port, 15):
-            return {"built": True, "healthy": False}
-        fails = []
-        for _ in range(a.repeat):
-            failing, note = mutate.run_killers(port, scratch, a)
-            fails.append({"failing": sorted(failing)[:10], "n": len(failing), "note": note, "crashed": p.poll() is not None})
-            if failing or note or p.poll() is not None:
-                break
-        crashed = p.poll() is not None
-        tail = ""
-        if crashed:
-            tail = p.stderr.read().decode("utf-8", "replace")[-600:]
-        return {"built": True, "healthy": True, "runs": fails, "crashed": crashed, "stderr_tail": tail,
-                "red": any(r["n"] or r["note"] or r["crashed"] for r in fails)}
-    finally:
-        mutate.kill(p)
+    """Evaluate the build up to a.repeat times (in containers, see mutate.evaluate); red on the first failure."""
+    runs = []
+    for k in range(a.repeat):
+        r = mutate.evaluate(root, scratch, port, a, f"{tag}{k}")
+        if r.get("status") == "INVALID":
+            return {"built": False, "error": r.get("note")}
+        if r.get("status") == "KILLED":
+            return {"built": True, "healthy": False, "red": True, "runs": runs}
+        runs.append({"failing": r["failing"][:10], "n": len(r["failing"]), "note": r.get("note", ""), "crashed": r.get("crashed")})
+        if r["failing"] or r.get("note") or r.get("crashed"):
+            break
+    return {"built": True, "healthy": True, "runs": runs, "red": any(x["n"] or x["note"] or x["crashed"] for x in runs)}
 
 
 def main(argv=None):
@@ -81,7 +69,7 @@ def main(argv=None):
         applied.append({"file": f, "old": old, "new": new, "occurrences": n})
     scratch = work / "scratch"
     scratch.mkdir()
-    a.groups = a.groups  # consumed by mutate.run_killers
+    a.docker = True
     without = run(bad, scratch, a.port, a, "without")
     a.repeat = 1
     with_ = run(good, scratch, a.port + 1, a, "with")
