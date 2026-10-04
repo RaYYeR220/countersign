@@ -887,6 +887,51 @@ def test_C3_28_O14_tampered_stage3_records_are_refused(c, ada, bob, mia):
     assert applied >= 25, applied
     assert c.import_(exp).status == 204
     assert c.get(f"/series/{s['series_id']}", token=ada).json == before["series"]
+    # relayed survivors: a receipt with a non-2xx status but a valid body; two boundary pairs
+    from test_hardening import _records, _walk
+    e = copy.deepcopy(exp)
+    hit = False
+    for parent, key_, v in list(_walk(e["state"])):
+        if isinstance(v, dict) and isinstance(v.get("status"), int) and not isinstance(v["status"], bool)                 and 200 <= v["status"] <= 299 and "response" in v:
+            v["status"] = 404
+            hit = True
+            break
+    assert hit, "no receipt found in the export"
+    err(c.import_(e), 422, "validation_failed")
+    assert c.get(f"/series/{s['series_id']}", token=ada).json == before["series"]
+
+    def policies_in(doc):
+        r = _records(doc["state"], id="r_anker")[0][2]
+        return next(v for v in r.values() if isinstance(v, list) and v and isinstance(v[0], dict) and "policy_version" in v[0])
+
+    def series_in(doc):
+        for v in doc["state"].values():
+            if isinstance(v, list) and v and isinstance(v[0], dict) and "occurrences" in v[0]:
+                return v[0]
+            if isinstance(v, dict):
+                for vv in v.values():
+                    if isinstance(vv, dict) and "occurrences" in vv:
+                        return vv
+        raise AssertionError("no series in the export")
+
+    e = copy.deepcopy(exp)
+    policies_in(e)[0]["reservation_duration_minutes"] = 1440
+    assert c.import_(e).status == 204                                                       # boundary accepted
+    assert c.get("/restaurants/r_anker/policies").json["policies"][0]["reservation_duration_minutes"] == 1440
+    e = copy.deepcopy(exp)
+    policies_in(e)[0]["reservation_duration_minutes"] = 1441
+    err(c.import_(e), 422, "validation_failed")                                             # boundary refused
+    assert c.get("/restaurants/r_anker/policies").json["policies"][0]["reservation_duration_minutes"] == 1440
+    e = copy.deepcopy(exp)
+    series_in(e)["revision"] = 1
+    assert c.import_(e).status == 204                                                       # boundary accepted
+    assert c.get(f"/series/{s['series_id']}", token=ada).json["revision"] == 1
+    e = copy.deepcopy(exp)
+    series_in(e)["revision"] = 0
+    err(c.import_(e), 422, "validation_failed")
+    assert c.get(f"/series/{s['series_id']}", token=ada).json["revision"] == 1
+    assert c.import_(exp).status == 204
+    assert c.get(f"/series/{s['series_id']}", token=ada).json == before["series"]
 
 
 def test_O13_party_size_2_pow_53(c, ada):

@@ -46,7 +46,12 @@ Exit code: 0
 OK: 40 runs, 3240 ops, seeds 1..40, 2.9s
 ```
 
+## Relayed survivors (added after the Foreman relayed the verdict-1 list)
+- A receipt with a non-2xx status but a valid body → 422, destination unchanged (the model only stores 2xx receipts, R-18).
+- Boundary pairs: an imported policy with `reservation_duration_minutes` 1440 imports (204) and 1441 is refused (422);
+  a series with revision 1 imports (204) and revision 0 is refused (422). The duplicated occurrence was already covered.
+- Re-run: `test_C3_28_O14_tampered_stage3_records_are_refused` → 1 passed in 2.38s (36 refusals + 1 receipt refusal +
+  2 boundary acceptances + 2 boundary refusals).
+
 ## Known gaps
-- The Auditor's verdict-1 survivor list lives on the Auditor's branch, which my guard refuses to read; the 36 cases
-  above are my own coverage of the four record kinds named in the finding. If any of the four survivors is not among
-  them, the Foreman relays its description and I add it.
+- None for the relayed list.
