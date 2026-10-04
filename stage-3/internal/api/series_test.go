@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -384,4 +385,45 @@ func TestSeriesOnImportedStage1Booking(t *testing.T) {
 	e.ada = decodeSession(t, do(e.h, "POST", "/auth/login", `{"email":"ada@example.com","password":"correct horse"}`)).Token
 	e.bob = decodeSession(t, do(e.h, "POST", "/auth/login", `{"email":"bob@example.com","password":"correct horse"}`)).Token
 	expect(t, e.adopt(e.bob, "k", "SEED01", 2, 1), 201, "") // seeded booking, revision 1 under policy 0
+}
+
+// Adoption works on bookings imported from stage-1 and stage-2 exports (C3.48, R-55).
+func TestSeriesOnImportedExports(t *testing.T) {
+	for _, tc := range []struct{ file, anchor string }{
+		{"stage1-export.json", "FDNDYW3N"}, // 2027-01-07 21:00, schema 1
+		{"stage2-export.json", "PFOHNWE4"}, // 2027-01-14 19:00, schema 2
+	} {
+		raw, err := os.ReadFile("../snapshot/testdata/" + tc.file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var export struct{ State struct{ Tokens map[string]string } }
+		json.Unmarshal(raw, &export)
+		var token string
+		for tok := range export.State.Tokens {
+			token = tok
+		}
+		c := &clock{t: time.Date(2026, 10, 4, 18, 0, 0, 0, time.UTC)}
+		e := &env{t: t, h: New(state.NewStore(state.Empty()), c.now), clock: c}
+		expect(t, do(e.h, "POST", "/_test/import", string(raw)), 204, "")
+		before := e.req("GET", "/reservations/"+tc.anchor, token, "", "").Body.String()
+		hist := e.req("GET", "/reservations/"+tc.anchor+"/history", token, "", "").Body.String()
+
+		rec := e.adopt(token, "k-up", tc.anchor, 3, 1)
+		expect(t, rec, 201, "")
+		if t.Failed() {
+			t.Fatalf("%s: adoption failed", tc.file)
+		}
+		s := decodeSeries(t, rec)
+		if a := occ(t, s, 0); a.Reference != tc.anchor || a.Revision != 1 || a.AcceptedTerms.PolicyVersion != 0 || len(s.Occurrences) != 3 {
+			t.Errorf("%s: anchor occurrence = %+v", tc.file, a)
+		}
+		if got := e.req("GET", "/reservations/"+tc.anchor, token, "", "").Body.String(); got != before {
+			t.Errorf("%s: imported anchor changed", tc.file)
+		}
+		if got := e.req("GET", "/reservations/"+tc.anchor+"/history", token, "", "").Body.String(); got != hist {
+			t.Errorf("%s: imported anchor history changed", tc.file)
+		}
+		expect(t, e.adopt(token, "k-cancelled", "SEED01", 2, 1), 409, "reservation_cancelled")
+	}
 }
