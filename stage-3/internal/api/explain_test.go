@@ -86,11 +86,14 @@ func TestExplainAbsentAndInvalid(t *testing.T) {
 	if closed.Code != 200 || !strings.Contains(closed.Body.String(), `"slots":[]`) {
 		t.Errorf("closed day explain = %d %s", closed.Code, closed.Body)
 	}
-	for _, q := range []string{"explain=false", "explain=1", "explain=", "explain=TRUE", "explain=true%20", "explain=yes&explain=true"} {
+	for _, q := range []string{"explain=false", "explain=1", "explain=", "explain=TRUE", "explain=true%20", "explain=yes&explain=true", "explain=true&explain=false", "explain=true&explain="} {
 		rec := do(h, http.MethodGet, "/availability?restaurant_id=r_anker&date=2026-09-24&party_size=2&"+q, "")
 		if rec.Code != 422 || errorCode(t, rec) != "validation_failed" {
 			t.Errorf("%s = %d %s", q, rec.Code, rec.Body)
 		}
+	}
+	if rec := do(h, http.MethodGet, "/availability?restaurant_id=r_anker&date=2026-09-24&party_size=2&explain=true&explain=true", ""); rec.Code != 200 {
+		t.Errorf("repeated explain=true = %d", rec.Code)
 	}
 	// Parameter errors, explain included, precede the unknown-restaurant 404.
 	if rec := do(h, http.MethodGet, "/availability?restaurant_id=r_nope&date=2026-09-24&party_size=2&explain=false", ""); rec.Code != 422 {
