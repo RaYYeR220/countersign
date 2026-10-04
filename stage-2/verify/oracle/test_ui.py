@@ -220,14 +220,14 @@ def test_C2_29_C2_31_C2_32_C2_33_booking_flow(page, c, ada):
     tid(page, "slot-t_2-19:00").click()
     tid(page, "booking-form").wait_for()
     summary = tid(page, "booking-summary").inner_text()
-    assert "2" in summary and "19:00" in summary and FUT_FRI in summary and "Friday" in summary, summary   # R-32
+    assert "2" in summary and "19:00" in summary and FUT_FRI in summary and "Fri" in summary, summary   # R-32: HH:MM, ISO date, readable weekday (abbreviation or full name)
     assert tid(page, "booking-party-size").input_value() == "2"
     tid(page, "booking-submit").click()
     tid(page, "confirmation").wait_for()
     ref = tid(page, "confirmation-reference").inner_text().strip()
     assert REF.match(ref), ref
     details = tid(page, "confirmation-details").inner_text()
-    assert "Zum Anker" in details and "2" in details and "19:00" in details and FUT_FRI in details and "Friday" in details, details
+    assert "Zum Anker" in details and "2" in details and "19:00" in details and FUT_FRI in details and "Fri" in details, details
     assert tid(page, "booking-form").is_visible() and tid(page, "booking-error").count() == 0
     mine = c.get("/reservations", token=ada).json["reservations"]
     assert [x["reference"] for x in mine] == [ref] and mine[0]["table_ids"] == ["t_2"]
