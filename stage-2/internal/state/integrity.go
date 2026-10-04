@@ -62,7 +62,7 @@ func checkIntegrity(st *State) error {
 			return invalid("reservation entry incomplete")
 		}
 		r := restaurants[res.RestaurantID]
-		if !users[res.UserID] || r == nil || r.Table(res.TableID) == nil {
+		if !users[res.UserID] || r == nil || !checkTableSet(r, res.TableIDs) {
 			return invalid("reservation %s refers to an unknown user, restaurant or table", res.ID)
 		}
 		if ids[res.ID] || refs[res.Reference] {
@@ -86,7 +86,7 @@ func checkIntegrity(st *State) error {
 
 func checkRestaurant(r *Restaurant) error {
 	if r == nil || !validID(r.ID) || r.SlotMinutes < 1 || r.ReservationDurationMinutes < 1 ||
-		r.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil {
+		r.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {
 		return invalid("restaurant entry incomplete")
 	}
 	if _, err := localtime.Location(r.Timezone); err != nil {
@@ -106,6 +106,9 @@ func checkRestaurant(r *Restaurant) error {
 			return invalid("restaurant %s has an invalid table", r.ID)
 		}
 		tables[t.ID] = true
+	}
+	if checkCombinable(r) != nil {
+		return invalid("restaurant %s has invalid combinable pairs", r.ID)
 	}
 	return nil
 }

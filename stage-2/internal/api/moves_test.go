@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -39,7 +40,7 @@ func TestMoveSwapAndOrder(t *testing.T) {
 	expect(t, rec, 201, "")
 	got := decodeViews(t, rec)
 	if len(got) != 3 || got[0].Reference != b.Reference || got[0].TableID != "t_1" ||
-		got[1].Reference != a.Reference || got[1].TableID != "t_2" || got[2] != c {
+		got[1].Reference != a.Reference || got[1].TableID != "t_2" || !reflect.DeepEqual(got[2], c) {
 		t.Fatalf("swap result = %+v", got)
 	}
 	if got[0].ReservationID != b.ReservationID || got[0].CreatedAt != b.CreatedAt || got[0].StartsAt != b.StartsAt {

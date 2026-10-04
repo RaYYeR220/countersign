@@ -36,6 +36,7 @@ type Restaurant struct {
 	CancellationCutoffMinutes  int            `json:"cancellation_cutoff_minutes"`
 	OpeningHours               []OpeningHours `json:"opening_hours"`
 	Tables                     []Table        `json:"tables"`
+	Combinable                 [][]string     `json:"combinable"` // declared pairs, each in declared order
 }
 
 // Table returns the restaurant's table with the given id, or nil.
@@ -64,7 +65,7 @@ type Reservation struct {
 	Reference     string    `json:"reference"`
 	UserID        string    `json:"user_id"`
 	RestaurantID  string    `json:"restaurant_id"`
-	TableID       string    `json:"table_id"`
+	TableIDs      []string  `json:"table_ids"` // one table, or a declared pair in combinable order
 	PartySize     int       `json:"party_size"`
 	Status        string    `json:"status"`
 	StartsAtLocal string    `json:"starts_at_local"`

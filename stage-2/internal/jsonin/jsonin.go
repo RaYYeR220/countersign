@@ -150,3 +150,51 @@ func (o Object) Objects(name string) (items []Object, ok bool, err error) {
 		return nil, false, wrongType(name, "an array of objects")
 	}
 }
+
+// StringList decodes raw as an array of strings; ok is false for any other JSON value.
+func StringList(raw json.RawMessage) (list []string, ok bool) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '[' {
+		return nil, false
+	}
+	var items []json.RawMessage
+	if json.Unmarshal(raw, &items) != nil {
+		return nil, false
+	}
+	list = make([]string, len(items))
+	for i, item := range items {
+		item = bytes.TrimSpace(item)
+		if len(item) == 0 || item[0] != '"' || json.Unmarshal(item, &list[i]) != nil {
+			return nil, false
+		}
+	}
+	return list, true
+}
+
+// Strings returns member name as an array of strings; ok is false when it is absent. Any other
+// JSON value, or an element that is not a string, is 400.
+func (o Object) Strings(name string) (list []string, ok bool, err error) {
+	if o.Kind(name) == Absent {
+		return nil, false, nil
+	}
+	if list, ok = StringList(o[name]); !ok {
+		return nil, false, wrongType(name, "an array of strings")
+	}
+	return list, true, nil
+}
+
+// Arrays returns member name as an array of raw JSON values; ok is false when it is absent.
+// A value that is not an array is 400.
+func (o Object) Arrays(name string) (items []json.RawMessage, ok bool, err error) {
+	switch o.Kind(name) {
+	case Absent:
+		return nil, false, nil
+	case Array:
+		if err := json.Unmarshal(o[name], &items); err != nil {
+			return nil, false, wrongType(name, "an array")
+		}
+		return items, true, nil
+	default:
+		return nil, false, wrongType(name, "an array")
+	}
+}

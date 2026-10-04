@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 
 	"tablekeeper/internal/apperr"
@@ -15,9 +16,16 @@ import (
 var digitsPattern = regexp.MustCompile(`^[0-9]+$`)
 
 type availabilitySlot struct {
-	StartsAtLocal     string   `json:"starts_at_local"`
-	StartsAt          string   `json:"starts_at"`
-	AvailableTableIDs []string `json:"available_table_ids"`
+	StartsAtLocal     string            `json:"starts_at_local"`
+	StartsAt          string            `json:"starts_at"`
+	AvailableTableIDs []string          `json:"available_table_ids"` // single tables only
+	AvailableOptions  []availableOption `json:"available_options"`   // singles, then declared pairs
+}
+
+// availableOption is one bookable table set with its summed capacity.
+type availableOption struct {
+	TableIDs []string `json:"table_ids"`
+	Capacity int      `json:"capacity"`
 }
 
 type availabilityResponse struct {
@@ -100,17 +108,27 @@ func buildAvailability(st *state.State, restaurantID, date string, party int64) 
 	}
 	resp := &availabilityResponse{RestaurantID: rest.ID, Date: date, Timezone: rest.Timezone, Slots: []availabilitySlot{}}
 	for _, slot := range localtime.Slots(loc, rest.OpeningHours, rest.SlotMinutes, rest.ReservationDurationMinutes, date) {
+		free := func(id string) bool { return !tableBusy(booked, id, slot) }
 		ids := []string{}
+		options := []availableOption{}
 		for _, t := range rest.Tables {
-			if int64(t.Capacity) < party || tableBusy(booked, t.ID, slot) {
+			if int64(t.Capacity) < party || !free(t.ID) {
 				continue
 			}
 			ids = append(ids, t.ID)
+			options = append(options, availableOption{[]string{t.ID}, t.Capacity})
+		}
+		for _, pair := range rest.Combinable {
+			capacity := rest.Capacity(pair)
+			if int64(capacity) >= party && free(pair[0]) && free(pair[1]) {
+				options = append(options, availableOption{pair, capacity})
+			}
 		}
 		resp.Slots = append(resp.Slots, availabilitySlot{
 			StartsAtLocal:     slot.Local,
 			StartsAt:          localtime.Format(slot.Start, loc),
 			AvailableTableIDs: ids,
+			AvailableOptions:  options,
 		})
 	}
 	return resp, nil
@@ -118,7 +136,7 @@ func buildAvailability(st *state.State, restaurantID, date string, party int64) 
 
 func tableBusy(booked []*state.Reservation, tableID string, slot localtime.Slot) bool {
 	for _, res := range booked {
-		if res.TableID == tableID && localtime.Overlaps(res.StartsAt, res.EndsAt, slot.Start, slot.End) {
+		if slices.Contains(res.TableIDs, tableID) && localtime.Overlaps(res.StartsAt, res.EndsAt, slot.Start, slot.End) {
 			return true
 		}
 	}
