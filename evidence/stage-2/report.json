@@ -1,0 +1,24 @@
+{
+  "stage": 2,
+  "outcome": "accepted",
+  "accepted_sha": "aa63cd28f4559a0c7fc394b164001385adbe315a",
+  "clauses": {"total": 59, "both": 59, "a_only": 0, "b_only": 0, "rulings": 17},
+  "work_items": 9,
+  "candidates": 5,
+  "rejections": [
+    {"sha": "b4e805fceb930ae3bc84c29825c8f31590922216", "findings": 3, "changed_work": true},
+    {"sha": "090df19d857a659359cc2a6c19e943c7aad6d286", "findings": 1, "changed_work": true},
+    {"sha": "3550522c51ffd3c6f6ec64dfe1a7666dc2abf234", "findings": 1, "changed_work": true}
+  ],
+  "mutation": {"tool": "mutate.py (containerised textual Go mutants; HTTP killers: audit battery + Oracle suites); 5 equivalent excluded per R-45 (raw 40/54)", "killed": 40, "total": 49},
+  "race_proofs": [
+    {"guard": "G1 state.Store write lock", "test": "audit bursts B3/B5 + crash check", "red_without": true, "green_with": true},
+    {"guard": "G2 signup email re-check under write lock", "test": "audit burst B8", "red_without": true, "green_with": true},
+    {"guard": "G3 idempotency lookup/execute/store in one write section", "test": "audit bursts B3,B4", "red_without": true, "green_with": true},
+    {"guard": "G4 moves check-all-before-apply", "test": "audit moves atomicity", "red_without": true, "green_with": true},
+    {"guard": "G5 state.Store read lock", "test": "race detector + readwrite_load", "red_without": true, "green_with": true},
+    {"guard": "G6 occupancy over every member of a table set", "test": "comboburst shared-table bids", "red_without": true, "green_with": true}
+  ],
+  "holdout": {"ran": true, "passed": 145, "failed": 0, "escapes": []},
+  "blockers": []
+}
