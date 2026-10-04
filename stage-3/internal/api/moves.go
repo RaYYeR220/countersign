@@ -57,6 +57,7 @@ func (s *Server) moveReservations(w http.ResponseWriter, r *http.Request, user *
 		if err != nil {
 			return nil, err
 		}
+		now := s.now()
 		changes := make([]*change, len(items))
 		var restaurantID string
 		for i, item := range items {
@@ -69,14 +70,14 @@ func (s *Server) moveReservations(w http.ResponseWriter, r *http.Request, user *
 			} else if res.RestaurantID != restaurantID {
 				return nil, apperr.Validation("all moved bookings must belong to the same restaurant")
 			}
-			if changes[i], err = planChange(st, res, item, s.now()); err != nil {
+			if changes[i], err = planChange(st, res, item, now); err != nil {
 				return nil, err
 			}
 		}
 		if conflicts(st, changes) {
-			return nil, tableUnavailable()
+			return nil, apperr.TableUnavailable()
 		}
-		apply(changes)
+		apply(st, changes, now)
 		out := make([]reservationView, len(changes))
 		for i, c := range changes {
 			out[i] = view(st, c.res)

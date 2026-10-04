@@ -53,8 +53,8 @@ func TestImportStage1Export(t *testing.T) {
 		t.Fatal(err)
 	}
 	out2, _ := Export(again)
-	if !bytes.Equal(out, out2) || !bytes.Contains(out, []byte(`"schema":2`)) {
-		t.Errorf("schema-2 round trip differs or wrong schema")
+	if !bytes.Equal(out, out2) || !bytes.Contains(out, []byte(`"schema":3`)) {
+		t.Errorf("schema-3 round trip differs or wrong schema")
 	}
 }
 

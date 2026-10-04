@@ -122,6 +122,9 @@ func loadRestaurants(st *State, fx jsonin.Object) error {
 		if err != nil {
 			return err
 		}
+		if r.ManagerUserIDs, err = loadManagers(st, o); err != nil {
+			return err
+		}
 		if st.Restaurant(r.ID) != nil {
 			return apperr.Validation("duplicate restaurant id: " + r.ID)
 		}
@@ -132,7 +135,7 @@ func loadRestaurants(st *State, fx jsonin.Object) error {
 }
 
 func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
-	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}, Combinable: [][]string{}}
+	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}, Combinable: [][]string{}, Policies: []Policy{}}
 	var err error
 	if r.ID, err = requiredID(o, "id", "restaurants[]"); err != nil {
 		return nil, err
@@ -209,6 +212,23 @@ func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+// loadManagers reads a restaurant's optional manager_user_ids: distinct ids of fixture users.
+func loadManagers(st *State, o jsonin.Object) ([]string, error) {
+	ids, _, err := o.Strings("manager_user_ids")
+	if err != nil {
+		return nil, err
+	}
+	for i, id := range ids {
+		if st.User(id) == nil || slices.Contains(ids[:i], id) {
+			return nil, apperr.Validation("manager_user_ids must name distinct fixture users")
+		}
+	}
+	if ids == nil {
+		ids = []string{}
+	}
+	return ids, nil
 }
 
 func loadOpeningHours(o jsonin.Object) (OpeningHours, error) {
@@ -336,6 +356,8 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		}
 		res.StartsAt = localtime.ResolveOrAfter(loc, res.StartsAtLocal)
 		res.EndsAt = localtime.End(res.StartsAt, r.ReservationDurationMinutes)
+		res.Revision, res.Terms = 1, r.Policy0().Terms // seeded: revision 1 under policy 0
+		res.Record(res.CreatedAt, EventCreated, res.CreatedChanges())
 		ids[res.ID] = true
 		st.Reservations = append(st.Reservations, res)
 		st.reservationsByRef[res.Reference] = res

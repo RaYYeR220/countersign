@@ -24,14 +24,20 @@ func unauthenticated(message string) error {
 // authedHandler is a handler for a protected endpoint; user is the authenticated caller.
 type authedHandler func(w http.ResponseWriter, r *http.Request, user *state.User)
 
+// caller returns the user of a valid bearer token, or nil.
+func (s *Server) caller(r *http.Request) *state.User {
+	scheme, token, ok := strings.Cut(r.Header.Get("Authorization"), " ")
+	var user *state.User
+	if ok && strings.EqualFold(scheme, "Bearer") && token != "" {
+		s.store.Read(func(st *state.State) { user = st.UserByToken(token) })
+	}
+	return user
+}
+
 // authed rejects a missing, malformed or unknown bearer token with 401 before anything else (C1.36).
 func (s *Server) authed(h authedHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		scheme, token, ok := strings.Cut(r.Header.Get("Authorization"), " ")
-		var user *state.User
-		if ok && strings.EqualFold(scheme, "Bearer") && token != "" {
-			s.store.Read(func(st *state.State) { user = st.UserByToken(token) })
-		}
+		user := s.caller(r)
 		if user == nil {
 			writeError(w, unauthenticated("a valid bearer token is required"))
 			return

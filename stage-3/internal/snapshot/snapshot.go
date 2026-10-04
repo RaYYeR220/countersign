@@ -21,13 +21,15 @@ import (
 const (
 	Track         = "tablekeeper"
 	FormatVersion = 1
-	// Current is the schema written by Export. Schema 1 is the stage-1 service's state.
-	Current = 2
+	// Current is the schema written by Export. Schemas 1 and 2 are the stage-1 and stage-2
+	// services' states.
+	Current = 3
 )
 
 // migrations[n] turns a schema-n state object into a schema-(n+1) one.
 var migrations = map[int]func(map[string]json.RawMessage) (map[string]json.RawMessage, error){
 	1: schema1to2,
+	2: schema2to3,
 }
 
 // schema1to2 (stage 1 → stage 2): a reservation's table_id becomes the one-member set

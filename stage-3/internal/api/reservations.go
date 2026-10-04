@@ -15,17 +15,19 @@ import (
 
 // reservationView is the reservation shape of every reservation response (§8, R-21).
 type reservationView struct {
-	ReservationID string   `json:"reservation_id"`
-	Reference     string   `json:"reference"`
-	RestaurantID  string   `json:"restaurant_id"`
-	TableID       string   `json:"table_id,omitempty"` // only when the set has exactly one table
-	TableIDs      []string `json:"table_ids"`
-	PartySize     int      `json:"party_size"`
-	Status        string   `json:"status"`
-	StartsAtLocal string   `json:"starts_at_local"`
-	StartsAt      string   `json:"starts_at"`
-	EndsAt        string   `json:"ends_at"`
-	CreatedAt     string   `json:"created_at"`
+	ReservationID string      `json:"reservation_id"`
+	Reference     string      `json:"reference"`
+	RestaurantID  string      `json:"restaurant_id"`
+	TableID       string      `json:"table_id,omitempty"` // only when the set has exactly one table
+	TableIDs      []string    `json:"table_ids"`
+	PartySize     int         `json:"party_size"`
+	Status        string      `json:"status"`
+	StartsAtLocal string      `json:"starts_at_local"`
+	StartsAt      string      `json:"starts_at"`
+	EndsAt        string      `json:"ends_at"`
+	CreatedAt     string      `json:"created_at"`
+	Revision      int         `json:"revision"`
+	AcceptedTerms state.Terms `json:"accepted_terms"`
 }
 
 // view renders res; starts_at and ends_at carry the restaurant's offset, created_at is UTC +00:00.
@@ -47,6 +49,8 @@ func view(st *state.State, res *state.Reservation) reservationView {
 		StartsAt:      localtime.Format(res.StartsAt, loc),
 		EndsAt:        localtime.Format(res.EndsAt, loc),
 		CreatedAt:     localtime.Format(res.CreatedAt, time.UTC),
+		Revision:      res.Revision,
+		AcceptedTerms: res.Terms,
 	}
 }
 
@@ -108,32 +112,12 @@ func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user 
 		if err != nil {
 			return nil, err
 		}
-		loc, err := localtime.Location(rest.Timezone)
+		pol, start, end, err := st.CheckBooking(rest, tableIDs, local, party, nil)
 		if err != nil {
 			return nil, err
 		}
-		start, err := localtime.CheckStart(loc, rest.OpeningHours, rest.SlotMinutes, rest.ReservationDurationMinutes, local)
-		if err != nil {
-			return nil, err
-		}
-		if party > rest.Capacity(tableIDs) {
-			return nil, partyExceedsCapacity()
-		}
-		end := localtime.End(start, rest.ReservationDurationMinutes)
-		if st.TableBusy(rest.ID, tableIDs, start, end, nil) {
-			return nil, tableUnavailable()
-		}
-		res := &state.Reservation{
-			UserID:        user.ID,
-			RestaurantID:  rest.ID,
-			TableIDs:      tableIDs,
-			PartySize:     party,
-			StartsAtLocal: local,
-			StartsAt:      start,
-			EndsAt:        end,
-			CreatedAt:     state.Stamp(s.now()),
-		}
-		st.AddReservation(res)
+		res := st.InsertReservation(user.ID, rest, tableIDs, local, party, pol, start, end, s.now())
+		rest.Revision++
 		return view(st, res), nil
 	})
 }
@@ -184,7 +168,9 @@ func (s *Server) getReservation(w http.ResponseWriter, r *http.Request, user *st
 }
 
 // cancelReservation is POST /reservations/{reference}/cancel (R-13): an absent or empty body is
-// ignored; 404 → already cancelled 200 → 409 cutoff_passed → cancel.
+// ignored; 404 → already cancelled 200 (no change) → 409 cutoff_passed (accepted cutoff) →
+// cancel, which bumps the reservation's revision, its series' and its restaurant's once and
+// records a cancelled history entry.
 func (s *Server) cancelReservation(w http.ResponseWriter, r *http.Request, user *state.User) {
 	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
 	if err != nil {
@@ -204,11 +190,18 @@ func (s *Server) cancelReservation(w http.ResponseWriter, r *http.Request, user 
 			return
 		}
 		if res.Status == state.Confirmed {
-			if withinCutoff(res, st.Restaurant(res.RestaurantID), s.now()) {
+			now := s.now()
+			if withinCutoff(res, now) {
 				err = cutoffPassed()
 				return
 			}
 			res.Status = state.Cancelled
+			res.Revision++
+			res.Record(now, state.EventCancelled, nil)
+			if series := st.SeriesOf(res); series != nil {
+				series.Revision++
+			}
+			st.Restaurant(res.RestaurantID).Revision++
 		}
 		out = view(st, res)
 	})
@@ -241,10 +234,10 @@ func (s *Server) amendReservation(w http.ResponseWriter, r *http.Request, user *
 			return
 		}
 		if conflicts(st, []*change{c}) {
-			err = tableUnavailable()
+			err = apperr.TableUnavailable()
 			return
 		}
-		apply([]*change{c})
+		apply(st, []*change{c}, s.now())
 		out = view(st, res)
 	})
 	if err != nil {
