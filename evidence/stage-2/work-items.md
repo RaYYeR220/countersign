@@ -35,4 +35,4 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 | WI-15 | Builder | stage-2 candidate 2 F-1 (R-43: wrongly typed table_id with both fields) | C2.47, C2.54, C2.58 | evidence 7d6bc49, merged (rework round 2 of 2 on WI-8 validation) |
 | 4 | 3550522 | + WI-15 (7d6bc49) | superseded by 5 (R-44 ordering finding → WI-16) |
 | WI-16 | Builder | stage-2 candidate 4 escalation; R-44 (both-fields check before the ownership 404 in PATCH/moves) | C2.47, C2.54, C2.58 | evidence ccaccbc, merged (new item per R-44 budget decision) |
-| 5 | (this commit) | + WI-16 (ccaccbc) | pending |
+| 5 | aa63cd2 | + WI-16 (ccaccbc) | ACCEPT (verdict 4) |

@@ -150,3 +150,10 @@ stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted)
   value checks after the 404, which put a type error (400) before ownership but a stricter body rule after it.
 - Budget decision (Foreman): this arises from ruling composition, not an implementation error; the work is a new
   item (WI-16) and does not consume the WI-8 validation rework budget.
+
+## R-45 — Equivalent mutants in the stage-2 mutation score
+- Clauses: gate step 5 (verdict 4, aa63cd2)
+- Decision: the Foreman accepts the Auditor's classification of 5 surviving mutants as equivalent (slot-loop bound,
+  start-at-closes check, stable sort, trusted-seed date resolver, nanosecond cutoff boundary; arguments in
+  `evidence/stage-2/verdicts/verdict-4.md`). The recorded step-5 score is 40/49 = 81.6% equivalence-adjusted
+  (40/54 = 74.1% raw); the remaining non-equivalent survivors become Oracle work items O-12/O-13.
