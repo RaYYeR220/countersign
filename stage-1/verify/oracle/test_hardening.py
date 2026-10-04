@@ -68,10 +68,12 @@ def test_C1_89_tie_order_live_created_at(c, ada):
     noon = [x for x in lst if x["starts_at"] == f"{FUT_DAY}T15:00:00+02:00"]
     assert [x["reference"] for x in noon] == [x["reference"] for x in made[:3]]
     assert lst[:2] == berlin and lst[2:] == noon
-    inversions = [(a, b) for a, b in zip(made, made[1:]) if b["reference"] < a["reference"]]
-    # when an implementation's references are not monotonic, at least one pair proves created_at wins
+    # R-27: only pairs with equal starts_at are ordered by created_at; across instants starts_at descending wins.
+    # When an implementation's references are not monotonic, such a pair proves created_at beats the reference.
+    inversions = [(a, b) for a, b in zip(made, made[1:])
+                  if a["starts_at"] == b["starts_at"] and b["reference"] < a["reference"]]
     for a, b in inversions:
-        assert lst.index(a) < lst.index(b)
+        assert lst.index(a) < lst.index(b), (a["reference"], b["reference"])
 
 
 # ============================================================ O-2
@@ -116,7 +118,15 @@ def _reservation_records(state, **match):
     return owned or found
 
 
-def _tampers(exp: dict, second_ref: str):
+def _top_key_with_value(state: dict, value):
+    """Top-level key of the collection that holds `value` anywhere inside it, or None."""
+    for key, coll in state.items():
+        if any(v == value or (isinstance(v, str) and isinstance(value, str) and value in v) for _, _, v in _walk(coll)):
+            return key   # substring match too: a receipt may store the key inside a composite string
+    return None
+
+
+def _tampers(exp: dict, second_ref: str, idem_key: str = None, token: str = None):
     """Yield (name, tampered export) pairs. Each is built from a deep copy of the real export.
 
     Every tamper is applied to *all* reservation records that match, so an implementation that stores a record
@@ -162,6 +172,18 @@ def _tampers(exp: dict, second_ref: str):
         e = copy.deepcopy(exp)
         del e["state"][_top_key_of(e["state"], locate(e["state"]))]
         yield f"missing {which} collection", e
+    # O-8: only the receipts / only the tokens collection removed, located by a value each must contain; skipped when
+    # the layout has no separate collection for it (for example tokens nested under users, or hashed tokens)
+    main_keys = {_top_key_of(state0, _records(state0, email="ada@example.com")[0][2]),
+                 _top_key_of(state0, _records(state0, id="r_anker")[0][2]),
+                 _top_key_of(state0, _reservation_records(state0, reference="SEED01")[0][2])}
+    for which, value in (("receipts", idem_key), ("tokens", token)):
+        key = _top_key_with_value(state0, value) if value is not None else None
+        if key is None or key in main_keys:
+            continue
+        e = copy.deepcopy(exp)
+        del e["state"][key]
+        yield f"missing {which} collection", e
     # invalid restaurant
     for field, value in (("timezone", "Nope/Zone"), ("slot_minutes", -5), ("reservation_duration_minutes", 0),
                          ("name", 5), ("tables", "none"), ("slot_minutes", 0), ("reservation_duration_minutes", -1),
@@ -180,14 +202,23 @@ def _tampers(exp: dict, second_ref: str):
         yield "duplicate table id inside one restaurant", e
     # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
-                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref"),
-                         ("reference", ""), ("reference", "X" * 65), ("reservation_id", ""), ("reservation_id", "X" * 65),
-                         ("id", ""), ("id", "X" * 65)):
+                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"),
+                         ("reference", "bad ref"), ("reference", "abcdef"), ("reference", "X"), ("reference", "A" * 13),
+                         ("reference", "SEED-01"), ("reference", ""), ("reference", "X" * 65),
+                         ("reservation_id", ""), ("reservation_id", "X" * 65), ("id", ""), ("id", "X" * 65)):
         e, seeds, _, _, _ = fresh()
         if all(field in rec for _, _, rec in seeds):
             for _, _, rec in seeds:
                 rec[field] = value
             yield f"invalid reservation ({field}={str(value)[:8]!r}{'…' if len(str(value)) > 8 else ''})", e
+    # O-8: zero or empty start/end timestamps on the record, whatever the field is called
+    for field in ("starts_at", "ends_at", "start", "end", "starts_at_utc", "ends_at_utc", "start_at", "end_at"):
+        for value in ("", 0, "0001-01-01T00:00:00Z"):
+            e, seeds, _, _, _ = fresh()
+            if all(field in rec for _, _, rec in seeds):
+                for _, _, rec in seeds:
+                    rec[field] = value
+                yield f"reservation {field}={value!r}", e
     # wrong JSON types
     for which, locate in (("users", lambda s: _records(s, email="ada@example.com")[0][2]),
                           ("restaurants", lambda s: _records(s, id="r_anker")[0][2])):
@@ -220,15 +251,70 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
     assert exp.status == 200
     before = _snapshot(c, [ada, bob])
     applied = 0
-    for name, doc in _tampers(exp.json, other["reference"]):
+    for name, doc in _tampers(exp.json, other["reference"], idem_key=key, token=ada):
         r = c.import_(doc)
         assert r.status == 422 and r.code == "validation_failed", (name, r)
         assert _snapshot(c, [ada, bob]) == before, f"destination changed after refused import: {name}"
         applied += 1
-    assert applied >= 25, applied
+    assert applied >= 30, applied
     # the untouched export still imports, and receipts survive
     assert c.import_(exp.json).status == 204
     assert c.book(ada, key, "r_all", "a_2", f"{FUT_DAY}T13:00", 2).status == 200
+    assert _snapshot(c, [ada, bob]) == before
+
+
+def test_C1_107_C1_81_imported_references_must_conform(c, ada, bob):
+    """R-28: a reference carried in imported state must match ^[A-Z0-9]{6,12}$ and be unique; otherwise 422 and
+    the destination is unchanged. Conforming ones round-trip."""
+    before = _snapshot(c, [ada, bob])
+    exp = c.export().json
+    for bad in ("abcdef", "r" * 64, "Ref-with.punct_1", "X", "seed01", "ABCDEFGHJKLMN", "SEED-01", "", "X" * 65):
+        doc = copy.deepcopy(exp)
+        for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+            rec["reference"] = bad
+        r = c.import_(doc)
+        assert r.status == 422 and r.code == "validation_failed", (bad, r)
+        assert _snapshot(c, [ada, bob]) == before, bad
+    for good in ("ABCDEFGHJKLM", "A1B2C3"):
+        doc = copy.deepcopy(exp)
+        for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+            rec["reference"] = good
+        assert c.import_(doc).status == 204, good
+        got = c.get(f"/reservations/{good}", token=bob)
+        assert got.status == 200 and got.json["reservation_id"] == "res_seed", (good, got)
+        err(c.get("/reservations/SEED01", token=bob), 404, "not_found")
+    assert c.import_(exp).status == 204
+    assert _snapshot(c, [ada, bob]) == before
+
+
+@pytest.mark.parametrize("ref", ["X", "seed01", "ABCDEFGHJKLMN", "SEED-01", "", "X" * 65, "bad ref", "abcdef"])
+def test_C1_81_C1_30_reset_refuses_nonconforming_reference(c, ada, bob, ref):
+    """R-28: a seeded reference must match ^[A-Z0-9]{6,12}$."""
+    before = _snapshot(c, [ada, bob])
+    fx = base_fixture()
+    fx["reservations"][0]["reference"] = ref
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", (ref, r)
+    assert _snapshot(c, [ada, bob]) == before, ref
+    assert c.get("/reservations/SEED01", token=bob).status == 200
+
+
+@pytest.mark.parametrize("ref", ["SEED01", "ABCDEFGHJKLM", "A1B2C3", "000000"])
+def test_C1_81_C1_30_reset_accepts_conforming_reference(c, ref):
+    fx = base_fixture()
+    fx["reservations"][0]["reference"] = ref
+    assert c.reset(fx).status == 204, ref
+    tok = c.login("bob@example.com", "bob secret 1")
+    assert c.get(f"/reservations/{ref}", token=tok).json["reservation_id"] == "res_seed"
+
+
+def test_C1_81_C1_30_reset_refuses_duplicate_reference(c, ada, bob):
+    before = _snapshot(c, [ada, bob])
+    fx = base_fixture()
+    fx["reservations"].append({"id": "res_dup", "reference": "SEED01", "user_id": "u_ada", "restaurant_id": "r_all",
+                               "table_id": "a_1", "starts_at_local": f"{FUT_DAY}T12:00", "party_size": 1})
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", r
     assert _snapshot(c, [ada, bob]) == before
 
 

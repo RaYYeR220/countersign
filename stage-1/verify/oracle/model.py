@@ -507,7 +507,7 @@ class Model:
             self._fobj(s, "reservation")
             rid = self._fstr(s, "id", max_len=ID_MAX)
             ref = self._fstr(s, "reference")
-            if not REFERENCE_RE.match(ref):
+            if not REFERENCE_RE.match(ref):                     # R-28: every reference is 6..12 of A-Z0-9
                 raise Err(422, "validation_failed", "reference must be 6..12 of A-Z0-9")
             uid = self._fstr(s, "user_id")
             restaurant_id = self._fstr(s, "restaurant_id")
@@ -607,7 +607,7 @@ class Model:
             for f in ("reservation_id", "reference", "user_id", "restaurant_id", "table_id", "status",
                       "starts_at_local", "start", "end", "created"):
                 need(isinstance(s_.get(f), str) and s_[f] != "")
-            need(len(s_["reservation_id"]) <= ID_MAX and REFERENCE_RE.match(s_["reference"]))
+            need(len(s_["reservation_id"]) <= ID_MAX and REFERENCE_RE.match(s_["reference"]))   # R-28
             need(s_["status"] in ("confirmed", "cancelled") and s_["user_id"] in new.users)
             r = new.restaurants.get(s_["restaurant_id"])
             need(r is not None and any(t["id"] == s_["table_id"] for t in r["tables"]))
@@ -615,6 +615,7 @@ class Model:
             need(parse_local(s_["starts_at_local"]) is not None)
             start, end, created = (parse_rfc3339(s_[f]) for f in ("start", "end", "created"))
             need(start is not None and end is not None and created is not None and end > start)
+            need(min(start.year, end.year, created.year) >= 1000)     # a zero timestamp is not a value we produced
             need(s_["reservation_id"] not in new.reservations and s_["reference"] not in new.references)
             new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
                                  s_["table_id"], int(s_["party_size"]), s_["starts_at_local"], start, end, created)
