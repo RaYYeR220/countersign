@@ -20,10 +20,6 @@ func cutoffPassed() error {
 	return apperr.New(http.StatusConflict, "cutoff_passed", "the reservation starts within its cancellation cutoff")
 }
 
-func tableUnavailable() error {
-	return apperr.New(http.StatusConflict, "table_unavailable", "the table is taken for an overlapping time")
-}
-
 // withinCutoff reports whether now is within the booking's accepted cutoff of its current start,
 // or later: changes are allowed only while starts_at − now > cutoff (R-6, stage 3).
 func withinCutoff(res *state.Reservation, now time.Time) bool {
@@ -139,19 +135,15 @@ func planChange(st *state.State, res *state.Reservation, o jsonin.Object, now ti
 	if err != nil {
 		return nil, err
 	}
-	pol := rest.PolicyFor(localDate(c.local))
+	pol := rest.PolicyFor(state.LocalDate(c.local))
 	if c.start, err = localtime.CheckStart(loc, pol.OpeningHours, pol.SlotMinutes, pol.ReservationDurationMinutes, c.local); err != nil {
 		return nil, err
 	}
 	if c.party > pol.Capacity(c.tableIDs) {
-		return nil, partyExceedsCapacity()
+		return nil, apperr.PartyExceedsCapacity()
 	}
 	c.end, c.terms = localtime.End(c.start, pol.ReservationDurationMinutes), pol.Terms
 	return c, nil
-}
-
-func partyExceedsCapacity() error {
-	return apperr.New(http.StatusUnprocessableEntity, "party_exceeds_capacity", "party_size exceeds the capacity of the chosen tables")
 }
 
 // conflicts reports whether any real change overlaps another change's resulting occupancy or a

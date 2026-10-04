@@ -84,6 +84,20 @@ func TestFromFixtureSeedTablesAndStatus(t *testing.T) {
 	}
 }
 
+func TestFromFixtureManagers(t *testing.T) {
+	st, err := load(t, strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": ["u_ada"],`, 1))
+	if err != nil || !st.Restaurant("r_anker").IsManager("u_ada") {
+		t.Fatalf("managers: %v", err)
+	}
+	st, _ = load(t, sampleFixture)
+	if m := st.Restaurant("r_anker").ManagerUserIDs; m == nil || len(m) != 0 {
+		t.Errorf("absent managers = %#v, want []", m)
+	}
+	if res := st.ReservationByRef("SEED01"); res.Revision != 1 || res.Terms.PolicyVersion != 0 || len(res.History) != 1 {
+		t.Errorf("seed record = %+v", res)
+	}
+}
+
 func TestFromFixtureEmptyObject(t *testing.T) {
 	st, err := load(t, `{}`)
 	if err != nil || len(st.Users)+len(st.Restaurants)+len(st.Reservations) != 0 {
@@ -127,6 +141,11 @@ func TestFromFixtureErrors(t *testing.T) {
 		"combinable item object": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[{"a":"b"}]}]}`, "validation_failed"},
 		"seed bad status":        {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": "pending"}`, 1), "validation_failed"},
 		"seed status number":     {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": 1}`, 1), "malformed_request"},
+		"managers not array":     {strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": "u_ada",`, 1), "malformed_request"},
+		"managers item number":   {strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": [1],`, 1), "malformed_request"},
+		"manager unknown":        {strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": ["u_bob"],`, 1), "validation_failed"},
+		"manager empty":          {strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": [""],`, 1), "validation_failed"},
+		"manager duplicate":      {strings.Replace(sampleFixture, `"name": "Zum Anker",`, `"name": "Zum Anker", "manager_user_ids": ["u_ada", "u_ada"],`, 1), "validation_failed"},
 		"bad local start":        {strings.Replace(sampleFixture, `2026-09-24T19:00`, `2026-09-24T19:00+02:00`, 1), "validation_failed"},
 	}
 	for name, c := range cases {

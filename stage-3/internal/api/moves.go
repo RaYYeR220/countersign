@@ -75,7 +75,7 @@ func (s *Server) moveReservations(w http.ResponseWriter, r *http.Request, user *
 			}
 		}
 		if conflicts(st, changes) {
-			return nil, tableUnavailable()
+			return nil, apperr.TableUnavailable()
 		}
 		apply(st, changes, now)
 		out := make([]reservationView, len(changes))

@@ -112,36 +112,11 @@ func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user 
 		if err != nil {
 			return nil, err
 		}
-		loc, err := localtime.Location(rest.Timezone)
+		pol, start, end, err := st.CheckBooking(rest, tableIDs, local, party, nil)
 		if err != nil {
 			return nil, err
 		}
-		pol := rest.PolicyFor(localDate(local))
-		start, err := localtime.CheckStart(loc, pol.OpeningHours, pol.SlotMinutes, pol.ReservationDurationMinutes, local)
-		if err != nil {
-			return nil, err
-		}
-		if party > pol.Capacity(tableIDs) {
-			return nil, partyExceedsCapacity()
-		}
-		end := localtime.End(start, pol.ReservationDurationMinutes)
-		if st.TableBusy(rest.ID, tableIDs, start, end, nil) {
-			return nil, tableUnavailable()
-		}
-		res := &state.Reservation{
-			UserID:        user.ID,
-			RestaurantID:  rest.ID,
-			TableIDs:      tableIDs,
-			PartySize:     party,
-			StartsAtLocal: local,
-			StartsAt:      start,
-			EndsAt:        end,
-			CreatedAt:     state.Stamp(s.now()),
-			Revision:      1,
-			Terms:         pol.Terms,
-		}
-		st.AddReservation(res)
-		res.Record(res.CreatedAt, state.EventCreated, res.CreatedChanges())
+		res := st.InsertReservation(user.ID, rest, tableIDs, local, party, pol, start, end, s.now())
 		rest.Revision++
 		return view(st, res), nil
 	})
@@ -259,7 +234,7 @@ func (s *Server) amendReservation(w http.ResponseWriter, r *http.Request, user *
 			return
 		}
 		if conflicts(st, []*change{c}) {
-			err = tableUnavailable()
+			err = apperr.TableUnavailable()
 			return
 		}
 		apply(st, []*change{c}, s.now())
@@ -271,6 +246,3 @@ func (s *Server) amendReservation(w http.ResponseWriter, r *http.Request, user *
 	}
 	writeJSON(w, http.StatusOK, out)
 }
-
-// localDate is the local calendar date of a validated YYYY-MM-DDTHH:MM start.
-func localDate(local string) string { return local[:len("2006-01-02")] }
