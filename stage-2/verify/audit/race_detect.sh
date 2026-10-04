@@ -10,8 +10,8 @@ set -u
 SRC="$1"; WORK="$2"; OUT="$3"; GRPS="$4"; ROUNDS="$5"; shift 5
 HERE="$(cd "$(dirname "$0")" && pwd)"
 AUD="$(cd "$HERE/../../.." && pwd)"
-NET=auditor-s1-racenet
-SRV=auditor-s1-race-srv
+NET=auditor-s2-racenet
+SRV=auditor-s2-race-srv
 export MSYS_NO_PATHCONV=1
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
 rm -rf "$WORK"; mkdir -p "$WORK"
@@ -38,7 +38,7 @@ for v in with without; do
   docker run -d --name "$SRV" --network "$NET" --cpus 2 --memory 2g -v "$(win "$D/out"):/out" -e PORT=8080 \
     -e GORACE="halt_on_error=0 log_path=/out/race" golang:1.26 /out/tk-race >/dev/null
   docker run --rm --network "$NET" -v "$(win "$AUD"):/aud:ro" -v "$(win "$D/out"):/o" auditor-runner-py \
-    sh -c "if [ '$GRPS' = readwrite ]; then sleep 1; python /aud/stage-1/verify/audit/readwrite_load.py --base http://$SRV:8080 --rounds $ROUNDS > /o/load.txt 2>&1; echo '{\"hard_failures\": 0}' > /o/audit.json;       else python /aud/stage-1/verify/audit/audit.py --base http://$SRV:8080 --groups $GRPS --rounds $ROUNDS --wait 30 --out /o/audit.json >/dev/null 2>&1; fi"
+    sh -c "if [ '$GRPS' = readwrite ]; then sleep 1; python /aud/stage-2/verify/audit/readwrite_load.py --base http://$SRV:8080 --rounds $ROUNDS > /o/load.txt 2>&1; echo '{\"hard_failures\": 0}' > /o/audit.json;       else python /aud/stage-2/verify/audit/audit.py --base http://$SRV:8080 --groups $GRPS --rounds $ROUNDS --wait 30 --out /o/audit.json >/dev/null 2>&1; fi"
   docker rm -f "$SRV" >/dev/null 2>&1
   n=$(cat "$D"/out/race.* 2>/dev/null | grep -c "WARNING: DATA RACE")
   hard=$(python -c "import json;print(json.load(open('$(win "$D/out/audit.json")'))['hard_failures'])" 2>/dev/null || echo "?")

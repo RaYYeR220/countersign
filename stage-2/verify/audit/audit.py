@@ -4,7 +4,7 @@
 Stdlib only. Runs inside a runner container on the same internal Docker network as the
 candidate, because Docker Desktop does not forward ports of internal networks.
 
-    python audit.py --base http://auditor-s1-a:8080 [--dest http://auditor-s1-b:8080] \
+    python audit.py --base http://auditor-s2-a:8080 [--dest http://auditor-s2-b:8080] \
         [--groups core,auth,...] [--rounds 3] [--out /out/attacks.json]
 
 Every check records: group, name, spec section, request, expected, actual. A "soft" check
@@ -425,7 +425,9 @@ def check_invariant(s: S, tokens: list[str], label: str, section="§1"):
         a, b = parse_rfc(r.get("starts_at")), parse_rfc(r.get("ends_at"))
         if a is None or b is None:
             continue
-        by_table.setdefault((r.get("restaurant_id"), r.get("table_id")), []).append((a, b, r.get("reference")))
+        tables = r.get("table_ids") if isinstance(r.get("table_ids"), list) else [r.get("table_id")]
+        for t in tables:   # a combination occupies every member table (stage 2)
+            by_table.setdefault((r.get("restaurant_id"), t), []).append((a, b, r.get("reference")))
     clashes = []
     for k, iv in by_table.items():
         iv.sort()
@@ -1536,9 +1538,360 @@ def g_export(s: S, dest: Client | None):
             check_invariant(sd, users, f"export #{i} under load")
 
 
+# --------------------------------------------------------------------------- stage 2: combined tables
+
+COMBO_TABLES = [{"id": "c_1", "label": "Window", "capacity": 2}, {"id": "c_2", "label": "Booth", "capacity": 4},
+                {"id": "c_3", "label": "Terrace", "capacity": 4}, {"id": "c_4", "label": "Garden", "capacity": 6}]
+COMBINABLE = [["c_2", "c_1"], ["c_2", "c_3"], ["c_3", "c_4"]]   # first pair deliberately not in fixture order
+
+
+def fixture2(ctx: Ctx) -> dict:
+    all_days = [{"weekday": w, "opens": "12:00", "closes": "23:00"} for w in WEEKDAYS]
+    D, D2 = ctx.thu, ctx.thu + timedelta(days=7)
+    return {
+        "users": [ADA, BOB],
+        "restaurants": [
+            {"id": "r_combo", "name": "Long Table", "timezone": "Europe/Berlin", "slot_minutes": 30,
+             "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120, "opening_hours": all_days,
+             "tables": COMBO_TABLES, "combinable": COMBINABLE},
+            {"id": "r_solo", "name": "Solo", "timezone": "Europe/Berlin", "slot_minutes": 30,
+             "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120, "opening_hours": all_days,
+             "tables": [{"id": "s_1", "label": "Only", "capacity": 4}]},          # no "combinable" key (stage-1 shape)
+        ],
+        "reservations": [
+            {"id": "s_c1", "reference": "COMBO1", "user_id": "u_ada", "restaurant_id": "r_combo", "table_ids": ["c_3", "c_4"],
+             "starts_at_local": f"{D}T13:00", "party_size": 8},
+            {"id": "s_c2", "reference": "CANCL1", "user_id": "u_ada", "restaurant_id": "r_combo", "table_id": "c_1",
+             "starts_at_local": f"{D}T19:00", "party_size": 2, "status": "cancelled"},
+            {"id": "s_c3", "reference": "SINGL1", "user_id": "u_bob", "restaurant_id": "r_combo", "table_ids": ["c_1"],
+             "starts_at_local": f"{D2}T12:00", "party_size": 2},
+        ],
+    }
+
+
+def body2(rid, tids, start, party):
+    return {"restaurant_id": rid, "table_ids": tids, "starts_at_local": start, "party_size": party}
+
+
+def opts(slot):
+    return [(tuple(o.get("table_ids") or []), o.get("capacity")) for o in (slot or {}).get("available_options", [])]
+
+
+ALL_OPTS = [(("c_1",), 2), (("c_2",), 4), (("c_3",), 4), (("c_4",), 6), (("c_2", "c_1"), 6), (("c_2", "c_3"), 8), (("c_3", "c_4"), 10)]
+
+
+def _slot(s: S, rid, d, party, hhmm):
+    r = s.avail(rid, d, party)
+    for x in (r.json or {}).get("slots", []) if r.status == 200 else []:
+        if x.get("starts_at_local") == f"{d}T{hhmm}":
+            return x, r
+    return None, r
+
+
+def _filter(party, free):
+    return [o for o in ALL_OPTS if o[1] >= party and all(t in free for t in o[0])]
+
+
+def g_combo(s: S, dest: Client | None = None):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    r = c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
+    chk.expect("reset accepts combinable pairs, seeded table_ids and status", r, 204, section="S2 Model")
+    if r.status != 204:
+        return
+    s.ada, s.bob = s.login(ADA), s.login(BOB)
+    D, D2, D3 = ctx.thu, ctx.thu + timedelta(days=7), ctx.thu + timedelta(days=14)
+    ALL = {"c_1", "c_2", "c_3", "c_4"}
+
+    def post(body, tok=None, key=None):
+        return c.req("POST", "/reservations", body, token=tok or s.ada, key=key or uuid.uuid4().hex)
+
+    # availability options
+    for party, hhmm, free, why in ((2, "19:00", ALL, "cancelled seed does not block"), (7, "19:00", ALL, "pairs only above single capacity"),
+                                   (5, "19:00", ALL, "capacity sum filters pairs"), (2, "13:00", {"c_1", "c_2"}, "seeded pair occupies both members"),
+                                   (2, "12:00", {"c_1", "c_2"}, "overlap with seeded pair"), (2, "14:30", ALL, "half-open after seeded pair"),
+                                   (11, "19:00", ALL, "no option fits")):
+        sl, rr = _slot(s, "r_combo", D, party, hhmm)
+        want = _filter(party, free)
+        chk.check(f"available_options party {party} {hhmm}: {why}", sl is not None and opts(sl) == want, want, opts(sl), rr.req, "S2 API availability")
+        want_ids = [t["id"] for t in COMBO_TABLES if t["capacity"] >= party and t["id"] in free]
+        chk.check(f"available_table_ids unchanged (singles only) party {party} {hhmm}", sl is not None and sl.get("available_table_ids") == want_ids,
+                  want_ids, (sl or {}).get("available_table_ids"), rr.req, "S2 API availability")
+    sl, rr = _slot(s, "r_solo", D, 2, "19:00")
+    chk.check("restaurant without combinable: options are singles only", sl is not None and opts(sl) == [(("s_1",), 4)], [(("s_1",), 4)], opts(sl), rr.req, "S2 Model")
+
+    # seeded shapes
+    r = s.get(s.ada, "COMBO1")
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("seeded table_ids: table_ids carried, table_id omitted", r.status == 200 and sorted(j.get("table_ids") or []) == ["c_3", "c_4"]
+              and "table_id" not in j and j.get("status") == "confirmed", "pair, no table_id", r.text(300), r.req, "S2 Model")
+    r = s.get(s.ada, "CANCL1")
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("seeded status cancelled kept; single carries table_id and table_ids", r.status == 200 and j.get("status") == "cancelled"
+              and j.get("table_id") == "c_1" and j.get("table_ids") == ["c_1"], "cancelled c_1", r.text(300), r.req, "S2 Model")
+    r = s.get(s.bob, "SINGL1")
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("seeded single given as table_ids: response has table_id", r.status == 200 and j.get("table_id") == "c_1" and j.get("table_ids") == ["c_1"],
+              "c_1", r.text(300), r.req, "S2 Model")
+
+    # create a pair
+    r = post(body2("r_combo", ["c_2", "c_1"], f"{D}T19:00", 6))
+    j = r.json if isinstance(r.json, dict) else {}
+    st = resolve(f"{D}T19:00", "Europe/Berlin")
+    chk.check("POST table_ids pair 201: table_ids set, table_id omitted, times", r.status == 201 and sorted(j.get("table_ids") or []) == ["c_1", "c_2"]
+              and "table_id" not in j and same_instant_and_text(j.get("ends_at"), st + timedelta(minutes=90)), "201 pair", r.text(400), r.req, "S2 API POST")
+    chk.check("pair response keeps the requested/combinable order", j.get("table_ids") == ["c_2", "c_1"], ["c_2", "c_1"], j.get("table_ids"),
+              r.req, "S2 API POST", soft=True)
+    pair_ref = j.get("reference")
+    g = s.get(s.ada, pair_ref)
+    chk.check("GET pair reservation equals create response", g.status == 200 and g.json == j, j, g.text(300), g.req, "S2 API POST")
+    lst = [x for x in s.mine(s.ada) if x.get("reference") == pair_ref]
+    chk.check("list entry for pair has the same shape", lst == [j], [j], lst, None, "S2 API POST")
+    sl, rr = _slot(s, "r_combo", D, 2, "19:00")
+    chk.check("pair occupies both tables: singles and every pair touching them gone", sl is not None and opts(sl) == _filter(2, {"c_3", "c_4"})
+              and sl.get("available_table_ids") == ["c_3", "c_4"], _filter(2, {"c_3", "c_4"}), opts(sl), rr.req, "S2 Combined tables")
+    sl, rr = _slot(s, "r_combo", D, 2, "20:30")
+    chk.check("pair released at end (half-open)", sl is not None and opts(sl) == _filter(2, ALL), _filter(2, ALL), opts(sl), rr.req, "S2 Combined tables")
+    chk.expect("single on a pair member, overlapping -> 409", post(booking_body("r_combo", "c_2", f"{D}T19:30", 2), tok=s.bob), 409, "table_unavailable", "S2 API POST")
+    chk.expect("single on the other member -> 409", post(booking_body("r_combo", "c_1", f"{D}T20:00", 2), tok=s.bob), 409, "table_unavailable", "S2 API POST")
+    chk.expect("pair sharing one taken member -> 409", post(body2("r_combo", ["c_2", "c_3"], f"{D}T19:00", 4), tok=s.bob), 409, "table_unavailable", "S2 API POST")
+    r = post(body2("r_combo", ["c_3", "c_2"], f"{D}T21:00", 5))
+    chk.check("pair given in reverse order is the same declared pair -> 201", r.status == 201 and sorted((r.json or {}).get("table_ids") or []) == ["c_2", "c_3"],
+              201, r.text(300), r.req, "S2 Model")
+    r = post(body2("r_combo", ["c_4"], f"{D}T21:00", 2))
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("table_ids with one member: response has table_id and table_ids", r.status == 201 and j.get("table_id") == "c_4" and j.get("table_ids") == ["c_4"],
+              "c_4", r.text(300), r.req, "S2 API POST")
+    r = post(booking_body("r_combo", "c_1", f"{D}T21:00", 2))
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("table_id still accepted: response carries table_ids [t]", r.status == 201 and j.get("table_id") == "c_1" and j.get("table_ids") == ["c_1"],
+              "c_1", r.text(300), r.req, "S2 API POST")
+
+    # error matrix
+    T = f"{D2}T19:00"
+    for name, body, st_, code, soft in (
+            ("pair not declared (non-transitive c_1+c_3)", body2("r_combo", ["c_1", "c_3"], T, 2), 422, "combination_not_allowed", False),
+            ("pair not declared (c_1+c_4)", body2("r_combo", ["c_1", "c_4"], T, 2), 422, "combination_not_allowed", False),
+            ("three tables", body2("r_combo", ["c_1", "c_2", "c_3"], T, 2), 422, "combination_not_allowed", False),
+            ("four tables", body2("r_combo", ["c_1", "c_2", "c_3", "c_4"], T, 2), 422, "combination_not_allowed", False),
+            ("duplicate table id", body2("r_combo", ["c_2", "c_2"], T, 2), 422, "validation_failed", False),
+            ("both table_id and table_ids", {**body2("r_combo", ["c_2", "c_1"], T, 2), "table_id": "c_2"}, 422, "validation_failed", False),
+            ("both, consistent single", {**body2("r_combo", ["c_2"], T, 2), "table_id": "c_2"}, 422, "validation_failed", False),
+            ("party exceeds summed capacity", body2("r_combo", ["c_2", "c_3"], T, 9), 422, "party_exceeds_capacity", False),
+            ("neither table_id nor table_ids", {"restaurant_id": "r_combo", "starts_at_local": T, "party_size": 2}, 422, "validation_failed", False),
+            ("table_ids a string", body2("r_combo", "c_1", T, 2), 400, "malformed_request", False),
+            ("table_ids null", body2("r_combo", None, T, 2), 400, "malformed_request", False),
+            ("table_ids numbers", body2("r_combo", [1, 2], T, 2), 400, "malformed_request", True),
+            ("table_ids empty", body2("r_combo", [], T, 2), 422, "validation_failed", True),
+            ("pair with an unknown table", body2("r_combo", ["c_2", "zz"], T, 2), (404, 422), None, True),
+            ("pair on a restaurant without combinable", body2("r_solo", ["s_1", "s_1"], T, 2), 422, None, True)):
+        chk.expect(f"POST {name} -> {st_} {code or ''}", post(body), st_, code, "S2 API POST", soft=soft)
+    chk.expect("party equal to summed capacity -> 201", post(body2("r_combo", ["c_2", "c_3"], T, 8)), 201, section="S2 Model")
+
+    # idempotency with table_ids
+    k = "pair-" + uuid.uuid4().hex
+    b = body2("r_combo", ["c_3", "c_4"], f"{D2}T21:00", 7)
+    r1 = post(b, key=k)
+    r2 = post(b, key=k)
+    chk.check("pair booking replay 200 identical", r1.status == 201 and r2.status == 200 and r2.json == r1.json, 200, r2.text(200), r2.req, "S2 API POST/§7")
+    r3 = post({**b, "table_ids": ["c_4", "c_3"]}, key=k)
+    chk.expect("same key, pair listed in the other order (different JSON) -> 409", r3, 409, "idempotency_key_reuse", "§7", soft=True)
+
+    # PATCH with table_ids
+    P = s.book(s.ada, "r_combo", "c_1", f"{D2}T15:00", 2)
+    pref = P["reference"]
+
+    def patch(b_, rf=None):
+        return c.req("PATCH", f"/reservations/{rf or pref}", b_, token=s.ada)
+
+    r = patch({"table_ids": ["c_2", "c_1"], "party_size": 5})
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("PATCH single -> pair 200: table_ids set, table_id omitted", r.status == 200 and sorted(j.get("table_ids") or []) == ["c_1", "c_2"]
+              and "table_id" not in j and j.get("party_size") == 5 and j.get("reference") == pref, "pair", r.text(300), r.req, "S2 API PATCH")
+    sl, rr = _slot(s, "r_combo", D2, 2, "15:00")
+    chk.check("after PATCH both members occupied", sl is not None and "c_1" not in (sl.get("available_table_ids") or []) and "c_2" not in (sl.get("available_table_ids") or []),
+              "c_1, c_2 absent", (sl or {}).get("available_table_ids"), rr.req, "S2 API PATCH")
+    snap = s.get(s.ada, pref).json
+    for name, b_, st_, code in (("undeclared pair", {"table_ids": ["c_1", "c_3"]}, 422, "combination_not_allowed"),
+                                ("both table_id and table_ids", {"table_id": "c_4", "table_ids": ["c_4"]}, 422, "validation_failed"),
+                                ("party over summed capacity", {"party_size": 7}, 422, "party_exceeds_capacity"),
+                                ("duplicate ids", {"table_ids": ["c_2", "c_2"]}, 422, "validation_failed"),
+                                ("three tables", {"table_ids": ["c_1", "c_2", "c_3"]}, 422, "combination_not_allowed"),
+                                ("table_ids a string", {"table_ids": "c_2"}, 400, "malformed_request")):
+        r = patch(b_)
+        chk.expect(f"PATCH {name} -> {st_} {code}", r, st_, code, "S2 API PATCH")
+        chk.check(f"PATCH {name}: booking unchanged", s.get(s.ada, pref).json == snap, snap, None, r.req, "S2 API PATCH")
+    r = patch({"starts_at_local": f"{D2}T15:30"})
+    chk.check("PATCH pair onto its own overlapping interval 200", r.status == 200 and sorted((r.json or {}).get("table_ids") or []) == ["c_1", "c_2"],
+              200, r.text(200), r.req, "S2 API PATCH")
+    r = patch({"table_id": "c_4"})
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("PATCH pair -> single via table_id: table_id back, table_ids [t]", r.status == 200 and j.get("table_id") == "c_4" and j.get("table_ids") == ["c_4"],
+              "c_4", r.text(200), r.req, "S2 API PATCH")
+    sl, rr = _slot(s, "r_combo", D2, 2, "15:30")
+    chk.check("old pair released after PATCH to single", sl is not None and {"c_1", "c_2"} <= set(sl.get("available_table_ids") or []),
+              "c_1, c_2 listed", (sl or {}).get("available_table_ids"), rr.req, "S2 API PATCH")
+
+    # cancel frees every member
+    Q = post(body2("r_combo", ["c_3", "c_4"], f"{D2}T17:00", 3)).json
+    c.req("POST", f"/reservations/{Q['reference']}/cancel", token=s.ada)
+    sl, rr = _slot(s, "r_combo", D2, 2, "17:00")
+    chk.check("cancel frees every table in the set", sl is not None and ("c_3", "c_4") in [o[0] for o in opts(sl)]
+              and {"c_3", "c_4"} <= set(sl.get("available_table_ids") or []), "c_3, c_4 and pair", opts(sl), rr.req, "S2 API cancel")
+
+    # moves with table_ids
+    A = s.book(s.ada, "r_combo", "c_1", f"{D3}T18:00", 2)
+    B = post(body2("r_combo", ["c_3", "c_4"], f"{D3}T18:00", 2)).json
+
+    def mv(moves, key=None):
+        return c.req("POST", "/reservation-moves", {"moves": moves}, token=s.ada, key=key or uuid.uuid4().hex)
+
+    r = mv([{"reference": A["reference"], "table_ids": ["c_3", "c_4"]}, {"reference": B["reference"], "table_ids": ["c_1"]}])
+    rs = (r.json or {}).get("reservations") if isinstance(r.json, dict) else None
+    ok = r.status == 201 and isinstance(rs, list) and len(rs) == 2 and sorted(rs[0].get("table_ids") or []) == ["c_3", "c_4"] \
+        and "table_id" not in rs[0] and rs[1].get("table_id") == "c_1"
+    chk.check("moves swap single <-> pair with table_ids 201", ok, "swap", r.text(400), r.req, "S2 moves")
+    snapA, snapB = s.get(s.ada, A["reference"]).json, s.get(s.ada, B["reference"]).json
+    r = mv([{"reference": A["reference"], "table_ids": ["c_2", "c_1"]}, {"reference": B["reference"], "table_ids": ["c_2", "c_3"]}])
+    chk.expect("moves whose results share a table -> 409", r, 409, "table_unavailable", "S2 moves")
+    chk.check("failed table_ids batch changed nothing", (s.get(s.ada, A["reference"]).json, s.get(s.ada, B["reference"]).json) == (snapA, snapB),
+              "unchanged", None, r.req, "S2 moves")
+    chk.expect("moves undeclared pair -> 422", mv([{"reference": A["reference"], "table_ids": ["c_1", "c_3"]}]), 422, "combination_not_allowed", "S2 moves")
+    chk.expect("moves both table_id and table_ids -> 422", mv([{"reference": A["reference"], "table_id": "c_2", "table_ids": ["c_2"]}]), 422,
+               "validation_failed", "S2 moves")
+    chk.expect("moves table_ids a string -> 400", mv([{"reference": A["reference"], "table_ids": "c_2"}]), 400, "malformed_request", "S2 moves")
+
+    # export -> import keeps pairs
+    if dest is not None:
+        E = c.req("GET", "/_test/export").json
+        r = dest.req("POST", "/_test/import", E, timeout=12)
+        chk.expect("import of an export holding pairs -> 204", r, 204, section="S2 Model/§10")
+        g = dest.req("GET", f"/reservations/{pair_ref}", token=s.ada)
+        chk.check("pair reservation survives export/import unchanged", g.status == 200 and g.json == s.get(s.ada, pair_ref).json, "identical",
+                  g.text(200), g.req, "S2 Model/§10")
+        sl1, _ = _slot(s, "r_combo", D, 2, "19:00")
+        r = dest.req("GET", "/availability", query={"restaurant_id": "r_combo", "date": str(D), "party_size": 2})
+        sl2 = next((x for x in (r.json or {}).get("slots", []) if x.get("starts_at_local") == f"{D}T19:00"), None)
+        chk.check("available_options identical after import", opts(sl1) == opts(sl2), opts(sl1), opts(sl2), r.req, "S2 Model/§10")
+    check_invariant(s, [s.ada, s.bob], "combo group", "S2 Combined tables")
+
+
+def g_comboburst(s: S, rounds: int):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    base = c.base
+    for rnd in range(rounds):
+        r = c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
+        if r.status != 204:
+            raise RuntimeError(f"reset fixture2 failed: {r.status}")
+        s.ada, s.bob = s.login(ADA), s.login(BOB)
+        users = [s.signup() for _ in range(12)]
+        D = ctx.thu + timedelta(days=21)
+        # K1: everything shares c_2
+        kinds = [(["c_2", "c_1"], 5), (["c_2", "c_3"], 6), (["c_2"], 3)]
+        rs = burst.fire([plan_entry(base, "POST", "/reservations", body2("r_combo", kinds[i % 3][0], f"{D}T20:00", kinds[i % 3][1]),
+                                    users[i % 12], f"k1-{rnd}-{i}") for i in range(48)])
+        st = statuses(rs)
+        chk.check(f"r{rnd} K1 48 concurrent bookings all sharing c_2: exactly one 201", st.get("201") == 1 and st.get("409") == 47,
+                  {"201": 1, "409": 47}, st, {"burst": "K1"}, "S2 Concurrent")
+        # K2: two disjoint pairs contested
+        rs = burst.fire([plan_entry(base, "POST", "/reservations", body2("r_combo", ["c_2", "c_1"] if i % 2 else ["c_3", "c_4"], f"{D}T14:00", 2),
+                                    users[i % 12], f"k2-{rnd}-{i}") for i in range(40)])
+        st = statuses(rs)
+        chk.check(f"r{rnd} K2 two disjoint pairs, 20 bids each: exactly two 201", st.get("201") == 2 and st.get("409") == 38,
+                  {"201": 2, "409": 38}, st, {"burst": "K2"}, "S2 Concurrent")
+        # K3: single-item moves competing for one pair
+        own = [s.book(users[i], "r_combo", "c_1", f"{ctx.thu + timedelta(days=28 + 7 * i)}T18:00", 2) for i in range(8)]
+        rs = burst.fire([plan_entry(base, "POST", "/reservation-moves",
+                                    {"moves": [{"reference": own[i]["reference"], "table_ids": ["c_2", "c_3"], "starts_at_local": f"{D}T17:00"}]},
+                                    users[i], f"k3-{rnd}-{i}") for i in range(8)])
+        st = statuses(rs)
+        moved = sum(1 for i in range(8) if (s.get(users[i], own[i]["reference"]).json or {}).get("starts_at_local") == f"{D}T17:00")
+        chk.check(f"r{rnd} K3 8 moves onto one pair: one 201, rest 409, exactly one booking moved", st == {"201": 1, "409": 7} and moved == 1,
+                  {"201": 1, "409": 7, "moved": 1}, {"statuses": st, "moved": moved}, {"burst": "K3"}, "S2 Concurrent/§11")
+        # K4: PATCHes onto overlapping pairs sharing c_3
+        own = [s.book(users[i], "r_combo", "c_1", f"{ctx.thu + timedelta(days=84 + 7 * i)}T18:00", 2) for i in range(8)]
+        rs = burst.fire([plan_entry(base, "PATCH", f"/reservations/{own[i]['reference']}",
+                                    {"table_ids": ["c_2", "c_3"] if i % 2 else ["c_3", "c_4"], "starts_at_local": f"{D + timedelta(days=1)}T21:00"},
+                                    users[i], None)
+                         for i in range(8)])
+        st = statuses(rs)
+        chk.check(f"r{rnd} K4 8 PATCHes onto pairs sharing c_3: exactly one 200", st.get("200") == 1 and st.get("409") == 7,
+                  {"200": 1, "409": 7}, st, {"burst": "K4"}, "S2 Concurrent")
+        check_invariant(s, users + [s.ada, s.bob], f"r{rnd} after combination bursts", "S2 Concurrent")
+
+
+def g_upgrade(s: S, prev: Client | None, dest: Client | None):
+    """Export from the accepted previous-stage service, import into the candidate (S2 'Existing clients after an upgrade')."""
+    c, chk, ctx = s.c, s.chk, s.ctx
+    if prev is None:
+        chk.check("upgrade source given (--prev)", False, "--prev URL of the previous stage image", None, None, "harness")
+        return
+    sp = S(prev, chk, ctx)
+    sp.reset()
+    tok = sp.signup(email="legacy@example.com", password="legacy pass 1", name="Legacy")
+    k1, k2, k3, kf = ("up1-" + uuid.uuid4().hex, "up2-" + uuid.uuid4().hex, "up3-" + uuid.uuid4().hex, "upf-" + uuid.uuid4().hex)
+    b1 = booking_body("r_anker", "t_2", ctx.D(ctx.thu, "19:00"), 2)
+    b3 = booking_body("r_anker", "t_3", ctx.D(ctx.fri, "18:00"), 4)
+    r1 = prev.req("POST", "/reservations", b1, token=tok, key=k1)
+    x2 = sp.book(tok, "r_anker", "t_1", ctx.D(ctx.thu, "19:00"), 2)
+    mb = {"moves": [{"reference": r1.json["reference"], "table_id": "t_1"}, {"reference": x2["reference"], "table_id": "t_2"}]}
+    rm = prev.req("POST", "/reservation-moves", mb, token=tok, key=k2)
+    r3 = prev.req("POST", "/reservations", b3, token=tok, key=k3)          # its response is "lost" by the client
+    prev.req("POST", "/reservations", booking_body("r_anker", "t_1", ctx.D(ctx.fri, "21:00"), 9), token=tok, key=kf)
+    prev.req("POST", f"/reservations/{x2['reference']}/cancel", token=tok)
+    chk.check("upgrade setup on previous stage ok", r1.status == 201 and rm.status == 201 and r3.status == 201, 201,
+              [r1.status, rm.status, r3.status], None, "harness")
+    old_list = sp.mine(tok)
+    E = prev.req("GET", "/_test/export").json
+    c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
+    r = c.req("POST", "/_test/import", E, timeout=12)
+    chk.expect("candidate imports the previous stage's export -> 204", r, 204, section="S2 Upgrade")
+    r = c.req("GET", "/reservations", token=tok)
+    new_list = (r.json or {}).get("reservations", []) if r.status == 200 else None
+    chk.expect("token issued by the previous stage still valid", r, 200, section="S2 Upgrade")
+    keys1 = ("reservation_id", "reference", "restaurant_id", "table_id", "party_size", "status", "starts_at_local", "starts_at", "ends_at", "created_at")
+    same = new_list is not None and [{k: x.get(k) for k in keys1} for x in new_list] == [{k: x.get(k) for k in keys1} for x in old_list]
+    chk.check("reservations identical after upgrade (stage-1 fields)", same, len(old_list), r.text(300), r.req, "S2 Upgrade")
+    chk.check("upgraded reservations carry table_ids [table_id]", new_list is not None and all(x.get("table_ids") == [x.get("table_id")] for x in new_list),
+              "table_ids", [x.get("table_ids") for x in (new_list or [])][:3], r.req, "S2 Upgrade")
+    g = c.req("GET", f"/reservations/{r1.json['reference']}", token=tok)
+    chk.expect("lookup of a retained reference works after upgrade", g, 200, section="S2 Upgrade")
+    rr = c.req("POST", "/reservations", b1, token=tok, key=k1)
+    chk.check("replay of a pre-upgrade booking -> 200 with the original body", rr.status == 200 and rr.json == r1.json, r1.json, rr.text(300), rr.req, "S2 Upgrade/§7")
+    rr = c.req("POST", "/reservations", b3, token=tok, key=k3)
+    chk.check("booking whose response was lost before export: retry -> 200, original reference", rr.status == 200
+              and (rr.json or {}).get("reference") == (r3.json or {}).get("reference"), r3.json, rr.text(300), rr.req, "S2 Upgrade")
+    rr = c.req("POST", "/reservation-moves", mb, token=tok, key=k2)
+    chk.check("batch receipt replay after upgrade -> 200 original", rr.status == 200 and rr.json == rm.json, rm.json, rr.text(300), rr.req, "S2 Upgrade/§11")
+    chk.expect("pre-upgrade key with a different body -> 409", c.req("POST", "/reservations", {**b1, "party_size": 1}, token=tok, key=k1), 409,
+               "idempotency_key_reuse", "S2 Upgrade")
+    chk.expect("pre-upgrade failed key is reusable -> 201", c.req("POST", "/reservations", booking_body("r_anker", "t_1", ctx.D(ctx.fri, "21:00"), 2),
+                                                                    token=tok, key=kf), 201, section="S2 Upgrade")
+    chk.expect("hashed password login works after upgrade", c.req("POST", "/auth/login", {"email": "legacy@example.com", "password": "legacy pass 1"}),
+               200, section="S2 Upgrade")
+    r = c.req("POST", "/reservations", body2("r_anker", ["t_3"], ctx.D(ctx.thu, "21:00"), 2), token=tok, key=uuid.uuid4().hex)
+    chk.check("new single booking with table_ids on an upgraded restaurant -> 201, fresh reference", r.status == 201
+              and (r.json or {}).get("reference") not in {x.get("reference") for x in old_list}, 201, r.text(200), r.req, "S2 Upgrade")
+    chk.expect("upgraded restaurant has no declared pairs -> 422 combination_not_allowed",
+               c.req("POST", "/reservations", body2("r_anker", ["t_1", "t_2"], ctx.D(ctx.thu2, "18:00"), 2), token=tok, key=uuid.uuid4().hex),
+               422, "combination_not_allowed", "S2 Upgrade")
+    sl, rr = _slot(s, "r_anker", ctx.fri, 2, "18:00")
+    chk.check("availability on upgraded restaurant has available_options (singles only)", sl is not None and all(len(o[0]) == 1 for o in opts(sl))
+              and [o[0][0] for o in opts(sl)] == (sl or {}).get("available_table_ids"), "singles", opts(sl), rr.req, "S2 Upgrade")
+    snap = c.req("GET", "/_test/export").json
+    r = c.req("POST", "/_test/import", E, timeout=12)
+    chk.expect("importing the previous-stage export again -> 204", r, 204, section="S2 Upgrade")
+    r = c.req("GET", "/reservations", token=tok)
+    chk.check("re-import restores the exported state (no duplicates)", [x.get("reference") for x in (r.json or {}).get("reservations", [])]
+              == [x.get("reference") for x in old_list], len(old_list), r.text(200), r.req, "S2 Upgrade")
+    if dest is not None:
+        r = dest.req("POST", "/_test/import", snap, timeout=12)
+        chk.expect("current-format export (after upgrade) imports into a fresh candidate", r, 204, section="S2 Upgrade")
+
+
 # --------------------------------------------------------------------------- main
 
-GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export"]
+GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
+          "combo", "comboburst", "upgrade"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:
@@ -1562,6 +1915,7 @@ def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--base", required=True)
     p.add_argument("--dest", help="second, fresh candidate container for export/import")
+    p.add_argument("--prev", help="previous-stage service (accepted image) for the upgrade group")
     p.add_argument("--groups", default=",".join(GROUPS))
     p.add_argument("--rounds", type=int, default=3)
     p.add_argument("--out")
@@ -1571,9 +1925,10 @@ def main(argv=None):
     ctx = Ctx()
     c = Client(a.base, chk, "A")
     dest = Client(a.dest, chk, "B") if a.dest else None
-    meta = {"base": a.base, "dest": a.dest, "now": ctx.now.isoformat(), "now_tz": ctx.now_tz, "thu": str(ctx.thu),
+    prev = Client(a.prev, chk, "P") if a.prev else None
+    meta = {"base": a.base, "dest": a.dest, "prev": a.prev, "now": ctx.now.isoformat(), "now_tz": ctx.now_tz, "thu": str(ctx.thu),
             "near": ctx.near, "far": ctx.far, "past": ctx.past}
-    for label, cl in (("A", c), ("B", dest)):
+    for label, cl in (("A", c), ("B", dest), ("P", prev)):
         if cl is not None:
             meta[f"health_{label}_s"] = wait_health(cl, a.wait)
             if meta[f"health_{label}_s"] is None:
@@ -1590,6 +1945,12 @@ def main(argv=None):
                 g_burst(s, a.rounds)
             elif g == "export":
                 g_export(s, dest)
+            elif g == "combo":
+                g_combo(s, dest)
+            elif g == "comboburst":
+                g_comboburst(s, a.rounds)
+            elif g == "upgrade":
+                g_upgrade(s, prev, dest)
             else:
                 globals()[f"g_{g}"](s)
         except Exception as e:

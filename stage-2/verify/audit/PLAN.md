@@ -1,91 +1,61 @@
-# Stage 1 — Auditor attack plan (Tablekeeper reservations API)
+# Stage 2 — Auditor attack plan (online booking UI and combined tables)
 
-Written from the stage-1 specification only. Clause ids are given as spec sections (§n) until the
-master ledger (`[RECONCILE] stage=1`) assigns `C1.<n>`; the mapping is added to each verdict.
+Written from `stage-2.md` plus the still-binding stage-1 contract (C1.1–C1.134, R-1…R-28). Stage-2 clause ids
+(C2.n) are attached once the master ledger is reconciled; until then checks carry spec section names ("S2 …").
 
 ## Files
 | file | purpose |
 |---|---|
-| `audit.py` | the battery: stdlib Python, ~550 checks in 12 groups, each mapped to C1.n, JSON report, exit 0 = no hard failures |
-| `run_attacks.sh` | orchestration: two candidate containers (A target, B fresh import destination) on an `--internal` network, `--cpus 2 --memory 2g -e PORT=8080`, and a runner container on the same network |
-| `Dockerfile.runner` | runner image `auditor-runner-img` (python:3.12-alpine + tzdata) |
+| `audit.py` | HTTP battery: all stage-1 groups (regression, unchanged fixture without `combinable`) + `combo`, `comboburst`, `upgrade` |
+| `run_attacks.sh` | candidates A (target) and B (fresh import destination) on an `--internal` network, 2 CPU / 2 GiB; `PREV_IMG=<accepted stage-1 image>` adds P for the upgrade |
+| `ui_audit.py` | step 7: headless Chromium (Playwright 1.55) against the candidate; screenshots of every named state |
+| `run_ui.sh`, `Dockerfile.ui` | browser runner `auditor-ui-runner` on the candidate's internal network (`PREV_IMG` optional) |
+| `run_oracle.sh`, `run_diff.sh` | steps 2–3 (Oracle suite incl. browser tests; differential runner) |
+| `mutate.py`, `race.py`, `race_detect.sh`, `readwrite_load.py` | steps 5–6, containerised (stage-1 lesson: host-native runs give false kills) |
 
-```
-bash stage-1/verify/audit/run_attacks.sh <candidate-image> <clean-clone> <out-dir> [--rounds 3] [--groups a,b]
-```
-On this Windows host, run it through bg.py with the Git Bash binary:
-`python factory/tools/bg.py run --timeout 900 -- "C:/Program Files/Git/usr/bin/bash.exe" stage-1/verify/audit/run_attacks.sh ...`
+Previous-stage image for the upgrade: the accepted stage-1 build of c0f2b7b (`auditor-s1-c5`; rebuilt from a clean
+clone of c0f2b7b `stage-1/` if absent).
 
-Hard checks fail the run. Soft checks cover readings the specification leaves open; they are
-reported, raised with the Foreman for a ruling, and promoted to hard (or deleted) once ruled.
-
-## Cross-cutting (applied to every response)
-- No 5xx ever (§5); 4xx/5xx carry `{"error":{"code":str,"message":str}}` (§5); JSON content type (§3.4).
-- Per-request latency ≤ 5 s, ≤ 10 s for `/_test/*` (§2).
-
-## Groups
-| group | what it attacks | spec |
+## HTTP attacks added for stage 2
+| group | attacks | spec |
 |---|---|---|
-| core | health body, reset 204 + repeat, restaurant list/detail in fixture shape (public), 404 unknown/65-char id, seeded bookings + seeded login, unknown query/body fields ignored | §3, §4, §8 |
-| auth | signup/login shapes, multiple live tokens, `email_taken` (incl. seeded), password 7/8 chars, email forms, wrong JSON types → 400, missing → 422, unparseable → 400, bad/absent/foreign-scheme bearer → 401 on every protected endpoint, public endpoints need no token | §5, §6 |
-| availability | 30-min grid with `slot+duration ≤ closes` (thu 8 slots, fri 9), capacity filter in fixture order, empty lists kept, closed day `[]`, half-open occupancy around a booking, IANA offsets, missing params → 422, invalid date / integer query forms (`1e9`, `4.0`, `+4`, ` 4`, `0x4`) → 422, unknown restaurant 404 | §5, §8 |
-| create | full 201 shape and derived times, GET equals create, overlap 409 vs back-to-back 201, off-grid, before/after hours, ends exactly at `closes`, closed day, capacity, `party_size` matrix (0, -1, "2", true, 2.5, null) → 422, `starts_at_local` matrix (seconds, Z, offset, space, invalid date, 24:00, non-padded) → 422, number → 400, wrong-type ids → 400, missing fields → 422, unknown/foreign table 404, Idempotency-Key absent/empty → 400, 256 → 422, 255 → 201, past and inside-cutoff starts allowed, reference format and uniqueness | §4, §5, §7, §8 |
-| reads | own list only, confirmed + cancelled, `starts_at` descending, entry shape, 404 for another user's / unknown reference | §8 |
-| cancel | 200 cancelled, twice 200, inside cutoff and past → 409 `cutoff_passed` and still confirmed, 404 foreign/unknown, table freed immediately and rebookable | §8 |
-| patch | self-overlapping move allowed (release+reserve together), identity kept, `ends_at` recomputed, old slot released, every failure (capacity, party, grid, hours, closed, format, foreign booking overlap, unknown/foreign table, wrong types, nonexistent local time) leaves the booking byte-identical, 404 foreign/unknown, cutoff on current start, cancelled → 409 | §8, §9 |
-| dst | Berlin and New York spring/fall slot lists (skipped hour absent, repeated hour once with first-occurrence offset), booking the skipped hour → `invalid_local_time` (POST and PATCH), absolute-duration `ends_at` across both transitions, overlap computed in absolute time (discriminates wall-clock implementations), winter/summer offsets | §9 |
-| idem | replay 200 identical (also with reordered keys and whitespace), no duplicates, different body → 409 even when that body is invalid, parse error and auth precede idempotency, key scoped per user and per path, replay after PATCH and after cancel returns the original, failed keys (422, 404, 409) reusable, 255-char key | §7 |
-| moves | table swap in one batch, chain into a slot vacated by a later item, replays (also after cancellation), key reuse 409, unlisted-booking collision → 409 and nothing changes (records and occupancy), failed key reusable, overlap among results, no-op items, shape matrix (0, 9, duplicates, missing reference), 8 allowed, 404 unknown/foreign, cross-restaurant 422, cutoff 409 and its precedence, input-order precedence, cancelled 409, 401, missing/long key | §7, §11 |
-| burst | per round (default 3, fresh reset each): B1 50 identical-slot creates → one 201 + 49 `table_unavailable`; B2 45 overlapping starts → only 201/409; B3 30 identical keyed creates → one 201 + 29 identical 200, effect once; B4 same key two bodies → one creation; B5 20 identical keyed batches → one 201 + 19 identical 200; B6 8 PATCHes onto one slot → one 200 + 7 409; B7 10 competing two-item batches → one 201, every batch all-or-nothing; B8 20 same-email signups → one 201; B9 50 mixed requests → no 5xx; B10 50 in-flight reads < 5 s; then a global no-overlap / unique-reference invariant | §1, §2, §6, §7, §11 |
-| export | export shape, no plaintext passwords in state, invalid imports (missing fields, wrong track/version, bad state, unparseable) → 422/400 with destination unchanged, import into the same server and into a fresh container: old destination credentials gone, imported tokens and hashed-password logins work, reservations and config identical, create and batch replays return original bodies, reused key with new body 409, failed key reusable, references don't collide, occupancy enforced, repeated import = replacement, reset clears imported state; exports taken under concurrent writes import cleanly and satisfy the invariant | §6, §10 |
+| combo | reset with `combinable`, seeded `table_ids` and `status: cancelled`; `available_options` (singles in fixture order, then pairs in `combinable` order with ids in `combinable` order, capacity = sum, every member free) over 7 party/slot cases, incl. a pair declared out of fixture order, cancelled seeds not blocking, half-open release; `available_table_ids` unchanged; restaurant without `combinable` → singles only; POST pair → `table_ids`, no `table_id`, GET/list identical; member singles and sharing pairs → 409; reversed pair order accepted; `table_ids` of one → `table_id` present; `table_id` still accepted; error matrix (undeclared/non-transitive pair, 3 and 4 tables → `combination_not_allowed`; duplicate ids, both fields, neither → `validation_failed`; summed capacity exceeded → `party_exceeds_capacity`; string/null → 400; empty/numbers/unknown member soft pending rulings); idempotent replay of a pair; PATCH single→pair→single with release, every failure leaves the booking unchanged; cancel frees every member; moves with `table_ids` (swap single↔pair, results sharing a table → 409 and nothing changes, undeclared pair, both fields, wrong type); export→import into a fresh container keeps pairs and options | Model, API, UI (moves), Combined tables |
+| comboburst | per round: K1 48 bids that all share `c_2` (two pairs + single) → exactly one 201; K2 two disjoint pairs, 20 bids each → exactly two 201; K3 8 single-item moves onto one pair → one 201, one booking moved; K4 8 PATCHes onto pairs sharing `c_3` → one 200; invariant over every member table | Concurrent bookings and amendments |
+| upgrade | on the accepted stage-1 service: signup, keyed bookings, a batch, a failed key, a cancel, and a booking whose response is "lost"; export → candidate import: old tokens, identical reservations (+ `table_ids`), lookup, replays with original bodies (booking and batch), the lost booking's retry → original reference, reuse 409, failed key reusable, password login, new `table_ids` booking, no pairs on upgraded restaurants, options singles-only, idempotent re-import, current-format re-export into a fresh candidate | Existing clients after an upgrade, §7, §10 |
 
-Version upgrade (export from the previous stage's image, import into the candidate) does not apply to
-stage 1; from stage 2 on, `run_attacks.sh` gains an upgrade step that exports from the accepted
-`stage-<n-1>` image.
+## Browser checks (battery step 7, `ui_audit.py`)
+| check | what |
+|---|---|
+| u_routes | `/`, `/signup`, `/login`, `/lookup` → 200 `text/html`; search controls present; `restaurant-select` option values are ids |
+| u_auth | signup signs in; `current-user` (with display name) on every route; `logout-button`; `auth-error` only on error (taken email, wrong password) |
+| u_grid | every `slot-{table}-{HH:MM}` cell exists with `data-available` mirroring `available_table_ids` for the searched party; every available declared pair has a `slot-{a}+{b}-{HH:MM}` cell (ids in `combinable` order); closed day → `no-slots` and no cells |
+| u_click_rules | unavailable cell → nothing; available cell signed out → `auth-error` or `/login` |
+| u_booking | single and pair: form opens, `booking-summary` names every table and the time, party pre-filled; confirmation (`confirmation-reference` exactly a reference, details, `confirmation-tables`); reservation exists server-side; form stays; unchanged resubmit → same reference, same key+body, no new booking; changed field → new key |
+| u_conflict | another client takes the table after the form opens → `booking-error`, no confirmation, form and inputs kept, cell refreshed to false |
+| u_lost_after / u_lost_before | response aborted after (and before) the server commits → non-empty `booking-uncertain`, no error/confirmation; unchanged retry reuses key and body → original reference, uncertainty removed, exactly one booking |
+| u_out_of_order | search A held, search B answered, A released → grid still B (cell values and full grid match B) |
+| u_lookup | detail, status exactly `confirmed`/`cancelled`, `reservation-tables`, cancel removes the button and really cancels; unknown → `reservation-error`; refused cancel (inside cutoff) → `reservation-error` |
+| u_states_distinct | available ≠ unavailable computed style; selected cell marked; loading marker (soft); screenshots of available/unavailable/selected/loading/empty/success/refused/uncertain/error |
+| u_keyboard | Tab reaches search controls and `booking-submit`; Enter on a cell opens the form; visible focus; every visible input labelled |
+| u_layout | no horizontal page scroll at 375, 768, 1280 px on every route, with the grid and with the form |
+| u_import | with `--prev`: candidate imports a stage-1 export, legacy user signs in, legacy reference works on `/lookup`; then a lost booking, export/import between requests, no reload: still signed in, retry keeps key+body and shows the original reference |
 
-## Other battery steps prepared for the verdict
-- Step 1: build per `RUN.md` literally from a clean clone; boot on an internal network, 2 CPU / 2 GiB;
-  `audit.py` records seconds to first healthy response (limit 60 s).
-- Step 5 (mutation): tool chosen once the Builder's ADR fixes the stack, 20-minute box, target 75%
-  kill rate on the domain core; survivors go to the Oracle.
-- Step 6 (race proofs): for every concurrency/atomicity guard found in the candidate (lock around
-  the state machine, idempotency claim, batch commit, signup uniqueness), build a scratch image with
-  the guard disabled, show B1/B3/B5/B7/B8 (as relevant) red, restore and show green.
-- Step 7: no user-facing surface in stage 1 (skip with reason).
-- Step 8: holdout `harness_win.py run --track tablekeeper --stage 1 --mode isolated` only when 1–7 are green.
+## Other steps
+- Step 1: RUN.md literally, internal network, 2 CPU / 2 GiB, health ≤ 60 s, no egress; UI assets must load with no egress (u_routes run on the internal network; any CDN/font fetch fails there).
+- Step 5: mutation over `internal/…` incl. the new combination and UI-serving code, Oracle suite (HTTP + browser) as killer.
+- Step 6: race proofs for every guard, incl. any new one for combination occupancy.
+- Step 8: holdout `harness_win.py run --track tablekeeper --stage 2 --mode isolated` only after 1–7 are green.
 
-## Clause mapping and rulings
-Every check carries a master-ledger clause id (`evidence/stage-1/ledger.md` @ 564f21e), derived in
-`audit.py` (`CLAUSE_RULES`) from its group and name; ruling-driven checks also name the ruling.
-The eight questions raised at kickoff were answered at reconciliation (R-1, R-14, R-19, R-22, R-24, C1.97);
-their checks are hard now. Ruling-driven attacks added: R-1 keyed-path precedence, R-2 null = wrong
-type, R-3 integral `2.0` (create and replay), R-4 case-insensitive email / one `@` / blank display_name /
-code-point password length, R-7 domain-check order, R-8 + R-20 refused fixtures (20 variants, each
-leaving state unchanged; `24:00` and trusted seeds accepted), R-9 404/405, R-10 public endpoints ignore a
-bad bearer, R-11 restaurant order and reservation tie order, R-12 parameter errors before 404, R-13 cancel
-body, R-14 PATCH order and no-op rules, R-16 seeded `created_at`, R-17 Content-Type not enforced, R-19
-three-pass field order, R-21 `+00:00` whole-second `created_at`, R-22 move order (structure 422 → item
-type 400 → per-item checks in input order, no-op cutoff), R-23 absolute end-of-day on DST nights
-(`r_close`, discriminates wall-clock arithmetic), R-24 `state: {}` → 422.
+## Self-test status
+- HTTP: stage-1 groups unchanged (pass on the stage-1 build); `combo` 78/78 and `comboburst` 30/30 (5 rounds) on an
+  interim Builder build (seat/builder 91230e1, WI-8 only); `upgrade` mechanics verified stage-1→stage-1 (14/18; the 4
+  failures are stage-2 features) and red on 91230e1 because WI-9 is not there yet.
+- Browser: runner and harness mechanics verified (Chromium launches on the internal network); the checks themselves are
+  validated against the first build that serves the UI.
 
-Remaining soft checks (2): `created_at` within 5 minutes of the runner's clock; a later export differs from
-an earlier one.
-
-Self-test of the battery (not a verdict): against an old image from an earlier run (`auditor-tk-s1c1`),
-553 checks, 18 hard failures. All 18 are this run's rulings (R-3, R-4, R-8, R-9, R-11, R-13, R-20, R-22)
-that the old image does not implement. No other check fails, so ruling-independent checks don't fail a
-working implementation.
-
-## Step 5 and step 6 tooling (stack fixed by ADR-001: Go 1.26, one `sync.RWMutex`)
-- `mutate.py` — textual Go mutants (conditional boundary, negation, `&&`/`||`, `+`/`-`, boolean returns,
-  `if !`) over the non-test files of the domain-core packages, built natively with the host Go 1.26.5
-  toolchain, killed through HTTP by `audit.py` (all groups, 1 burst round) plus the Oracle pytest suite.
-  A mutant is killed when a check that passed on the unmutated baseline fails, or it crashes / never
-  becomes healthy; non-compiling mutants are excluded. Seeded shuffle, 20-minute budget, parallel
-  workers on ports 18321+. Survivors are reported to the Oracle as work items.
-  Dry run on main (state package, 150 s, 3 workers, core+create killers): 156 generated, 53 evaluated.
-- `race.py` — applies literal `--edit FILE::OLD::NEW` changes that disable one guard in a scratch copy,
-  runs the burst attacks (and optionally the Oracle suite) against the guard-less build (repeated up to 3
-  times) and against the unmodified build; reports red-without / green-with.
-  Planned guards: `Store.Write` lock (B1/B3/B5/B6/B7/B8), `Store.Replace` lock (export under write load),
-  plus whatever claim/commit guards the candidate adds for idempotency receipts and batch moves.
+## Open points for rulings (soft until ruled)
+1. `table_ids: []` — 422 `validation_failed`?  2. `table_ids` with non-string members — 400?  3. a pair naming an unknown
+   table or a table of another restaurant — 404 `not_found` or 422 `combination_not_allowed`?  4. response order of a
+   pair's `table_ids` — request order, `combinable` order, or any?  5. same key with the pair listed in the other order —
+   a different body (409) or the same request?  6. reset fixture validation for `combinable` (unknown table, a pair of one
+   or three, a table paired with itself, duplicate pairs) and for seeded `table_ids` naming an undeclared pair.
