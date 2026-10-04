@@ -27,6 +27,15 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux.Handle("/restaurants", methods{http.MethodGet: s.listRestaurants})
 	mux.Handle("/restaurants/{id}", methods{http.MethodGet: s.getRestaurant})
 	mux.Handle("/availability", methods{http.MethodGet: s.availability})
+	mux.Handle("/reservations", methods{
+		http.MethodGet:  s.authed(s.listReservations),
+		http.MethodPost: s.authed(s.createReservation),
+	})
+	mux.Handle("/reservations/{reference}", methods{
+		http.MethodGet:   s.authed(s.getReservation),
+		http.MethodPatch: s.authed(s.amendReservation),
+	})
+	mux.Handle("/reservations/{reference}/cancel", methods{http.MethodPost: s.authed(s.cancelReservation)})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))
 	})

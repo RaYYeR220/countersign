@@ -76,10 +76,11 @@ type Reservation struct {
 // State is the complete service state. Exported fields are the persisted state; slices keep
 // fixture order and the unexported maps are indexes over them, rebuilt by reindex.
 type State struct {
-	Users        []*User           `json:"users"`
-	Restaurants  []*Restaurant     `json:"restaurants"`
-	Reservations []*Reservation    `json:"reservations"`
-	Tokens       map[string]string `json:"tokens"` // bearer token -> user id
+	Users        []*User             `json:"users"`
+	Restaurants  []*Restaurant       `json:"restaurants"`
+	Reservations []*Reservation      `json:"reservations"`
+	Tokens       map[string]string   `json:"tokens"`   // bearer token -> user id
+	Receipts     map[string]*Receipt `json:"receipts"` // ReceiptKey -> outcome of an idempotent request
 
 	usersByID         map[string]*User
 	usersByEmail      map[string]*User
@@ -100,6 +101,9 @@ func EmailKey(email string) string { return strings.ToLower(email) }
 func (st *State) reindex() {
 	if st.Tokens == nil {
 		st.Tokens = map[string]string{}
+	}
+	if st.Receipts == nil {
+		st.Receipts = map[string]*Receipt{}
 	}
 	st.usersByID = make(map[string]*User, len(st.Users))
 	st.usersByEmail = make(map[string]*User, len(st.Users))
