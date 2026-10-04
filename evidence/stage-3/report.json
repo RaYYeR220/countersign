@@ -1,0 +1,24 @@
+{
+  "stage": 3,
+  "outcome": "accepted",
+  "accepted_sha": "c4a828e341d997f00b8c078c423135fbccf6fdac",
+  "clauses": {"total": 53, "both": 52, "a_only": 0, "b_only": 1, "rulings": 15},
+  "work_items": 6,
+  "candidates": 2,
+  "rejections": [
+    {"sha": "1aaececb8efac6444becfd7ec00650e26adcf407", "findings": 1, "changed_work": true}
+  ],
+  "mutation": {"tool": "mutate.py (containerised textual Go mutants; HTTP killers: audit battery + Oracle suites)", "killed": 22, "total": 27},
+  "race_proofs": [
+    {"guard": "G1 state.Store write lock", "test": "audit bursts B3/B5 + crash check", "red_without": true, "green_with": true},
+    {"guard": "G2 signup email re-check under write lock", "test": "audit burst B8", "red_without": true, "green_with": true},
+    {"guard": "G3 idempotency lookup/execute/store in one write section", "test": "audit bursts B3,B4", "red_without": true, "green_with": true},
+    {"guard": "G4 moves check-all-before-apply", "test": "audit moves atomicity", "red_without": true, "green_with": true},
+    {"guard": "G5 state.Store read lock", "test": "race detector + readwrite_load", "red_without": true, "green_with": true},
+    {"guard": "G6 occupancy over every member of a table set", "test": "comboburst shared-table bids", "red_without": true, "green_with": true},
+    {"guard": "G7 already-in-series check", "test": "s3burst concurrent adoption of one anchor", "red_without": true, "green_with": true},
+    {"guard": "G8 all-or-nothing series adoption", "test": "series failed adoption creates nothing", "red_without": true, "green_with": true}
+  ],
+  "holdout": {"ran": true, "passed": 152, "failed": 0, "escapes": []},
+  "blockers": []
+}
