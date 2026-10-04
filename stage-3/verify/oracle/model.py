@@ -549,8 +549,8 @@ class Model:
             for m in managers:
                 if not isinstance(m, str):
                     raise Err(400, "malformed_request", "manager_user_ids must be strings")
-                if m not in self.users:
-                    raise Err(422, "validation_failed", "unknown manager user id")         # Q7
+                if m == "" or len(m) > ID_MAX or m not in self.users:
+                    raise Err(422, "validation_failed", "unknown manager user id")         # R-59
             if len(set(managers)) != len(managers):
                 raise Err(422, "validation_failed", "duplicate manager user id")
             revision = r.get("revision", 0)
@@ -610,8 +610,7 @@ class Model:
             self._add_reservation(rid, ref, uid, restaurant_id, table_ids, party, local, start,
                                   start + timedelta(minutes=r["reservation_duration_minutes"]), created,
                                   self._policy0(r))                                         # B45: revision 1, policy 0
-            if status == "cancelled":                                                       # Q19
-                self._cancel_record(self.reservations[rid], created)
+            self.reservations[rid]["status"] = status                                       # R-51: one created entry
 
     def _add_reservation(self, rid, ref, uid, restaurant_id, table_ids, party, local, start, end, created,
                          terms: dict, history: Optional[list] = None):
@@ -693,15 +692,13 @@ class Model:
     def _validate_policy(self, r: dict, obj: dict) -> dict:
         """B35-B37 (Q9): types 400 (booleans in integer fields 422) -> missing 422 -> values 422. Returns a normalised policy."""
         int_fields = ("slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes")
-        for f, kind in (("effective_from", str), ("opening_hours", list), ("capacities", dict)):      # pass 1
+        bad = Err(422, "validation_failed", "invalid policy")                                       # R-47: every field problem
+        for f, kind in (("effective_from", str), ("opening_hours", list), ("capacities", dict)):
             if f in obj and not isinstance(obj[f], kind):
-                raise Err(400, "malformed_request", f"{f} has the wrong type")
-        for f in int_fields:
-            if f in obj and not isinstance(obj[f], bool) and not isinstance(obj[f], (int, float)):
-                raise Err(400, "malformed_request", f"{f} must be an integer")
-        for f in ("effective_from",) + int_fields + ("opening_hours", "capacities"):               # pass 2
+                raise bad
+        for f in ("effective_from",) + int_fields + ("opening_hours", "capacities"):
             if f not in obj:
-                raise Err(422, "validation_failed", f"{f} is required")
+                raise bad
         if parse_date(obj["effective_from"]) is None:                                                # pass 3
             raise Err(422, "validation_failed", "effective_from must be a real YYYY-MM-DD date")
         out = {"effective_from": obj["effective_from"]}
@@ -713,12 +710,13 @@ class Model:
             out[f] = int(v)
         hours, seen_wd = [], set()
         for h in obj["opening_hours"]:
-            self._fobj(h, "opening_hours entry")
-            wd = self._fstr(h, "weekday")
+            if not isinstance(h, dict) or any(not isinstance(h.get(x), str) for x in ("weekday", "opens", "closes")):
+                raise bad
+            wd = h["weekday"]
             if wd not in WEEKDAYS or wd in seen_wd:
                 raise Err(422, "validation_failed", "weekday must be mon..sun and unique")
             seen_wd.add(wd)
-            o, c = self._fstr(h, "opens"), self._fstr(h, "closes")
+            o, c = h["opens"], h["closes"]
             om, cm = hhmm_to_minutes(o), hhmm_to_minutes(c)
             if om is None or cm is None or om == 24 * 60 or cm <= om:
                 raise Err(422, "validation_failed", "opens/closes must be HH:MM with closes later than opens")
@@ -730,8 +728,6 @@ class Model:
         out["capacities"] = {}
         for t in r["tables"]:
             v = caps[t["id"]]
-            if not isinstance(v, bool) and not isinstance(v, (int, float)):
-                raise Err(400, "malformed_request", "capacities must be integers")
             if not is_json_int(v) or not 1 <= int(v) <= 100:
                 raise Err(422, "validation_failed", "capacities must be integers 1..100")
             out["capacities"][t["id"]] = int(v)
@@ -746,6 +742,7 @@ class Model:
         pol = self._validate_policy(r, obj)
         pol["policy_version"] = len(r["policies"]) + 1                                             # B27, B28
         r["policies"].append(pol)
+        r["revision"] += 1                                                                          # R-54
         return 201, json.loads(json.dumps(pol))
 
     def list_policies(self, rid: str):
@@ -927,8 +924,7 @@ class Model:
                 new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
                                      new._declared_order(r, ids), int(s_["party_size"]), s_["starts_at_local"], start, end,
                                      created, new._policy0(r))
-                if s_["status"] == "cancelled":
-                    new._cancel_record(new.reservations[s_["reservation_id"]], created)
+                new.reservations[s_["reservation_id"]]["status"] = s_["status"]            # R-55: revision 1, created only
         for i in alist("idempotency"):
             need(isinstance(i, dict) and isinstance(i.get("key"), str) and i["key"] not in new.idem)
             need(isinstance(i.get("body"), dict) and is_json_int(i.get("status")) and i.get("response") is not None)
@@ -1140,6 +1136,7 @@ class Model:
         ref = self._new_reference()
         self._add_reservation(rid, ref, user_id, obj["restaurant_id"], table_ids, party,
                               obj["starts_at_local"], start, end, self.now(), pol)
+        r["revision"] += 1                                                   # R-54
         return 201, self._view(self.reservations[rid])
 
     def list_reservations(self, user_id: str):
@@ -1168,6 +1165,7 @@ class Model:
         if self._cutoff_passed(rec):
             raise Err(409, "cutoff_passed", "within the cancellation cutoff")
         self._cancel_record(rec, self.now())                                 # B51, B71
+        self.restaurants[rec["restaurant_id"]]["revision"] += 1               # R-54
         return 200, self._view(rec)
 
     AMEND_FIELDS = [("table_id", False, "str"), ("table_ids", False, "list"), ("starts_at_local", False, "str"),
@@ -1218,9 +1216,9 @@ class Model:
         self._both_table_fields(obj)                                      # R-43
         check_fields(obj, self.AMEND_FIELDS)                              # wrong types 400 before 404
         rec = self._mine(user_id, reference)
+        self._expected_revision(rec, obj)                                 # R-49: 422 invalid -> 409 stale, before cancelled
         if rec["status"] == "cancelled":
             raise Err(409, "reservation_cancelled", "reservation is cancelled")
-        self._expected_revision(rec, obj)                                 # B52
         if self._cutoff_passed(rec):
             raise Err(409, "cutoff_passed", "within the amendment cutoff")
         plan = self._plan_amendment(rec, obj)
@@ -1230,6 +1228,7 @@ class Model:
         if any(self._table_busy(x, start, end, {rec["reservation_id"]}) for x in table_ids):
             raise Err(409, "table_unavailable", "a table is taken for an overlapping interval")
         self._apply_amendment(rec, plan, self.now())
+        self.restaurants[rec["restaurant_id"]]["revision"] += 1               # R-54
         return 200, self._view(rec)
 
     # ------------------------------------------------------------------ atomic moves (R-22)
@@ -1255,9 +1254,9 @@ class Model:
                 first_restaurant = rec["restaurant_id"]
             elif rec["restaurant_id"] != first_restaurant:
                 raise Err(422, "validation_failed", "bookings belong to different restaurants")
+            self._expected_revision(rec, m)                                 # R-57: before cancelled
             if rec["status"] == "cancelled":
                 raise Err(409, "reservation_cancelled", "reservation is cancelled")
-            self._expected_revision(rec, m)                                 # B80 (Q20)
             if self._cutoff_passed(rec):
                 raise Err(409, "cutoff_passed", "within the amendment cutoff")
             plan = self._plan_amendment(rec, m)                              # B79, B81

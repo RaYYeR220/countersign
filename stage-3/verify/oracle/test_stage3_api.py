@@ -1,6 +1,6 @@
 """Stage-3 HTTP acceptance suite (Oracle): explanations, history, policies and accepted terms, revisions,
 series, combined-table history, collective moves under policies, the upgrade from stage-1/stage-2 exports, and the
-stage-2 leftovers O-12/O-13. Test names carry the entry-B ids (evidence/stage-3/ledger-B.md) until C3 ids exist.
+stage-2 leftovers O-12/O-13. Test names carry the master-ledger ids C3.<n> (evidence/stage-3/ledger.md); clauses3.json maps the entry-B ids.
 """
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def fixture_terms(rid="r_anker") -> dict:
 
 
 # ============================================================ explanations (B3-B11)
-def test_B3_B4_B7_B8_B9_B10_explain_matches_rules(c, ada):
+def test_C3_2_C3_5_C3_6_C3_7_C3_8_explain_matches_rules(c, ada):
     book_single(c, ada, "r_anker", "t_2", f"{FUT_FRI}T19:00", 2)
     plain = c.availability("r_anker", FUT_FRI, 3).json
     r = c.get(f"/availability?restaurant_id=r_anker&date={FUT_FRI}&party_size=3&explain=true")
@@ -85,7 +85,7 @@ def test_B3_B4_B7_B8_B9_B10_explain_matches_rules(c, ada):
     assert e2["rules"] == [{"rule": "capacity", "holds": False}, {"rule": "no_overlap", "holds": False}] and not e2["available"]
 
 
-def test_B5_B6_explain_parameter(c):
+def test_C3_3_C3_4_explain_parameter(c):
     for v in ("false", "1", "", "TRUE", "True", "yes", "0", "true%20"):
         err(c.get(f"/availability?restaurant_id=r_anker&date={FUT_FRI}&party_size=2&explain={v}"), 422, "validation_failed")
     plain = c.availability("r_anker", FUT_FRI, 2).json
@@ -97,7 +97,7 @@ def test_B5_B6_explain_parameter(c):
     err(c.get(f"/availability?restaurant_id=r_anker&date=bad&party_size=2&explain=false"), 422, "validation_failed")
 
 
-def test_B11_explain_closed_and_full(c):
+def test_C3_9_explain_closed_and_full(c):
     r = c.get(f"/availability?restaurant_id=r_anker&date={FUT_WED}&party_size=2&explain=true").json
     assert r["slots"] == []
     r = c.get(f"/availability?restaurant_id=r_anker&date={FUT_FRI}&party_size=99&explain=true").json
@@ -108,7 +108,7 @@ def test_B11_explain_closed_and_full(c):
 
 
 # ============================================================ history (B12-B20)
-def test_B12_B15_B16_B17_B18_B19_history_entries(c, ada):
+def test_C3_10_C3_11_C3_12_C3_13_C3_14_C3_15_history_entries(c, ada):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     ref = o["reference"]
     h = history(c, ada, ref)
@@ -136,7 +136,7 @@ def test_B12_B15_B16_B17_B18_B19_history_entries(c, ada):
     assert ats == sorted(ats)
 
 
-def test_B13_B14_B55_history_visibility(c, ada, bob):
+def test_C3_10_C3_36_history_visibility(c, ada, bob):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     ref = o["reference"]
     err(c.get(f"/reservations/{ref}/history", token=bob), 404, "not_found")
@@ -151,7 +151,26 @@ def test_B13_B14_B55_history_visibility(c, ada, bob):
     assert d == {"reference": ref, "revision": 2, "accepted_terms": d["accepted_terms"]} and check_terms(d["accepted_terms"]) is None
 
 
-def test_B20_replay_records_nothing(c, ada):
+def test_C3_28_C3_33_seeded_cancelled_history(c, bob):
+    fx = base_fixture()
+    fx["reservations"].append({"id": "res_cx", "reference": "CANCX1", "user_id": "u_bob", "restaurant_id": "r_anker",
+                               "table_id": "t_1", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2, "status": "cancelled",
+                               "created_at": "2026-01-02T03:04:05+00:00"})
+    assert c.reset(fx).status == 204
+    tok = c.login("bob@example.com", "bob secret 1")
+    g = c.get("/reservations/CANCX1", token=tok).json
+    assert g["status"] == "cancelled" and g["revision"] == 1 and g["accepted_terms"]["policy_version"] == 0
+    h = history(c, tok, "CANCX1")
+    assert len(h) == 1 and h[0]["event"] == "created" and h[0]["revision"] == 1
+    assert h[0]["at"] == "2026-01-02T04:04:05+01:00"                                                 # R-51: created_at in the restaurant zone
+    assert c.get("/reservations/CANCX1/decision", token=tok).json["revision"] == 1
+    for bad in ([""], ["x" * 65], ["u_mia", "u_mia"], ["u_nobody"]):
+        fx = base_fixture()
+        fx["restaurants"][0]["manager_user_ids"] = bad
+        err(c.reset(fx), 422, "validation_failed")                                                  # R-59
+
+
+def test_C3_16_replay_records_nothing(c, ada):
     key = k()
     body = {"restaurant_id": "r_anker", "table_id": "t_1", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
     o = c.post("/reservations", body, token=ada, key=key).json
@@ -160,7 +179,7 @@ def test_B20_replay_records_nothing(c, ada):
 
 
 # ============================================================ policies (B22-B42)
-def test_B22_B23_B24_managers(c, ada, bob, mia):
+def test_C3_18_managers(c, ada, bob, mia):
     err(publish(c, ada, "r_anker", policy("2027-09-01")), 403, "forbidden")
     err(publish(c, bob, "r_anker", policy("2027-09-01")), 403, "forbidden")
     err(publish(c, mia, "nope", policy("2027-09-01")), 404, "not_found")
@@ -187,7 +206,7 @@ def test_B22_B23_B24_managers(c, ada, bob, mia):
     err(c.reset(fx), 400, "malformed_request")
 
 
-def test_B25_B27_B28_B30_B40_publication_and_replay(c, mia):
+def test_C3_19_C3_20_C3_21_C3_24_publication_and_replay(c, mia):
     key = k()
     p1 = publish(c, mia, "r_anker", policy("2027-09-01"), key)
     assert p1.status == 201 and p1.json["policy_version"] == 1, p1
@@ -212,38 +231,48 @@ def test_B25_B27_B28_B30_B40_publication_and_replay(c, mia):
 
 @pytest.mark.parametrize("name,mutate,status,code", [
     ("effective_from bad", lambda p: p.__setitem__("effective_from", "2027-02-30"), 422, "validation_failed"),
-    ("effective_from type", lambda p: p.__setitem__("effective_from", 20270901), 400, "malformed_request"),
+    ("effective_from type", lambda p: p.__setitem__("effective_from", 20270901), 422, "validation_failed"),
+    ("effective_from null", lambda p: p.__setitem__("effective_from", None), 422, "validation_failed"),
     ("slot 0", lambda p: p.__setitem__("slot_minutes", 0), 422, "validation_failed"),
     ("slot 1441", lambda p: p.__setitem__("slot_minutes", 1441), 422, "validation_failed"),
     ("duration 1441", lambda p: p.__setitem__("reservation_duration_minutes", 1441), 422, "validation_failed"),
     ("cutoff -1", lambda p: p.__setitem__("cancellation_cutoff_minutes", -1), 422, "validation_failed"),
     ("cutoff 10081", lambda p: p.__setitem__("cancellation_cutoff_minutes", 10081), 422, "validation_failed"),
     ("slot bool", lambda p: p.__setitem__("slot_minutes", True), 422, "validation_failed"),
-    ("slot string", lambda p: p.__setitem__("slot_minutes", "30"), 400, "malformed_request"),
+    ("slot string", lambda p: p.__setitem__("slot_minutes", "30"), 422, "validation_failed"),
+    ("slot null", lambda p: p.__setitem__("slot_minutes", None), 422, "validation_failed"),
+    ("cutoff string", lambda p: p.__setitem__("cancellation_cutoff_minutes", "60"), 422, "validation_failed"),
     ("slot float", lambda p: p.__setitem__("slot_minutes", 30.5), 422, "validation_failed"),
     ("hours dup weekday", lambda p: p.__setitem__("opening_hours", [{"weekday": "mon", "opens": "18:00", "closes": "23:00"}] * 2), 422, "validation_failed"),
     ("hours closes<=opens", lambda p: p.__setitem__("opening_hours", [{"weekday": "mon", "opens": "18:00", "closes": "18:00"}]), 422, "validation_failed"),
-    ("hours type", lambda p: p.__setitem__("opening_hours", "none"), 400, "malformed_request"),
+    ("hours type", lambda p: p.__setitem__("opening_hours", "none"), 422, "validation_failed"),
+    ("hours item type", lambda p: p.__setitem__("opening_hours", ["mon"]), 422, "validation_failed"),
+    ("hours bad time", lambda p: p.__setitem__("opening_hours", [{"weekday": "mon", "opens": "6pm", "closes": "23:00"}]), 422, "validation_failed"),
     ("caps missing table", lambda p: p.__setitem__("capacities", {"t_1": 2}), 422, "validation_failed"),
     ("caps extra table", lambda p: p.__setitem__("capacities", {"t_1": 2, "t_2": 4, "t_3": 4}), 422, "validation_failed"),
     ("caps 0", lambda p: p.__setitem__("capacities", {"t_1": 0, "t_2": 4}), 422, "validation_failed"),
     ("caps 101", lambda p: p.__setitem__("capacities", {"t_1": 2, "t_2": 101}), 422, "validation_failed"),
     ("caps bool", lambda p: p.__setitem__("capacities", {"t_1": True, "t_2": 4}), 422, "validation_failed"),
-    ("caps type", lambda p: p.__setitem__("capacities", [2, 4]), 400, "malformed_request"),
+    ("caps type", lambda p: p.__setitem__("capacities", [2, 4]), 422, "validation_failed"),
+    ("caps string value", lambda p: p.__setitem__("capacities", {"t_1": "2", "t_2": 4}), 422, "validation_failed"),
+    ("caps null value", lambda p: p.__setitem__("capacities", {"t_1": None, "t_2": 4}), 422, "validation_failed"),
     ("missing effective_from", lambda p: p.pop("effective_from"), 422, "validation_failed"),
     ("missing capacities", lambda p: p.pop("capacities"), 422, "validation_failed"),
     ("missing hours", lambda p: p.pop("opening_hours"), 422, "validation_failed"),
 ])
-def test_B26_B35_B36_B37_B38_policy_validation(c, mia, name, mutate, status, code):
+def test_C3_20_C3_23_policy_validation(c, mia, name, mutate, status, code):
     p = policy("2027-09-01")
     mutate(p)
     r = publish(c, mia, "r_anker", p)
     assert r.status == status and r.code == code, (name, r)
     assert c.get("/restaurants/r_anker/policies").json == {"policies": []}
-    assert publish(c, mia, "r_anker", policy("2027-09-01")).json["policy_version"] == 1    # no version consumed
+    assert publish(c, mia, "r_anker", policy("2027-09-01", slot_minutes=30.0)).json["policy_version"] == 1    # no version consumed; 30.0 is 30 (R-3)
+    # a body that is not a JSON object is the only 400
+    err(c.request("POST", "/restaurants/r_anker/policies", raw=b"[]", token=mia, key=k()), 400, "malformed_request")
+    err(c.request("POST", "/restaurants/r_anker/policies", raw=b"{", token=mia, key=k()), 400, "malformed_request")
 
 
-def test_B29_B31_B32_B33_B34_B41_B42_selection(c, ada, mia):
+def test_C3_21_C3_22_C3_25_C3_26_selection(c, ada, mia):
     v1 = publish(c, mia, "r_anker", policy("2027-09-01", reservation_duration_minutes=120, cancellation_cutoff_minutes=60)).json
     v2 = publish(c, mia, "r_anker", policy("2027-10-01", slot_minutes=60)).json
     v3 = publish(c, mia, "r_anker", policy("2027-09-01", capacities={"t_1": 1, "t_2": 9})).json     # same date as v1, later version
@@ -282,7 +311,7 @@ def test_B29_B31_B32_B33_B34_B41_B42_selection(c, ada, mia):
     assert o3["accepted_terms"] == fixture_terms("r_all") and o3["revision"] == 1
 
 
-def test_B39_policy_cannot_change_structure(c, mia):
+def test_C3_23_policy_cannot_change_structure(c, mia):
     p = policy("2027-09-01")
     p.update({"timezone": "America/New_York", "tables": [{"id": "t_9", "label": "9", "capacity": 9}], "combinable": [], "name": "X", "foo": 1})
     r = publish(c, mia, "r_anker", p)
@@ -292,7 +321,7 @@ def test_B39_policy_cannot_change_structure(c, mia):
 
 
 # ============================================================ terms, revisions, decisions (B43-B55)
-def test_B43_B44_B45_B46_B47_terms_and_revision(c, ada, bob, mia):
+def test_C3_27_C3_28_C3_29_terms_and_revision(c, ada, bob, mia):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     check_reservation_shape(o)
     assert o["revision"] == 1 and o["accepted_terms"] == fixture_terms()
@@ -314,7 +343,7 @@ def test_B43_B44_B45_B46_B47_terms_and_revision(c, ada, bob, mia):
     assert rp.status == 200 and rp.json == first and rp.json["revision"] == 1
 
 
-def test_B48_cancel_uses_accepted_cutoff(c, ada, mia):
+def test_C3_30_cancel_uses_accepted_cutoff(c, ada, mia):
     # policy 0 cutoff for r_all is 60; a booking accepted under it; then a policy with cutoff 0 -> still the accepted 60
     past = book_single(c, ada, "r_all", "a_1", f"{PAST_DAY}T12:00", 2)
     assert past["accepted_terms"]["cancellation_cutoff_minutes"] == 60
@@ -334,7 +363,7 @@ def test_B48_cancel_uses_accepted_cutoff(c, ada, mia):
     assert c.post(f"/reservations/{fut['reference']}/cancel", token=ada2).json["revision"] == 2
 
 
-def test_B49_B50_B51_B53_amendment_under_policies(c, ada, mia):
+def test_C3_31_C3_32_C3_33_C3_35_amendment_under_policies(c, ada, mia):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     ref = o["reference"]
     v1 = publish(c, mia, "r_anker", policy(FUT_FRI2, reservation_duration_minutes=120, cancellation_cutoff_minutes=30,
@@ -364,7 +393,7 @@ def test_B49_B50_B51_B53_amendment_under_policies(c, ada, mia):
     assert d["revision"] == 3 and d["accepted_terms"]["policy_version"] == 1
 
 
-def test_B52_expected_revision(c, ada, bob):
+def test_C3_34_expected_revision(c, ada, bob):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     ref = o["reference"]
     for bad in (0, -1, 1.5, "1", True, None, [1]):
@@ -380,10 +409,16 @@ def test_B52_expected_revision(c, ada, bob):
     past = book_single(c, ada, "r_anker", "t_2", "2020-09-25T19:00", 2)
     err(c.patch(f"/reservations/{past['reference']}", {"party_size": 99, "expected_revision": 5}, token=ada), 409, "stale_revision")
     err(c.patch(f"/reservations/{past['reference']}", {"party_size": 99, "expected_revision": 1}, token=ada), 409, "cutoff_passed")
-    # 404 before stale; cancelled before stale (Q8)
+    # 404 before stale; stale before cancelled (R-49); a matching revision on a cancelled booking -> cancelled
     err(c.patch(f"/reservations/{ref}", {"party_size": 1, "expected_revision": 9}, token=bob), 404, "not_found")
-    assert c.post(f"/reservations/{ref}/cancel", token=ada).status == 200
-    err(c.patch(f"/reservations/{ref}", {"party_size": 1, "expected_revision": 9}, token=ada), 409, "reservation_cancelled")
+    assert c.post(f"/reservations/{ref}/cancel", token=ada).status == 200                          # revision 3
+    err(c.patch(f"/reservations/{ref}", {"party_size": 1, "expected_revision": 9}, token=ada), 409, "stale_revision")
+    err(c.patch(f"/reservations/{ref}", {"party_size": 1, "expected_revision": "x"}, token=ada), 422, "validation_failed")
+    err(c.patch(f"/reservations/{ref}", {"party_size": 1, "expected_revision": 3}, token=ada), 409, "reservation_cancelled")
+    # a stale expected_revision refuses even a no-op (P5); cancel ignores expected_revision (R-50)
+    o2 = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T21:30", 2)
+    err(c.patch(f"/reservations/{o2['reference']}", {"expected_revision": 2}, token=ada), 409, "stale_revision")
+    assert c.request("POST", f"/reservations/{o2['reference']}/cancel", json_body={"expected_revision": 9}, token=ada).status == 200
     # concurrency: 20 amendments sharing one expected_revision -> at most one real change
     o = book_single(c, ada, "r_all", "a_3", f"{FUT_DAY}T12:00", 2)
     fns = [(lambda i=i: Client(c.base_url, timeout=15).patch(f"/reservations/{o['reference']}",
@@ -398,7 +433,7 @@ def test_B52_expected_revision(c, ada, bob):
     assert final["revision"] == (2 if changed else 1) and len(history(c, ada, o["reference"])) == final["revision"]
 
 
-def test_B54_decision(c, ada):
+def test_C3_36_decision(c, ada):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     d = c.get(f"/reservations/{o['reference']}/decision", token=ada)
     assert d.status == 200 and d.json == {"reference": o["reference"], "revision": 1, "accepted_terms": fixture_terms()}
@@ -411,7 +446,7 @@ def adopt(c, token, ref, count=3, interval=1, key=None, **extra):
     return c.post("/series", {"anchor_reference": ref, "count": count, "interval_weeks": interval, **extra}, token=token, key=key or k())
 
 
-def test_B56_B59_B60_B63_B66_B67_B68_adoption(c, ada, bob):
+def test_C3_37_C3_39_C3_40_C3_41_C3_42_C3_43_C3_44_adoption(c, ada, bob):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     before = {"res": c.get(f"/reservations/{o['reference']}", token=ada).json, "hist": history(c, ada, o["reference"])}
     key = k()
@@ -445,7 +480,7 @@ def test_B56_B59_B60_B63_B66_B67_B68_adoption(c, ada, bob):
     assert rp.status == 200 and rp.json == s
 
 
-def test_B57_B58_adoption_errors(c, ada, bob):
+def test_C3_38_adoption_errors(c, ada, bob):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     ref = o["reference"]
     err(c.post("/series", {"anchor_reference": ref, "count": 3, "interval_weeks": 1}, key=k()), 401, "unauthenticated")
@@ -474,7 +509,7 @@ def test_B57_B58_adoption_errors(c, ada, bob):
     assert len(c.get("/reservations", token=ada).json["reservations"]) == 4
 
 
-def test_B61_B62_B64_B65_occurrence_rules(c, ada, bob, mia):
+def test_C3_40_C3_41_occurrence_rules(c, ada, bob, mia):
     # a closed weekday for occurrence 1, a busy table for occurrence 2: the first failing index decides, nothing survives
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     assert c.book(bob, k(), "r_anker", "t_1", f"{FUT_FRI3}T19:00", 2).status == 201           # blocker for index 2
@@ -505,7 +540,7 @@ def test_B61_B62_B64_B65_occurrence_rules(c, ada, bob, mia):
     assert r.status == 201 and r.json["occurrences"][1]["reservation"]["starts_at"] == "2027-10-31T02:30:00+02:00"   # first occurrence
 
 
-def test_B69_B70_B71_B72_B74_series_revision_and_exceptions(c, ada):
+def test_C3_45_C3_46_C3_47_series_revision_and_exceptions(c, ada):
     o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     key = k()
     s = adopt(c, ada, o["reference"], 3, 1, key).json
@@ -538,7 +573,7 @@ def test_B69_B70_B71_B72_B74_series_revision_and_exceptions(c, ada):
     assert c.get(f"/series/{sid}", token=ada).json["revision"] == 5
 
 
-def test_B75_series_key_is_its_own_path(c, ada):
+def test_C3_47_series_key_is_its_own_path(c, ada):
     key = k()
     body = {"restaurant_id": "r_anker", "table_id": "t_1", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
     o = c.post("/reservations", body, token=ada, key=key).json
@@ -549,7 +584,7 @@ def test_B75_series_key_is_its_own_path(c, ada):
 
 
 # ============================================================ combined-table history (B77, B78)
-def test_B77_B78_pair_history_and_capacity(c, ada, mia):
+def test_C3_49_C3_50_pair_history_and_capacity(c, ada, mia):
     o = c.post("/reservations", {"restaurant_id": "r_trio", "table_ids": ["q_2", "q_1"], "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 5}, token=ada, key=k()).json
     ref = o["reference"]
     h = history(c, ada, ref)
@@ -574,7 +609,7 @@ def test_B77_B78_pair_history_and_capacity(c, ada, mia):
 
 
 # ============================================================ collective moves (B79-B85)
-def test_B79_B80_B81_B82_B83_B84_B85_moves_under_policies(c, ada, mia):
+def test_C3_51_C3_52_moves_under_policies(c, ada, mia):
     a = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)
     b = book_single(c, ada, "r_anker", "t_2", f"{FUT_FRI}T19:00", 2)
     s = adopt(c, ada, a["reference"], 2, 1).json
@@ -598,6 +633,10 @@ def test_B79_B80_B81_B82_B83_B84_B85_moves_under_policies(c, ada, mia):
     # stale and invalid expected_revision per item; a failed batch changes nothing
     err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"], "party_size": 1, "expected_revision": 2}]}, token=ada, key=k()), 409, "stale_revision")
     err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"], "party_size": 1, "expected_revision": 0}]}, token=ada, key=k()), 422, "validation_failed")
+    canc = book_single(c, ada, "r_anker", "t_2", f"{FUT_FRI3}T19:00", 2)
+    assert c.post(f"/reservations/{canc['reference']}/cancel", token=ada).status == 200
+    err(c.post("/reservation-moves", {"moves": [{"reference": canc["reference"], "party_size": 1, "expected_revision": 7}]}, token=ada, key=k()), 409, "stale_revision")
+    err(c.post("/reservation-moves", {"moves": [{"reference": canc["reference"], "party_size": 1, "expected_revision": 2}]}, token=ada, key=k()), 409, "reservation_cancelled")
     err(c.post("/reservation-moves", {"moves": [{"reference": a["reference"], "party_size": 1}, {"reference": b["reference"], "party_size": 99}]}, token=ada, key=k()), 422, "party_exceeds_capacity")
     assert c.get(f"/reservations/{b['reference']}", token=ada).json["revision"] == 1
     assert c.get(f"/series/{s['series_id']}", token=ada).json["revision"] == 2
@@ -631,7 +670,7 @@ def older_exports(request):
 
 
 @pytest.mark.parametrize("stage", [1, 2])
-def test_B76_upgrade_from_older_exports(c, mia, older_exports, stage):
+def test_C3_48_upgrade_from_older_exports(c, mia, older_exports, stage):
     if stage not in older_exports:
         pytest.skip(f"no stage-{stage} source")
     src = older_exports[stage]
@@ -646,7 +685,9 @@ def test_B76_upgrade_from_older_exports(c, mia, older_exports, stage):
     assert len(h) == 1 and h[0]["event"] == "created" and h[0]["revision"] == 1 and h[0]["accepted_terms"]["policy_version"] == 0
     assert h[0]["changes"][0] == {"field": "table_id", "from": None, "to": "t_1"}
     hc = history(c, ada, src["cancelled"]["reference"])
-    assert [e["event"] for e in hc] == ["created", "cancelled"] and c.get(f"/reservations/{src['cancelled']['reference']}/decision", token=ada).json["revision"] == 2
+    assert [e["event"] for e in hc] == ["created"] and hc[0]["revision"] == 1                       # R-55
+    dc = c.get(f"/reservations/{src['cancelled']['reference']}/decision", token=ada).json
+    assert dc["revision"] == 1 and c.get(f"/reservations/{src['cancelled']['reference']}", token=ada).json["status"] == "cancelled"
     if src["pair"]:
         hp = history(c, ada, src["pair"]["reference"])
         assert hp[0]["changes"][0] == {"field": "table_ids", "from": None, "to": ["t_1", "t_2"]}
