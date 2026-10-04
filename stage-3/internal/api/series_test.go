@@ -427,3 +427,30 @@ func TestSeriesOnImportedExports(t *testing.T) {
 		expect(t, e.adopt(token, "k-cancelled", "SEED01", 2, 1), 409, "reservation_cancelled")
 	}
 }
+
+// R-60: an empty or over-long anchor_reference is an invalid value (422, value pass, first field);
+// a well-sized unknown reference is 404. Nothing changes and the key stays unclaimed.
+func TestSeriesAnchorReferenceValue(t *testing.T) {
+	e, _ := newSeriesEnv(t)
+	anchor := e.mustBook(e.ada, "k-a", "t_2", "2026-10-01T19:00", 2)
+	before := do(e.h, "GET", "/_test/export", "").Body.String()
+	long65, long64 := strings.Repeat("A", 65), strings.Repeat("A", 64)
+	for _, c := range []struct {
+		body   string
+		status int
+		code   string
+	}{
+		{`{"anchor_reference":"","count":3,"interval_weeks":2}`, 422, "validation_failed"},
+		{`{"anchor_reference":"` + long65 + `","count":3,"interval_weeks":2}`, 422, "validation_failed"},
+		{`{"anchor_reference":"","count":99,"interval_weeks":2}`, 422, "validation_failed"},
+		{`{"anchor_reference":"` + long64 + `","count":3,"interval_weeks":2}`, 404, "not_found"},
+		{`{"anchor_reference":"abc","count":3,"interval_weeks":2}`, 404, "not_found"},
+	} {
+		expect(t, e.req("POST", "/series", e.ada, "k-r60", c.body), c.status, c.code)
+		if got := do(e.h, "GET", "/_test/export", "").Body.String(); got != before {
+			t.Fatalf("%s changed state", c.body)
+		}
+	}
+	// The key was never claimed: it now adopts the real anchor.
+	expect(t, e.adopt(e.ada, "k-r60", anchor.Reference, 2, 1), 201, "")
+}
