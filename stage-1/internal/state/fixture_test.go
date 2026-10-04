@@ -73,6 +73,7 @@ func TestFromFixtureErrors(t *testing.T) {
 		"unknown timezone":    {`{"restaurants":[{"id":"r","timezone":"Mars/Base","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
 		"zero slot":           {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":0,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
 		"bad weekday":         {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thursday","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
+		"duplicate weekday":   {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"12:00","closes":"14:00"},{"weekday":"thu","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
 		"closes before opens": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"23:00","closes":"18:00"}]}]}`, "validation_failed"},
 		"id too long":         {`{"users":[{"id":"` + long + `","email":"a@b.c","password":"pw"}]}`, "validation_failed"},
 		"duplicate email":     {`{"users":[{"id":"u1","email":"a@b.c","password":"pw"},{"id":"u2","email":"A@b.c","password":"pw"}]}`, "validation_failed"},
@@ -85,5 +86,20 @@ func TestFromFixtureErrors(t *testing.T) {
 		if !errors.As(err, &ae) || ae.Code != c.code {
 			t.Errorf("%s: err = %v, want %s", name, err, c.code)
 		}
+	}
+}
+
+func TestFromFixtureSeedCreatedAt(t *testing.T) {
+	body := strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "created_at": "2026-09-01T08:00:00.75+02:00"}`, 1)
+	st, err := load(t, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := st.ReservationByRef("SEED01").CreatedAt; got.Format(time.RFC3339) != "2026-09-01T06:00:00Z" || got.Location() != time.UTC {
+		t.Errorf("created_at = %v, want the fixture instant in UTC (R-16, R-21)", got)
+	}
+	st, _ = load(t, strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "created_at": "yesterday"}`, 1))
+	if got := st.ReservationByRef("SEED01").CreatedAt; !got.Equal(seedTime) {
+		t.Errorf("invalid created_at = %v, want reset time", got)
 	}
 }

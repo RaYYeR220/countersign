@@ -1,0 +1,126 @@
+package api
+
+import (
+	"math"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
+
+	"tablekeeper/internal/apperr"
+	"tablekeeper/internal/localtime"
+	"tablekeeper/internal/state"
+)
+
+var digitsPattern = regexp.MustCompile(`^[0-9]+$`)
+
+type availabilitySlot struct {
+	StartsAtLocal     string   `json:"starts_at_local"`
+	StartsAt          string   `json:"starts_at"`
+	AvailableTableIDs []string `json:"available_table_ids"`
+}
+
+type availabilityResponse struct {
+	RestaurantID string             `json:"restaurant_id"`
+	Date         string             `json:"date"`
+	Timezone     string             `json:"timezone"`
+	Slots        []availabilitySlot `json:"slots"`
+}
+
+// queryParam returns the first value of name; empty counts as missing.
+func queryParam(q url.Values, name string) (string, error) {
+	v := q.Get(name)
+	if v == "" {
+		return "", apperr.Validation(name + " is required")
+	}
+	return v, nil
+}
+
+// availability is GET /availability (§8, §9; R-5, R-12). Public: any Authorization header is ignored.
+// Parameter errors (422, in order restaurant_id, date, party_size) precede the unknown-restaurant 404.
+func (s *Server) availability(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	restaurantID, err := queryParam(q, "restaurant_id")
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	date, err := queryParam(q, "date")
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if !localtime.ValidDate(date) {
+		writeError(w, apperr.Validation("date must be a calendar date YYYY-MM-DD"))
+		return
+	}
+	rawParty, err := queryParam(q, "party_size")
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	if !digitsPattern.MatchString(rawParty) {
+		writeError(w, apperr.Validation("party_size must be written as decimal digits"))
+		return
+	}
+	party, perr := strconv.ParseInt(rawParty, 10, 64)
+	if perr != nil {
+		party = math.MaxInt64 // all digits but too large: valid, and larger than every table
+	}
+	if party < 1 {
+		writeError(w, apperr.Validation("party_size must be at least 1"))
+		return
+	}
+
+	var resp *availabilityResponse
+	s.store.Read(func(st *state.State) {
+		resp, err = buildAvailability(st, restaurantID, date, party)
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func buildAvailability(st *state.State, restaurantID, date string, party int64) (*availabilityResponse, error) {
+	rest := st.Restaurant(restaurantID)
+	if rest == nil {
+		return nil, apperr.NotFound("no such restaurant")
+	}
+	loc, err := localtime.Location(rest.Timezone)
+	if err != nil {
+		return nil, err
+	}
+	var booked []*state.Reservation
+	for _, res := range st.Reservations {
+		if res.RestaurantID == rest.ID && res.Status == state.Confirmed {
+			booked = append(booked, res)
+		}
+	}
+	resp := &availabilityResponse{RestaurantID: rest.ID, Date: date, Timezone: rest.Timezone, Slots: []availabilitySlot{}}
+	for _, slot := range localtime.Slots(loc, rest.OpeningHours, rest.SlotMinutes, rest.ReservationDurationMinutes, date) {
+		ids := []string{}
+		for _, t := range rest.Tables {
+			if int64(t.Capacity) < party || tableBusy(booked, t.ID, slot) {
+				continue
+			}
+			ids = append(ids, t.ID)
+		}
+		resp.Slots = append(resp.Slots, availabilitySlot{
+			StartsAtLocal:     slot.Local,
+			StartsAt:          localtime.Format(slot.Start, loc),
+			AvailableTableIDs: ids,
+		})
+	}
+	return resp, nil
+}
+
+func tableBusy(booked []*state.Reservation, tableID string, slot localtime.Slot) bool {
+	for _, res := range booked {
+		if res.TableID == tableID && localtime.Overlaps(res.StartsAt, res.EndsAt, slot.Start, slot.End) {
+			return true
+		}
+	}
+	return false
+}
