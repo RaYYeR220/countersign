@@ -46,6 +46,8 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux.Handle("/reservations/{reference}/cancel", methods{http.MethodPost: s.authed(s.cancelReservation)})
 	mux.Handle("/reservations/{reference}/history", methods{http.MethodGet: s.reservationHistory})
 	mux.Handle("/reservations/{reference}/decision", methods{http.MethodGet: s.reservationDecision})
+	mux.Handle("/series", methods{http.MethodPost: s.authed(s.createSeries)})
+	mux.Handle("/series/{id}", methods{http.MethodGet: s.getSeries})
 	mux.Handle("/reservation-moves", methods{http.MethodPost: s.authed(s.moveReservations)})
 	notFound := func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))

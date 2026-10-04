@@ -108,3 +108,45 @@ func TestExplainAbsentAndInvalid(t *testing.T) {
 		t.Errorf("bad party first = %d", rec.Code)
 	}
 }
+
+// Availability for a date follows the policy selected for that date (C3.4, C3.25, C3.26).
+func TestAvailabilityFollowsPolicy(t *testing.T) {
+	e, mgr := newSeriesEnv(t)
+	policy := `{"effective_from":"2026-10-08","slot_minutes":60,"reservation_duration_minutes":120,
+	  "cancellation_cutoff_minutes":60,"opening_hours":[{"weekday":"thu","opens":"17:00","closes":"21:00"}],
+	  "capacities":{"t_1":6,"t_2":1,"t_3":4}}`
+	expect(t, e.req("POST", "/restaurants/r_anker/policies", mgr, "p1", policy), 201, "")
+	type slot struct {
+		StartsAtLocal     string   `json:"starts_at_local"`
+		AvailableTableIDs []string `json:"available_table_ids"`
+		Explain           []struct {
+			TableID       string `json:"table_id"`
+			PolicyVersion int    `json:"policy_version"`
+		} `json:"explain"`
+	}
+	get := func(date string) []slot {
+		var body struct{ Slots []slot }
+		rec := e.req("GET", "/availability?restaurant_id=r_anker&date="+date+"&party_size=4&explain=true", "", "", "")
+		json.Unmarshal(rec.Body.Bytes(), &body)
+		return body.Slots
+	}
+	before := get("2026-10-01") // policy 0: 18:00 … 21:30 every 30 min, t_2 and t_3 seat 4
+	if len(before) != 8 || before[0].Explain[0].PolicyVersion != 0 || strings.Join(before[0].AvailableTableIDs, ",") != "t_2,t_3" {
+		t.Errorf("policy 0 day = %+v", before)
+	}
+	after := get("2026-10-08") // policy 1: 17:00, 18:00, 19:00 (120 min ≤ 21:00); t_1 seats 6, t_2 seats 1
+	var starts []string
+	for _, s := range after {
+		starts = append(starts, s.StartsAtLocal[11:])
+		if s.Explain[0].PolicyVersion != 1 || strings.Join(s.AvailableTableIDs, ",") != "t_1,t_3" {
+			t.Errorf("policy 1 slot = %+v", s)
+		}
+	}
+	if strings.Join(starts, ",") != "17:00,18:00,19:00" {
+		t.Errorf("policy 1 grid = %v", starts)
+	}
+	// The restaurant detail still shows the fixture configuration.
+	if d := e.req("GET", "/restaurants/r_anker", "", "", "").Body.String(); !strings.Contains(d, `"slot_minutes":30`) {
+		t.Errorf("detail changed: %s", d)
+	}
+}

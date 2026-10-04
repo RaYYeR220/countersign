@@ -128,27 +128,27 @@ func buildAvailability(st *state.State, restaurantID, date string, party int64, 
 		}
 	}
 	// Every slot of a date starts on that local date, so one policy decides the whole response.
-	p := rulesFor(st, rest, date)
+	p := rest.PolicyFor(date)
 	resp := &availabilityResponse{RestaurantID: rest.ID, Date: date, Timezone: rest.Timezone, Slots: []availabilitySlot{}}
-	for _, slot := range localtime.Slots(loc, p.hours, p.slotMinutes, p.durationMinutes, date) {
+	for _, slot := range localtime.Slots(loc, p.OpeningHours, p.SlotMinutes, p.ReservationDurationMinutes, date) {
 		free := func(id string) bool { return !tableBusy(booked, id, slot) }
 		ids := []string{}
 		options := []availableOption{}
 		var why []tableExplain
 		for _, t := range rest.Tables {
-			fits, open := int64(p.capacity(t.ID)) >= party, free(t.ID)
+			fits, open := int64(p.Capacities[t.ID]) >= party, free(t.ID)
 			if explain {
-				why = append(why, tableExplain{t.ID, p.version, fits && open,
+				why = append(why, tableExplain{t.ID, p.PolicyVersion, fits && open,
 					[]ruleHold{{"capacity", fits}, {"no_overlap", open}}})
 			}
 			if !fits || !open {
 				continue
 			}
 			ids = append(ids, t.ID)
-			options = append(options, availableOption{[]string{t.ID}, p.capacity(t.ID)})
+			options = append(options, availableOption{[]string{t.ID}, p.Capacities[t.ID]})
 		}
 		for _, pair := range rest.Combinable {
-			capacity := p.capacity(pair[0]) + p.capacity(pair[1])
+			capacity := p.Capacity(pair)
 			if int64(capacity) >= party && free(pair[0]) && free(pair[1]) {
 				options = append(options, availableOption{pair, capacity})
 			}
@@ -168,26 +168,6 @@ func buildAvailability(st *state.State, restaurantID, date string, party int64, 
 		resp.Slots = append(resp.Slots, out)
 	}
 	return resp, nil
-}
-
-// dayRules are the booking rules that apply to starts on one local date.
-type dayRules struct {
-	version                      int
-	slotMinutes, durationMinutes int
-	hours                        []localtime.Hours
-	capacities                   map[string]int
-}
-
-func (d dayRules) capacity(tableID string) int { return d.capacities[tableID] }
-
-// rulesFor selects the policy for a local start date. Until the policy core lands this is policy 0:
-// the fixture's own rules.
-func rulesFor(st *state.State, rest *state.Restaurant, date string) dayRules {
-	caps := make(map[string]int, len(rest.Tables))
-	for _, t := range rest.Tables {
-		caps[t.ID] = t.Capacity
-	}
-	return dayRules{0, rest.SlotMinutes, rest.ReservationDurationMinutes, rest.OpeningHours, caps}
 }
 
 func tableBusy(booked []*state.Reservation, tableID string, slot localtime.Slot) bool {
