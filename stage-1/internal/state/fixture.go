@@ -9,6 +9,7 @@ import (
 
 	"tablekeeper/internal/apperr"
 	"tablekeeper/internal/jsonin"
+	"tablekeeper/internal/localtime"
 	"tablekeeper/internal/password"
 )
 
@@ -251,6 +252,12 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		if ids[res.ID] || st.ReservationByRef(res.Reference) != nil {
 			return apperr.Validation("duplicate reservation id or reference: " + res.ID)
 		}
+		loc, err := localtime.Location(r.Timezone)
+		if err != nil {
+			return err
+		}
+		res.StartsAt = localtime.ResolveOrAfter(loc, res.StartsAtLocal)
+		res.EndsAt = localtime.End(res.StartsAt, r.ReservationDurationMinutes)
 		ids[res.ID] = true
 		st.Reservations = append(st.Reservations, res)
 		st.reservationsByRef[res.Reference] = res

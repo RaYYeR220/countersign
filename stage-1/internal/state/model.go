@@ -4,6 +4,8 @@ package state
 import (
 	"strings"
 	"time"
+
+	"tablekeeper/internal/localtime"
 )
 
 // User is an account. Only the password hash is stored.
@@ -15,11 +17,7 @@ type User struct {
 }
 
 // OpeningHours is one opening interval on a weekday, in local HH:MM.
-type OpeningHours struct {
-	Weekday string `json:"weekday"`
-	Opens   string `json:"opens"`
-	Closes  string `json:"closes"`
-}
+type OpeningHours = localtime.Hours
 
 // Table is a bookable table.
 type Table struct {
@@ -66,6 +64,8 @@ type Reservation struct {
 	PartySize     int       `json:"party_size"`
 	Status        string    `json:"status"`
 	StartsAtLocal string    `json:"starts_at_local"`
+	StartsAt      time.Time `json:"starts_at"` // absolute start: StartsAtLocal resolved in the restaurant's zone
+	EndsAt        time.Time `json:"ends_at"`   // StartsAt + reservation_duration_minutes (absolute)
 	CreatedAt     time.Time `json:"created_at"`
 }
 
