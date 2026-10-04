@@ -1,0 +1,24 @@
+{
+  "stage": 1,
+  "outcome": "accepted",
+  "accepted_sha": "c0f2b7b06069d2c3d58fdd4aef1f26a0c903e9bb",
+  "clauses": {"total": 134, "both": 124, "a_only": 0, "b_only": 10, "rulings": 28},
+  "work_items": 7,
+  "candidates": 5,
+  "rejections": [
+    {"sha": "bd108ef786a7b8d9e9c6b9f2bad5b03d5ced13f3", "findings": 1, "changed_work": false},
+    {"sha": "4f5473646302fa52183643b30552bfb8b59f475e", "findings": 2, "changed_work": false},
+    {"sha": "4f983ace6b97652f552deb66aaa87e333a5b7b90", "findings": 1, "changed_work": false},
+    {"sha": "1bfe6e25eab8cfd5f189437d289b4b997213bb61", "findings": 3, "changed_work": true}
+  ],
+  "mutation": {"tool": "mutate.py (containerised textual Go mutants; HTTP killers: audit battery + Oracle suite)", "killed": 54, "total": 66},
+  "race_proofs": [
+    {"guard": "G1 state.Store write lock", "test": "audit burst B3/B5 + crash check", "red_without": true, "green_with": true},
+    {"guard": "G2 signup email re-check under write lock", "test": "audit burst B8", "red_without": true, "green_with": true},
+    {"guard": "G3 idempotency lookup/execute/store in one write section", "test": "audit bursts B3,B4", "red_without": true, "green_with": true},
+    {"guard": "G4 moves check-all-before-apply", "test": "audit moves atomicity", "red_without": true, "green_with": true},
+    {"guard": "G5 state.Store read lock", "test": "race detector + readwrite_load", "red_without": true, "green_with": true}
+  ],
+  "holdout": {"ran": true, "passed": 120, "failed": 0, "escapes": ["C1.81 (found on candidate 1bfe6e2, fixed by WI-7; none on the accepted SHA)"]},
+  "blockers": []
+}

@@ -36,4 +36,4 @@ criteria are carried in each `[HANDOFF]` message (generated from `ledger-A.md` r
 | WI | owner | from | clauses | status |
 |----|-------|------|---------|--------|
 | WI-7 | Builder | verdict 5 (1bfe6e2) F-1, holdout escape; R-28 | C1.81, C1.30, C1.12, C1.109 | evidence f4dd4c6, merged (rework round 1 of 2 for the fixture/import validation of WI-2/WI-5) |
-| 5 | (this commit) | WI-7 (f4dd4c6) + oracle R-27/R-28/O-8 (4d21f7a) + auditor head | pending |
+| 5 | c0f2b7b | WI-7 (f4dd4c6) + oracle R-27/R-28/O-8 (4d21f7a) + auditor head | ACCEPT (verdict 6) |
