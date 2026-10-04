@@ -1,0 +1,3 @@
+# Attack runner: stdlib Python plus IANA tz data. Joins the candidate's internal network.
+FROM python:3.12-alpine
+RUN apk add --no-cache tzdata
