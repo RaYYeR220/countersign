@@ -17,19 +17,22 @@ func combinationNotAllowed(msg string) error {
 	return apperr.New(http.StatusUnprocessableEntity, "combination_not_allowed", msg)
 }
 
-// tableFieldTypes is the wrong-type pass: table_id must be a string and table_ids an array of
-// strings (400). When table_id is present, table_ids is not type-checked: sending both is
-// reported as 422 by requestedTables, which R-35 puts ahead of the table_ids type.
+// tableFieldTypes is the wrong-type pass for the table fields: alone, table_id must be a string
+// and table_ids an array of strings (400). When both are present neither is type-checked:
+// requestedTables reports 422 whatever their types (R-43).
 func tableFieldTypes(o jsonin.Object) error {
-	if o.Has("table_id") {
-		if o.Kind("table_id") != jsonin.String {
-			return apperr.Malformed("table_id must be a string")
-		}
+	switch {
+	case bothTableFields(o):
 		return nil
+	case o.Has("table_id") && o.Kind("table_id") != jsonin.String:
+		return apperr.Malformed("table_id must be a string")
 	}
 	_, _, err := o.Strings("table_ids")
 	return err
 }
+
+// bothTableFields reports whether table_id and table_ids are both present, null included.
+func bothTableFields(o jsonin.Object) bool { return o.Has("table_id") && o.Has("table_ids") }
 
 // hasTables reports whether either table field is present.
 func hasTables(o jsonin.Object) bool { return o.Has("table_id") || o.Has("table_ids") }
@@ -48,12 +51,11 @@ func invalidID(field string) error {
 // tables → 422 combination_not_allowed.
 // ok is false when neither field is present.
 func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
-	single, hasSingle, _ := o.String("table_id")
-	hasSet := o.Has("table_ids")
-	if hasSingle && hasSet {
+	if bothTableFields(o) {
 		return nil, false, apperr.Validation("send table_id or table_ids, not both")
 	}
-	ids, _, _ = o.Strings("table_ids")
+	single, hasSingle, _ := o.String("table_id")
+	ids, hasSet, _ := o.Strings("table_ids")
 	switch {
 	case hasSingle && !validBodyID(single):
 		return nil, false, invalidID("table_id")
