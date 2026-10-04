@@ -1,0 +1,534 @@
+{
+ "meta": {
+  "base": "http://auditor-s4-a:8080",
+  "dest": "http://auditor-s4-b:8080",
+  "prev": null,
+  "now": "2026-10-04T22:56:56.299638+00:00",
+  "now_tz": "Asia/Tokyo",
+  "thu": "2026-10-29",
+  "near": "2026-10-05T08:15",
+  "far": "2026-10-05T12:00",
+  "past": "2026-10-04T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 63,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "replan": {
+   "pass": 63,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "replan",
+   "name": "replan without token -> 401",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan by a non-manager -> 403",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan without key -> 400",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan on an unknown restaurant -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan on an unknown table -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan on another restaurant's table -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval from == to -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval from after to -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval no offset -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval Z offset form -> 201 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval not a time -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval date only -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan interval empty from -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan missing table_id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan missing from -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan missing to -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan table_id a number -> 400 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan from a number -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan table_id empty -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan table_id 65 chars -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "replan bad interval beats unknown table -> 422 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "non-manager with an invalid body -> 403 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview with no considered bookings is feasible: empty assignments, 0, 0 (R-62)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview equals the brute-force optimum (assignments in reference order, moved_count, unused_seats)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview shape: plan_id, restaurant_revision, closure echo",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview body has exactly the R-65 keys; plan_id <= 64",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "closure from/to written in the restaurant offset, whole seconds, never Z (R-65)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "a Z instant is echoed in the restaurant offset (R-65)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "restaurant_revision counts the 5 successful bookings since reset",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview replay -> 200 identical (same plan_id)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans/\u00a77",
+   "clause": "S4 Replans/\u00a77"
+  },
+  {
+   "group": "replan",
+   "name": "preview changes no booking",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview adds no history",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "preview records no closure (a_3 still offered where free)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "another preview: revision unchanged by previews",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "apply by a non-manager -> 403",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply an unknown plan -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply a plan through another restaurant -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply without key -> 400",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply after an intervening restaurant revision -> 409 stale_plan",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "the original plan is stale too",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "stale apply changed nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "a write at another restaurant does not invalidate; apply -> 201 with revision +1",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply lists every considered booking in reference order",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "unmoved MEPZLMJB gains nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved P7PBXGS4: new tables, times/party/terms unchanged, revision +1",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved P7PBXGS4: one reassigned entry with plan_id and a table_ids change",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved P7PBXGS4: reassigned from/to are the full old and new sets; entry revision and terms (R-67)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved VLSMRAMN: new tables, times/party/terms unchanged, revision +1",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved VLSMRAMN: one reassigned entry with plan_id and a table_ids change",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "moved VLSMRAMN: reassigned from/to are the full old and new sets; entry revision and terms (R-67)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "unmoved ZZRPW3EH gains nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "same plan, second key -> 409 plan_already_applied",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "apply replay -> 200 original response",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Apply",
+   "clause": "S4 Apply"
+  },
+  {
+   "group": "replan",
+   "name": "closure excludes the table from available_table_ids during the closure",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "closure excludes pairs containing the table",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "outside the closure the table is offered again",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "explain: no_overlap false under the closure",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "create on the closed table -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "create a pair containing the closed table -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "amend onto the closed table -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Closures",
+   "clause": "S4 Closures"
+  },
+  {
+   "group": "replan",
+   "name": "a closure on an already-closed table is planned normally (R-73)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "restaurant_revision after the plan is 7 (once for the whole plan)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  },
+  {
+   "group": "replan",
+   "name": "second preview honours the applied closure (brute force)",
+   "ok": true,
+   "soft": false,
+   "section": "S4 Replans",
+   "clause": "S4 Replans"
+  }
+ ]
+}

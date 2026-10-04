@@ -2544,6 +2544,11 @@ def g_series(s: S):
                                      ("interval 5", 2, 5, 422, "validation_failed"), ("interval true", 2, True, 422, "validation_failed"),
                                      ("interval 1.5", 2, 1.5, 422, "validation_failed")):
         chk.expect(f"series {name} -> {st_}", adopt(X["reference"], cnt, iv), st_, code, "S3 Series")
+    Mx = s.book(s.ada, "r_ser", "s_2", f"{D}T15:00", 2)
+    r = adopt(Mx["reference"], 12, 1)
+    chk.expect("count 12 (maximum) accepted -> 201", r, 201, section="C3.37")
+    My = s.book(s.ada, "r_ser", "s_1", f"{D}T15:00", 2)
+    chk.expect("interval_weeks 4 (maximum) accepted -> 201", adopt(My["reference"], 2, 4), 201, section="C3.37")
     chk.expect("series missing anchor_reference -> 422", c.req("POST", "/series", {"count": 2, "interval_weeks": 1}, token=s.ada, key=uuid.uuid4().hex), 422,
                "validation_failed", "S3 Series")
     chk.expect("series no token -> 401", c.req("POST", "/series", {"anchor_reference": X["reference"], "count": 2, "interval_weeks": 1}, key=uuid.uuid4().hex),
