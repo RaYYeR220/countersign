@@ -29,3 +29,5 @@ criteria are carried in each `[HANDOFF]` message (generated from `ledger-A.md` r
 | 2 | 4f54736 | + oracle aligned 3f407bf (runner), builder 507019c, stylist 14083c1 | pending |
 | 2 | 4f54736 | superseded by 3 (step 3 red: Oracle model/runner faults A and B; R-25; no product finding) | superseded |
 | 3 | (this commit) | + Oracle diff fix and hardening O-1..O-4 (seat/oracle 3e387ec), auditor verdict-1; product identical to 4f54736 | pending |
+| 3 | 4f983ac | + oracle 3e387ec; product = 4f54736 | superseded by 4 (step 2 test defect in tamper generator; no product finding) |
+| 4 | (this commit) | + oracle O-5..O-7 and tamper fix (seat/oracle dc4fd3a); product = 4f54736 | pending |
