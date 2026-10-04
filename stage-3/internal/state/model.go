@@ -26,7 +26,9 @@ type Table struct {
 	Capacity int    `json:"capacity"`
 }
 
-// Restaurant is supplied by the fixture; its JSON shape is the fixture's shape.
+// Restaurant is supplied by the fixture. Its fixture fields are policy 0; Policies holds the
+// published policies in publication order (versions 1, 2, …) and Revision counts committed
+// writes touching the restaurant.
 type Restaurant struct {
 	ID                         string         `json:"id"`
 	Name                       string         `json:"name"`
@@ -37,6 +39,9 @@ type Restaurant struct {
 	OpeningHours               []OpeningHours `json:"opening_hours"`
 	Tables                     []Table        `json:"tables"`
 	Combinable                 [][]string     `json:"combinable"` // declared pairs, each in declared order
+	ManagerUserIDs             []string       `json:"manager_user_ids"`
+	Policies                   []Policy       `json:"policies"`
+	Revision                   int            `json:"revision"`
 }
 
 // Table returns the restaurant's table with the given id, or nil.
@@ -61,17 +66,21 @@ const (
 // Reservation is a booking. ID, Reference, UserID and CreatedAt never change. It occupies its
 // table over the half-open interval [StartsAt, EndsAt) while confirmed.
 type Reservation struct {
-	ID            string    `json:"id"`
-	Reference     string    `json:"reference"`
-	UserID        string    `json:"user_id"`
-	RestaurantID  string    `json:"restaurant_id"`
-	TableIDs      []string  `json:"table_ids"` // one table, or a declared pair in combinable order
-	PartySize     int       `json:"party_size"`
-	Status        string    `json:"status"`
-	StartsAtLocal string    `json:"starts_at_local"`
-	StartsAt      time.Time `json:"starts_at"` // absolute start: StartsAtLocal resolved in the restaurant's zone
-	EndsAt        time.Time `json:"ends_at"`   // StartsAt + reservation_duration_minutes (absolute)
-	CreatedAt     time.Time `json:"created_at"`
+	ID            string         `json:"id"`
+	Reference     string         `json:"reference"`
+	UserID        string         `json:"user_id"`
+	RestaurantID  string         `json:"restaurant_id"`
+	TableIDs      []string       `json:"table_ids"` // one table, or a declared pair in combinable order
+	PartySize     int            `json:"party_size"`
+	Status        string         `json:"status"`
+	StartsAtLocal string         `json:"starts_at_local"`
+	StartsAt      time.Time      `json:"starts_at"` // absolute start: StartsAtLocal resolved in the restaurant's zone
+	EndsAt        time.Time      `json:"ends_at"`   // StartsAt + reservation_duration_minutes (absolute)
+	CreatedAt     time.Time      `json:"created_at"`
+	Revision      int            `json:"revision"`       // 1 at creation, +1 per real change or cancel
+	Terms         Terms          `json:"accepted_terms"` // the policy the current booking was accepted under
+	History       []HistoryEntry `json:"history"`        // seq 1, 2, … oldest first
+	SeriesID      string         `json:"series_id"`      // "" unless adopted into a series
 }
 
 // State is the complete service state. Exported fields are the persisted state; slices keep
@@ -82,6 +91,7 @@ type State struct {
 	Reservations []*Reservation      `json:"reservations"`
 	Tokens       map[string]string   `json:"tokens"`   // bearer token -> user id
 	Receipts     map[string]*Receipt `json:"receipts"` // ReceiptKey -> outcome of an idempotent request
+	Series       map[string]*Series  `json:"series"`   // series id -> recurring agreement
 
 	usersByID         map[string]*User
 	usersByEmail      map[string]*User
@@ -105,6 +115,9 @@ func (st *State) reindex() {
 	}
 	if st.Receipts == nil {
 		st.Receipts = map[string]*Receipt{}
+	}
+	if st.Series == nil {
+		st.Series = map[string]*Series{}
 	}
 	st.usersByID = make(map[string]*User, len(st.Users))
 	st.usersByEmail = make(map[string]*User, len(st.Users))
