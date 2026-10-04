@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-r27 sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-r27 sha=0d5f337
 
 # Evidence — R-27 applied: tie-order test compares created_at only within equal starts_at
 
