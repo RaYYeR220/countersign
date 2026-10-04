@@ -1,0 +1,4 @@
+{"edits": ["internal/state/store.go::func (s *Store) Read(fn func(*State)) {\\n\\ts.mu.RLock()\\n\\tdefer s.mu.RUnlock()::func (s *Store) Read(fn func(*State)) {"],
+ "groups": "burst", "rounds": 3,
+ "with": {"data_races": 0, "hard_failures": "0", "first_race": ""},
+ "without": {"data_races": 0, "hard_failures": "0", "first_race": ""}}

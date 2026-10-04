@@ -1,0 +1,4 @@
+{"edits": ["internal/state/store.go::func (s *Store) Write(fn func(*State)) {\\n\\ts.mu.Lock()\\n\\tdefer s.mu.Unlock()::func (s *Store) Write(fn func(*State)) {"],
+ "groups": "burst", "rounds": 1,
+ "with": {"data_races": 0, "hard_failures": "0", "first_race": ""},
+ "without": {"data_races": 9, "hard_failures": "5", "first_race": " tablekeeper/internal/state.(*State).StoreReceipt(); tablekeeper/internal/api.(*Server).keyedWrite.func1();"}}

@@ -1,0 +1,53 @@
+{
+ "guard": "G3 idempotency receipt lookup + execute + store in one write section (api/idempotency.go)",
+ "edits": [
+  {
+   "file": "internal/api/idempotency.go",
+   "old": "\ts.store.Write(func(st *state.State) {\n\t\tif rc := st.Receipt(rk); rc != nil {",
+   "new": "\tvar seen *state.Receipt\n\ts.store.Read(func(st *state.State) { seen = st.Receipt(rk) })\n\ts.store.Write(func(st *state.State) {\n\t\tif rc := seen; rc != nil {",
+   "occurrences": 1
+  }
+ ],
+ "groups": "burst",
+ "rounds": 3,
+ "red_without": false,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   },
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   },
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}
