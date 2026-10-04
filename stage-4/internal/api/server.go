@@ -34,6 +34,8 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 		http.MethodGet:  s.listPolicies,
 		http.MethodPost: s.authed(s.publishPolicy),
 	})
+	mux.Handle("/restaurants/{id}/replans", methods{http.MethodPost: s.authed(s.previewReplan)})
+	mux.Handle("/restaurants/{id}/replans/{plan_id}/apply", methods{http.MethodPost: s.authed(s.applyReplan)})
 	mux.Handle("/availability", methods{http.MethodGet: s.availability})
 	mux.Handle("/reservations", methods{
 		http.MethodGet:  s.authed(s.listReservations),

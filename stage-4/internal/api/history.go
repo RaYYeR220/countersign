@@ -15,6 +15,7 @@ type historyEntryView struct {
 	Changes       []state.FieldChange `json:"changes"`
 	Revision      int                 `json:"revision"`
 	AcceptedTerms state.Terms         `json:"accepted_terms"`
+	PlanID        string              `json:"plan_id,omitempty"` // reassigned entries only (R-67)
 }
 
 // ownedRead answers with fn's view of the caller's reservation. Anyone else, signed in or not,
@@ -44,7 +45,7 @@ func (s *Server) reservationHistory(w http.ResponseWriter, r *http.Request) {
 		loc, _ := localtime.Location(st.Restaurant(res.RestaurantID).Timezone)
 		entries := make([]historyEntryView, len(res.History))
 		for i, e := range res.History {
-			entries[i] = historyEntryView{e.Seq, localtime.Format(e.At, loc), e.Event, e.Changes, e.Revision, e.AcceptedTerms}
+			entries[i] = historyEntryView{e.Seq, localtime.Format(e.At, loc), e.Event, e.Changes, e.Revision, e.AcceptedTerms, e.PlanID}
 		}
 		return map[string]any{"reference": res.Reference, "entries": entries}
 	})

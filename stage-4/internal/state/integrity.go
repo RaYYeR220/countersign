@@ -83,6 +83,9 @@ func checkIntegrity(st *State) error {
 	if err := checkSeries(st, users); err != nil {
 		return err
 	}
+	if err := checkPlans(st, restaurants); err != nil {
+		return err
+	}
 	for token, userID := range st.Tokens {
 		if token == "" || !users[userID] {
 			return invalid("token for an unknown user")
@@ -118,7 +121,7 @@ func checkRestaurant(r *Restaurant) error {
 	if checkCombinable(r) != nil {
 		return invalid("restaurant %s has invalid combinable pairs", r.ID)
 	}
-	if r.ManagerUserIDs == nil || r.Policies == nil || r.Revision < 0 {
+	if r.ManagerUserIDs == nil || r.Policies == nil || r.Revision < 0 || r.Closures == nil {
 		return invalid("restaurant %s entry incomplete", r.ID)
 	}
 	for i, p := range r.Policies {
@@ -171,7 +174,7 @@ func checkRecord(r *Restaurant, res *Reservation) error {
 	}
 	for i, e := range res.History {
 		if e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||
-			(e.Event != EventCreated && e.Event != EventChanged && e.Event != EventCancelled) {
+			(e.Event != EventCreated && e.Event != EventChanged && e.Event != EventCancelled && e.Event != EventReassigned) {
 			return invalid("reservation %s has an invalid history", res.ID)
 		}
 	}
@@ -207,6 +210,52 @@ func checkSeries(st *State, users map[string]bool) error {
 	for _, res := range st.Reservations {
 		if s := st.Series[res.SeriesID]; s != nil && s.Occurrence(res.Reference) == nil {
 			return invalid("reservation %s is not an occurrence of its series", res.ID)
+		}
+	}
+	return nil
+}
+
+// validClosure requires a table of r and a non-empty interval.
+func validClosure(r *Restaurant, c Closure) bool {
+	return r.Table(c.TableID) != nil && c.From.Before(c.To) && validID(c.PlanID)
+}
+
+// checkPlans requires every closure and stored plan to name tables and bookings of its
+// restaurant (stage 4).
+func checkPlans(st *State, restaurants map[string]*Restaurant) error {
+	if st.Plans == nil {
+		return invalid("missing collection")
+	}
+	for _, r := range restaurants {
+		for _, c := range r.Closures {
+			if !validClosure(r, c) {
+				return invalid("restaurant %s has an invalid closure", r.ID)
+			}
+		}
+	}
+	for id, p := range st.Plans {
+		if p == nil || p.ID != id || !validID(id) || p.Assignments == nil || p.MovedCount < 0 || p.UnusedSeats < 0 || p.RestaurantRevision < 0 {
+			return invalid("plan entry incomplete")
+		}
+		r := restaurants[p.RestaurantID]
+		if r == nil || !validClosure(r, p.Closure) || p.Closure.PlanID != id {
+			return invalid("plan %s has an invalid restaurant or closure", id)
+		}
+		for _, a := range p.Assignments {
+			res := st.reservationsByRefOrScan(a.Reference)
+			if res == nil || res.RestaurantID != r.ID || !checkTableSet(r, a.TableIDs) {
+				return invalid("plan %s has an invalid assignment", id)
+			}
+		}
+	}
+	return nil
+}
+
+// reservationsByRefOrScan finds a reservation before the indexes are rebuilt.
+func (st *State) reservationsByRefOrScan(ref string) *Reservation {
+	for _, res := range st.Reservations {
+		if res.Reference == ref {
+			return res
 		}
 	}
 	return nil

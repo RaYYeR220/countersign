@@ -42,6 +42,7 @@ type Restaurant struct {
 	ManagerUserIDs             []string       `json:"manager_user_ids"`
 	Policies                   []Policy       `json:"policies"`
 	Revision                   int            `json:"revision"`
+	Closures                   []Closure      `json:"closures"` // applied closures, in application order
 }
 
 // Table returns the restaurant's table with the given id, or nil.
@@ -92,6 +93,7 @@ type State struct {
 	Tokens       map[string]string   `json:"tokens"`   // bearer token -> user id
 	Receipts     map[string]*Receipt `json:"receipts"` // ReceiptKey -> outcome of an idempotent request
 	Series       map[string]*Series  `json:"series"`   // series id -> recurring agreement
+	Plans        map[string]*Plan    `json:"plans"`    // plan id -> previewed seating repair
 
 	usersByID         map[string]*User
 	usersByEmail      map[string]*User
@@ -118,6 +120,9 @@ func (st *State) reindex() {
 	}
 	if st.Series == nil {
 		st.Series = map[string]*Series{}
+	}
+	if st.Plans == nil {
+		st.Plans = map[string]*Plan{}
 	}
 	st.usersByID = make(map[string]*User, len(st.Users))
 	st.usersByEmail = make(map[string]*User, len(st.Users))
