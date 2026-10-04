@@ -208,3 +208,14 @@ Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, th
    (R-14). 5. PATCH moving a far booking to a start inside the cutoff → allowed; cutoff is measured on the current
    start (C1.97). 6. Body valid JSON but not an object → 400 `malformed_request` (R-1). 7. Signup without
    display_name / login without password → 422 (R-19 pass 2). 8. → R-24.
+
+## R-25 — Non-canonical paths (extends R-9)
+- Clauses: C1.38, C1.90 (Auditor escalation on candidate 2, differential class B)
+- Ambiguity: the spec does not define paths with a trailing slash or empty segments (`/reservations/`,
+  `/reservations//cancel`).
+- Decision: any path that is not exactly one of the documented routes — including a trailing slash, an empty
+  segment or a doubled slash — is an unknown path → 404 `not_found` with the §5 envelope. Path segments are never
+  normalised, and an empty `{reference}` or `{id}` is never matched.
+- Rationale: literal reading — only the documented paths exist; R-9 already maps unknown paths to 404.
+  Normalising would make `/reservations/` (an empty reference) silently mean the collection. Rejected: dropping
+  empty segments (the model's behaviour) and redirecting.
