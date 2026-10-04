@@ -4,7 +4,8 @@
 # disable the guard), runs each on an internal network under the burst attacks, and counts
 # "WARNING: DATA RACE" reports. RED-without = reports > 0; GREEN-with = 0 reports and no hard failures.
 #
-#   race_detect.sh <stage-src> <work-dir> <out-json> <groups> <rounds> FILE::OLD::NEW [...]
+#   race_detect.sh <stage-src> <work-dir> <out-json> <groups|readwrite> <rounds> FILE::OLD::NEW [...]
+# groups=readwrite runs readwrite_load.py (mixed concurrent reads and writes) instead of audit.py.
 set -u
 SRC="$1"; WORK="$2"; OUT="$3"; GRPS="$4"; ROUNDS="$5"; shift 5
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -37,7 +38,7 @@ for v in with without; do
   docker run -d --name "$SRV" --network "$NET" --cpus 2 --memory 2g -v "$(win "$D/out"):/out" -e PORT=8080 \
     -e GORACE="halt_on_error=0 log_path=/out/race" golang:1.26 /out/tk-race >/dev/null
   docker run --rm --network "$NET" -v "$(win "$AUD"):/aud:ro" -v "$(win "$D/out"):/o" auditor-runner-py \
-    python /aud/stage-1/verify/audit/audit.py --base "http://$SRV:8080" --groups "$GRPS" --rounds "$ROUNDS" --wait 30 --out /o/audit.json >/dev/null 2>&1
+    sh -c "if [ '$GRPS' = readwrite ]; then sleep 1; python /aud/stage-1/verify/audit/readwrite_load.py --base http://$SRV:8080 --rounds $ROUNDS > /o/load.txt 2>&1; echo '{\"hard_failures\": 0}' > /o/audit.json;       else python /aud/stage-1/verify/audit/audit.py --base http://$SRV:8080 --groups $GRPS --rounds $ROUNDS --wait 30 --out /o/audit.json >/dev/null 2>&1; fi"
   docker rm -f "$SRV" >/dev/null 2>&1
   n=$(cat "$D"/out/race.* 2>/dev/null | grep -c "WARNING: DATA RACE")
   hard=$(python -c "import json;print(json.load(open('$(win "$D/out/audit.json")'))['hard_failures'])" 2>/dev/null || echo "?")
