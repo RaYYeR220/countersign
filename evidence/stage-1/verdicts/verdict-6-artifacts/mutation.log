@@ -1,0 +1,91 @@
+473 mutants generated
+baseline: 0 failing checks (excluded from kill criteria)
+[40s] #2 internal/state/fixture.go:103 ARI -> INVALID  (killed 0, survived 0)
+[42s] #4 internal/localtime/localtime.go:86 ARI -> INVALID  (killed 0, survived 0)
+[89s] #3 internal/state/integrity.go:39 LOG -> SURVIVED  (killed 0, survived 1)
+[90s] #0 internal/state/integrity.go:80 LOG -> SURVIVED  (killed 0, survived 2)
+[112s] #6 internal/jsonin/jsonin.go:144 NEG -> KILLED  (killed 1, survived 2)
+[112s] #7 internal/state/fixture.go:214 LOG -> KILLED  (killed 2, survived 2)
+[143s] #5 internal/state/integrity.go:60 CB -> KILLED  (killed 3, survived 2)
+[145s] #1 internal/api/moves.go:64 NEG -> KILLED  (killed 4, survived 2)
+[185s] #10 internal/localtime/localtime.go:272 LOG -> SURVIVED  (killed 4, survived 3)
+[198s] #12 internal/localtime/localtime.go:81 NEG -> KILLED  (killed 5, survived 3)
+[203s] #9 internal/state/integrity.go:65 NEG -> KILLED  (killed 6, survived 3)
+[207s] #8 internal/api/idempotency.go:67 NEG -> KILLED  (killed 7, survived 3)
+[214s] #13 internal/jsonin/jsonin.go:82 NEG -> KILLED  (killed 8, survived 3)
+[246s] #11 internal/api/respond.go:59 INV -> KILLED  (killed 9, survived 3)
+[248s] #15 internal/localtime/localtime.go:216 LOG -> SURVIVED  (killed 9, survived 4)
+[253s] #16 internal/state/integrity.go:33 LOG -> SURVIVED  (killed 9, survived 5)
+[280s] #14 internal/api/auth.go:97 NEG -> KILLED  (killed 10, survived 5)
+[327s] #18 internal/api/auth.go:124 NEG -> KILLED  (killed 11, survived 5)
+[328s] #17 internal/api/availability.go:97 NEG -> KILLED  (killed 12, survived 5)
+[329s] #22 internal/jsonin/jsonin.go:112 ARI -> INVALID  (killed 12, survived 5)
+[335s] #19 internal/state/reservations.go:45 LOG -> KILLED  (killed 13, survived 5)
+[362s] #20 internal/snapshot/snapshot.go:64 NEG -> KILLED  (killed 14, survived 5)
+[369s] #23 internal/jsonin/jsonin.go:111 LOG -> SURVIVED  (killed 14, survived 6)
+[409s] #21 internal/api/reservations.go:194 NEG -> KILLED  (killed 15, survived 6)
+[410s] #27 internal/state/fixture.go:192 ARI -> INVALID  (killed 15, survived 6)
+[415s] #24 internal/state/integrity.go:97 NEG -> KILLED  (killed 16, survived 6)
+[443s] #25 internal/api/reservations.go:169 NEG -> KILLED  (killed 17, survived 6)
+[450s] #26 internal/api/moves.go:33 NEG -> KILLED  (killed 18, survived 6)
+[466s] #31 internal/jsonin/jsonin.go:25 NEG -> KILLED  (killed 19, survived 6)
+[467s] #32 internal/api/availability.go:34 ARI -> INVALID  (killed 19, survived 6)
+[492s] #28 internal/state/integrity.go:59 LOG -> KILLED  (killed 20, survived 6)
+[498s] #29 internal/snapshot/snapshot.go:57 NEG -> KILLED  (killed 21, survived 6)
+[519s] #35 internal/api/testctl.go:18 NEG -> KILLED  (killed 22, survived 6)
+[533s] #30 internal/state/fixture.go:229 NEG -> KILLED  (killed 23, survived 6)
+[552s] #33 internal/localtime/localtime.go:241 LOG -> KILLED  (killed 24, survived 6)
+[561s] #36 internal/state/fixture.go:57 LOG -> SURVIVED  (killed 24, survived 7)
+[578s] #34 internal/snapshot/snapshot.go:151 NEG -> KILLED  (killed 25, survived 7)
+[594s] #38 internal/jsonin/jsonin.go:25 LOG -> SURVIVED  (killed 25, survived 8)
+[612s] #37 internal/api/reservations.go:87 NEG -> KILLED  (killed 26, survived 8)
+[643s] #39 internal/api/availability.go:121 LOG -> KILLED  (killed 27, survived 8)
+[660s] #40 internal/state/integrity.go:88 LOG -> KILLED  (killed 28, survived 8)
+[676s] #41 internal/api/availability.go:97 LOG -> KILLED  (killed 29, survived 8)
+[693s] #42 internal/state/integrity.go:68 LOG -> KILLED  (killed 30, survived 8)
+[701s] #44 internal/snapshot/snapshot.go:133 NEG -> SURVIVED  (killed 30, survived 9)
+[729s] #43 internal/state/integrity.go:33 NEG -> KILLED  (killed 31, survived 9)
+[736s] #46 internal/jsonin/jsonin.go:144 LOG -> SURVIVED  (killed 31, survived 10)
+[749s] #48 internal/state/fixture.go:102 NEG -> KILLED  (killed 32, survived 10)
+[774s] #45 internal/api/idempotency.go:49 NEG -> KILLED  (killed 33, survived 10)
+[803s] #47 internal/state/integrity.go:89 CB -> KILLED  (killed 34, survived 10)
+[840s] #49 internal/state/model.go:105 NEG -> KILLED  (killed 35, survived 10)
+[848s] #50 internal/api/amend.go:51 NEG -> KILLED  (killed 36, survived 10)
+[872s] #51 internal/state/integrity.go:39 NEG -> KILLED  (killed 37, survived 10)
+[889s] #55 internal/state/fixture.go:99 NEG -> KILLED  (killed 38, survived 10)
+[894s] #54 internal/snapshot/snapshot.go:114 LOG -> SURVIVED  (killed 38, survived 11)
+[898s] #52 internal/api/reservations.go:174 NEG -> KILLED  (killed 39, survived 11)
+[935s] #53 internal/state/fixture.go:214 NEG -> KILLED  (killed 40, survived 11)
+[948s] #56 internal/api/auth.go:54 NEG -> KILLED  (killed 41, survived 11)
+[988s] #57 internal/state/integrity.go:80 NEG -> KILLED  (killed 42, survived 11)
+[999s] #58 internal/api/availability.go:79 NEG -> KILLED  (killed 43, survived 11)
+[1006s] #60 internal/state/fixture.go:43 NEG -> KILLED  (killed 44, survived 11)
+[1025s] #63 internal/api/server.go:53 NEG -> KILLED  (killed 45, survived 11)
+[1028s] #64 internal/api/auth.go:48 ARI -> INVALID  (killed 45, survived 11)
+[1033s] #59 internal/api/auth.go:65 LOG -> KILLED  (killed 46, survived 11)
+[1036s] #66 internal/state/fixture.go:263 ARI -> INVALID  (killed 46, survived 11)
+[1093s] #65 internal/state/integrity.go:33 LOG -> SURVIVED  (killed 46, survived 12)
+[1103s] #61 internal/state/integrity.go:88 NEG -> KILLED  (killed 47, survived 12)
+[1121s] #62 internal/state/integrity.go:88 LOG -> KILLED  (killed 48, survived 12)
+[1124s] #68 internal/state/fixture.go:91 NEG -> KILLED  (killed 49, survived 12)
+[1134s] #67 internal/api/auth.go:134 NEG -> KILLED  (killed 50, survived 12)
+[1211s] #69 internal/api/idempotency.go:39 NEG -> KILLED  (killed 51, survived 12)
+[1221s] #70 internal/localtime/localtime.go:245 INV -> KILLED  (killed 52, survived 12)
+[1221s] #71 internal/api/availability.go:105 LOG -> KILLED  (killed 53, survived 12)
+[1229s] #72 internal/api/reservations.go:182 NEG -> KILLED  (killed 54, survived 12)
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 5,
+ "generated": 473,
+ "evaluated": 73,
+ "killed": 54,
+ "survived": 12,
+ "invalid": 7,
+ "kill_rate": 0.818,
+ "elapsed_s": 1230,
+ "baseline_failing": [],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ]
+}
