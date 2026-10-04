@@ -62,4 +62,29 @@ func TestUpgradeFromStage2Export(t *testing.T) {
 	if seed := decodeView(t, e.req("GET", "/reservations/SEED01", token, "", "")); seed.Status != "cancelled" || seed.Revision != 1 {
 		t.Errorf("seed = %+v", seed)
 	}
+
+	// An imported booking can anchor a series (C3.48); the anchor itself stays unchanged.
+	var pairBooked reservationView
+	json.Unmarshal([]byte(original["pair-1"]), &pairBooked)
+	rec = e.req("POST", "/series", token, "series-1", `{"anchor_reference":"`+pairBooked.Reference+`","count":3,"interval_weeks":2}`)
+	if rec.Code != 201 {
+		t.Fatalf("adopt imported anchor = %d %s", rec.Code, rec.Body)
+	}
+	var series struct {
+		SeriesID    string `json:"series_id"`
+		Occurrences []struct {
+			Index       int
+			Reference   string
+			Reservation reservationView
+		}
+	}
+	json.Unmarshal(rec.Body.Bytes(), &series)
+	if len(series.Occurrences) != 3 || series.Occurrences[0].Reference != pairBooked.Reference ||
+		series.Occurrences[0].Reservation.Revision != 1 || series.Occurrences[2].Reservation.StartsAtLocal != "2027-02-04T19:00" ||
+		len(series.Occurrences[2].Reservation.TableIDs) != 2 {
+		t.Errorf("series = %s", rec.Body)
+	}
+	if rec := e.req("GET", "/series/"+series.SeriesID, token, "", ""); rec.Code != 200 {
+		t.Errorf("GET series = %d %s", rec.Code, rec.Body)
+	}
 }
