@@ -1,0 +1,51 @@
+{
+ "guard": "G7 an anchor already in a series cannot be adopted again (api/series.go)",
+ "edits": [
+  {
+   "file": "internal/api/series.go",
+   "old": "\t\tif anchor.SeriesID != \"\" {\n\t\t\treturn nil, alreadyInSeries()\n\t\t}\n",
+   "new": "",
+   "occurrences": 1
+  }
+ ],
+ "groups": "series,s3burst",
+ "rounds": 2,
+ "red_without": true,
+ "green_with": false,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:s3burst/r0 R3 10 concurrent adoptions of one anchor: one 201, nine already_in_series, 2 new bookings",
+     "audit:s3burst/r1 R3 10 concurrent adoptions of one anchor: one 201, nine already_in_series, 2 new bookings",
+     "audit:series/65-character anchor_reference -> 422 before 404 (R-60)",
+     "audit:series/adopting a generated occurrence -> 409 already_in_series",
+     "audit:series/adopting the anchor again -> 409 already_in_series",
+     "audit:series/empty anchor_reference -> 422 before 404 (R-60)"
+    ],
+    "n": 6,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:series/65-character anchor_reference -> 422 before 404 (R-60)",
+     "audit:series/empty anchor_reference -> 422 before 404 (R-60)"
+    ],
+    "n": 2,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ }
+}

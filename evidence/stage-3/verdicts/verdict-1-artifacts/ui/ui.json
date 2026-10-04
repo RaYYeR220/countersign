@@ -1,0 +1,1010 @@
+{
+ "checks": 116,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "u_routes": {
+   "pass": 9,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_auth": {
+   "pass": 11,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_grid": {
+   "pass": 6,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_click_rules": {
+   "pass": 8,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_booking": {
+   "pass": 23,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_conflict": {
+   "pass": 5,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_lost_after": {
+   "pass": 6,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_lost_before": {
+   "pass": 6,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_out_of_order": {
+   "pass": 4,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_lookup": {
+   "pass": 6,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_states_distinct": {
+   "pass": 2,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_keyboard": {
+   "pass": 5,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_layout": {
+   "pass": 18,
+   "fail": 0,
+   "soft": 0
+  },
+  "u_import": {
+   "pass": 7,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "u_routes",
+   "name": "route / returns 200 HTML",
+   "ok": true,
+   "soft": false,
+   "section": "C2.3,C2.4",
+   "clause": "C2.3,C2.4"
+  },
+  {
+   "group": "u_routes",
+   "name": "route /signup returns 200 HTML",
+   "ok": true,
+   "soft": false,
+   "section": "C2.3,C2.4",
+   "clause": "C2.3,C2.4"
+  },
+  {
+   "group": "u_routes",
+   "name": "route /login returns 200 HTML",
+   "ok": true,
+   "soft": false,
+   "section": "C2.3,C2.4",
+   "clause": "C2.3,C2.4"
+  },
+  {
+   "group": "u_routes",
+   "name": "route /lookup returns 200 HTML",
+   "ok": true,
+   "soft": false,
+   "section": "C2.3,C2.4",
+   "clause": "C2.3,C2.4"
+  },
+  {
+   "group": "u_routes",
+   "name": "/ exposes restaurant-select",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_routes",
+   "name": "/ exposes date-input",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_routes",
+   "name": "/ exposes party-size-input",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_routes",
+   "name": "/ exposes search-button",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_routes",
+   "name": "restaurant-select option values are restaurant ids",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_auth",
+   "name": "auth-error absent before any error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "signup signs in: current-user shows the display name",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "current-user visible on / when signed in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "current-user visible on /lookup when signed in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "current-user visible on /login when signed in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "current-user visible on /signup when signed in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "logout-button present when signed in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "logout removes current-user",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "signup with a taken email shows auth-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "wrong password shows auth-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_auth",
+   "name": "login works",
+   "ok": true,
+   "soft": false,
+   "section": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)",
+   "clause": "C2.16,C2.17,C2.18,C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_grid",
+   "name": "availability-grid shown after search",
+   "ok": true,
+   "soft": false,
+   "section": "C2.21,C2.25,C2.26,C2.28,C2.29",
+   "clause": "C2.21,C2.25,C2.26,C2.28,C2.29"
+  },
+  {
+   "group": "u_grid",
+   "name": "party 2: grid cells mirror GET /availability (20 slots)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.26,C2.28,C2.55 (R-39)",
+   "clause": "C2.26,C2.28,C2.55 (R-39)"
+  },
+  {
+   "group": "u_grid",
+   "name": "party 7 (pairs only): grid cells mirror GET /availability (20 slots)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.26,C2.28,C2.55 (R-39)",
+   "clause": "C2.26,C2.28,C2.55 (R-39)"
+  },
+  {
+   "group": "u_grid",
+   "name": "party 7: no cell for the pair whose summed capacity is below the party (R-39)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.55 (R-39)",
+   "clause": "C2.55 (R-39)"
+  },
+  {
+   "group": "u_grid",
+   "name": "closed day shows no-slots; availability-grid absent (R-29)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.27 (R-29)",
+   "clause": "C2.27 (R-29)"
+  },
+  {
+   "group": "u_grid",
+   "name": "day with slots: no-slots absent (R-29)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.25,C2.27 (R-29)",
+   "clause": "C2.25,C2.27 (R-29)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "signed out: current-user and logout-button absent (R-29)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.19,C2.20 (R-29)",
+   "clause": "C2.19,C2.20 (R-29)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "clicking an unavailable single cell does nothing",
+   "ok": true,
+   "soft": false,
+   "section": "C2.29 (R-39)",
+   "clause": "C2.29 (R-39)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "clicking an unavailable combination cell does nothing",
+   "ok": true,
+   "soft": false,
+   "section": "C2.29 (R-39)",
+   "clause": "C2.29 (R-39)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "signed out: clicking an available cell navigates to /login (R-40)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.30 (R-40)",
+   "clause": "C2.30 (R-40)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "after sign-in: back on / with the search restored and the form open for that cell (R-40)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.30 (R-40)",
+   "clause": "C2.30 (R-40)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "after sign-in: the grid shows the same search (R-40)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.30 (R-40)",
+   "clause": "C2.30 (R-40)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "signed out: using the lookup screen navigates to /login (R-40)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-40)",
+   "clause": "C2.34 (R-40)"
+  },
+  {
+   "group": "u_click_rules",
+   "name": "after sign-in: returns to /lookup (R-40)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-40)",
+   "clause": "C2.34 (R-40)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: booking-form opens; booking-summary names every table, HH:MM and the ISO date (R-32)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.57 (R-32)",
+   "clause": "C2.31,C2.57 (R-32)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: booking-party-size pre-filled from the search",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: confirmation-reference is exactly a reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33",
+   "clause": "C2.33"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: confirmation-details has restaurant, table label, HH:MM and ISO date (R-32)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33 (R-32)",
+   "clause": "C2.33 (R-32)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: confirmation-tables lists every table label",
+   "ok": true,
+   "soft": false,
+   "section": "C2.55,C2.56,C2.57",
+   "clause": "C2.55,C2.56,C2.57"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: no booking-error on success",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: reservation exists server-side for the shown reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33",
+   "clause": "C2.33"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: booking-form stays on screen after success",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: unchanged resubmit -> same reference, no booking-error, no new booking",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: resubmit reused the idempotency key and body",
+   "ok": true,
+   "soft": false,
+   "section": "C2.32,C1.62 (R-38)",
+   "clause": "C2.32,C1.62 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "single: changing a field makes a new request (new key)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: booking-form opens; booking-summary names every table, HH:MM and the ISO date (R-32)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.57 (R-32)",
+   "clause": "C2.31,C2.57 (R-32)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: booking-party-size pre-filled from the search",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: confirmation-reference is exactly a reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33",
+   "clause": "C2.33"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: confirmation-details has restaurant, table label, HH:MM and ISO date (R-32)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33 (R-32)",
+   "clause": "C2.33 (R-32)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: confirmation-tables lists every table label",
+   "ok": true,
+   "soft": false,
+   "section": "C2.55,C2.56,C2.57",
+   "clause": "C2.55,C2.56,C2.57"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: no booking-error on success",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: reservation exists server-side for the shown reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.33",
+   "clause": "C2.33"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: booking-form stays on screen after success",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: unchanged resubmit -> same reference, no booking-error, no new booking",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: resubmit reused the idempotency key and body",
+   "ok": true,
+   "soft": false,
+   "section": "C2.32,C1.62 (R-38)",
+   "clause": "C2.32,C1.62 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair: changing a field makes a new request (new key)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.31,C2.32 (R-38)",
+   "clause": "C2.31,C2.32 (R-38)"
+  },
+  {
+   "group": "u_booking",
+   "name": "pair booked from the UI holds both tables",
+   "ok": true,
+   "soft": false,
+   "section": "C2.55,C2.56,C2.57",
+   "clause": "C2.55,C2.56,C2.57"
+  },
+  {
+   "group": "u_conflict",
+   "name": "conflict setup: another client took the table",
+   "ok": true,
+   "soft": false,
+   "section": "harness",
+   "clause": "harness"
+  },
+  {
+   "group": "u_conflict",
+   "name": "409 shows booking-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_conflict",
+   "name": "409: no confirmation for that attempt",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_conflict",
+   "name": "409: form and inputs preserved",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_conflict",
+   "name": "409 refreshes availability (cell now false)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: lost response shows non-empty booking-uncertain",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: no booking-error and no confirmation while uncertain",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: retry uses the same idempotency key and body",
+   "ok": true,
+   "soft": false,
+   "section": "C2.8,C1.62 (R-38)",
+   "clause": "C2.8,C1.62 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: retry shows the original reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: retry removes booking-uncertain and booking-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_after",
+   "name": "lost after commit: exactly one booking exists",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: lost response shows non-empty booking-uncertain",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: no booking-error and no confirmation while uncertain",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: retry uses the same idempotency key and body",
+   "ok": true,
+   "soft": false,
+   "section": "C2.8,C1.62 (R-38)",
+   "clause": "C2.8,C1.62 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: retry shows the original reference",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: retry removes booking-uncertain and booking-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lost_before",
+   "name": "lost before commit: exactly one booking exists",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_out_of_order",
+   "name": "a loading state is shown while a search is in flight",
+   "ok": true,
+   "soft": true,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_out_of_order",
+   "name": "late response of search A does not replace search B's grid",
+   "ok": true,
+   "soft": false,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_out_of_order",
+   "name": "after out-of-order responses (B): grid cells mirror GET /availability (20 slots)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.26,C2.28,C2.55 (R-39)",
+   "clause": "C2.26,C2.28,C2.55 (R-39)"
+  },
+  {
+   "group": "u_out_of_order",
+   "name": "booking form after out-of-order search describes B",
+   "ok": true,
+   "soft": true,
+   "section": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)",
+   "clause": "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)"
+  },
+  {
+   "group": "u_lookup",
+   "name": "lookup shows reservation-detail with status exactly 'confirmed'",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-29)",
+   "clause": "C2.34 (R-29)"
+  },
+  {
+   "group": "u_lookup",
+   "name": "reservation-tables lists every table label",
+   "ok": true,
+   "soft": false,
+   "section": "C2.55,C2.56,C2.57",
+   "clause": "C2.55,C2.56,C2.57"
+  },
+  {
+   "group": "u_lookup",
+   "name": "cancel -> status exactly 'cancelled', cancel button gone",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-29)",
+   "clause": "C2.34 (R-29)"
+  },
+  {
+   "group": "u_lookup",
+   "name": "cancel really happened server-side",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-29)",
+   "clause": "C2.34 (R-29)"
+  },
+  {
+   "group": "u_lookup",
+   "name": "unknown reference -> reservation-error",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-29)",
+   "clause": "C2.34 (R-29)"
+  },
+  {
+   "group": "u_lookup",
+   "name": "refused cancel (inside cutoff) -> reservation-error, still confirmed",
+   "ok": true,
+   "soft": false,
+   "section": "C2.34 (R-29)",
+   "clause": "C2.34 (R-29)"
+  },
+  {
+   "group": "u_states_distinct",
+   "name": "available and unavailable cells look different",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_states_distinct",
+   "name": "selected cell is visually marked",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_keyboard",
+   "name": "search controls reachable by Tab",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_keyboard",
+   "name": "keyboard focus is visible on controls",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_keyboard",
+   "name": "an available cell opens the form from the keyboard (Enter)",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_keyboard",
+   "name": "booking-submit reachable by Tab",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_keyboard",
+   "name": "every visible input has a label",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 375px on /",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 375px on /signup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 375px on /login",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 375px on /lookup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal page scroll at 375px with the grid",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 375px with the booking form",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 768px on /",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 768px on /signup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 768px on /login",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 768px on /lookup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal page scroll at 768px with the grid",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 768px with the booking form",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 1280px on /",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 1280px on /signup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 1280px on /login",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 1280px on /lookup",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal page scroll at 1280px with the grid",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_layout",
+   "name": "no horizontal scroll at 1280px with the booking form",
+   "ok": true,
+   "soft": false,
+   "section": "C2.11,C2.12,C2.14,C2.15",
+   "clause": "C2.11,C2.12,C2.14,C2.15"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: candidate imports the previous stage's export",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: sign in",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: a pre-upgrade reference works on the lookup screen",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: re-import between requests -> 204",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: still signed in without a reload",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: pending retry keeps key and body across the import",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  },
+  {
+   "group": "u_import",
+   "name": "UI upgrade: retry after import recovers the original confirmation",
+   "ok": true,
+   "soft": false,
+   "section": "C2.35,C2.36,C2.37 (R-30,R-37)",
+   "clause": "C2.35,C2.36,C2.37 (R-30,R-37)"
+  }
+ ]
+}

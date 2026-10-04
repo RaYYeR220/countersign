@@ -1,0 +1,53 @@
+{
+ "guard": "G8 adoption checks every occurrence before writing any (api/series.go planOccurrences)",
+ "edits": [
+  {
+   "file": "internal/api/series.go",
+   "old": "\t\tpol, start, end, err := st.CheckBooking(rest, anchor.TableIDs, local, anchor.PartySize, nil)\n\t\tif err != nil {\n\t\t\treturn nil, err\n\t\t}",
+   "new": "\t\tpol, start, end, err := st.CheckBooking(rest, anchor.TableIDs, local, anchor.PartySize, nil)\n\t\tif err != nil {\n\t\t\treturn planned, nil\n\t\t}",
+   "occurrences": 1
+  }
+ ],
+ "groups": "series",
+ "rounds": 1,
+ "red_without": true,
+ "green_with": false,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:series/65-character anchor_reference -> 422 before 404 (R-60)",
+     "audit:series/empty anchor_reference -> 422 before 404 (R-60)",
+     "audit:series/failed adoption created nothing",
+     "audit:series/first failing occurrence decides: occ 1 capacity (v3 cap 5) before occ 2 hours (v2)",
+     "audit:series/occurrence 2 collides -> 409 table_unavailable",
+     "audit:series/occurrence on spring-forward night (02:30 missing) -> 422 invalid_local_time",
+     "audit:series/occurrence outside the selected policy's hours -> 422",
+     "audit:series/same key after the failure is a first use -> 201"
+    ],
+    "n": 8,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:series/65-character anchor_reference -> 422 before 404 (R-60)",
+     "audit:series/empty anchor_reference -> 422 before 404 (R-60)"
+    ],
+    "n": 2,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ }
+}
