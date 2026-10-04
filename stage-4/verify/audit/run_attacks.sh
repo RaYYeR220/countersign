@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the stage-3 attack battery against a built candidate image.
+# Run the stage-4 attack battery against a built candidate image.
 #
 #   [PREV_IMG=<accepted stage-1 image>] [PREV2_IMG=<accepted stage-2 image>] run_attacks.sh <candidate-image> <clean-clone-dir> <out-dir> [audit.py args...]
 #
@@ -10,13 +10,15 @@
 # import into A). Stops and removes everything it started. Exit code is audit.py's.
 set -u
 IMG="$1"; CLONE="$2"; OUT="$3"; shift 3
-NET=auditor-s3-int
-A=auditor-s3-a
-B=auditor-s3-b
-P=auditor-s3-p
-Q=auditor-s3-q
+NET=auditor-s4-int
+A=auditor-s4-a
+B=auditor-s4-b
+P=auditor-s4-p
+Q=auditor-s4-q
+R=auditor-s4-r
 PREV_IMG="${PREV_IMG:-}"
 PREV2_IMG="${PREV2_IMG:-}"
+PREV3_IMG="${PREV3_IMG:-}"
 RUNNER_IMG=auditor-runner-img
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export MSYS_NO_PATHCONV=1
@@ -25,14 +27,14 @@ win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "
 cleanup() {
   docker logs "$A" > "$OUT/candidate-a.log" 2>&1 || true
   docker logs "$B" > "$OUT/candidate-b.log" 2>&1 || true
-  docker rm -f "$A" "$B" "$P" "$Q" >/dev/null 2>&1 || true
+  docker rm -f "$A" "$B" "$P" "$Q" "$R" >/dev/null 2>&1 || true
   docker network rm "$NET" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 mkdir -p "$OUT"
 docker image inspect "$RUNNER_IMG" >/dev/null 2>&1 || docker build -q -t "$RUNNER_IMG" -f "$HERE/Dockerfile.runner" "$HERE" >/dev/null
-docker rm -f "$A" "$B" "$P" "$Q" >/dev/null 2>&1 || true
+docker rm -f "$A" "$B" "$P" "$Q" "$R" >/dev/null 2>&1 || true
 docker network rm "$NET" >/dev/null 2>&1 || true
 docker network create --internal "$NET" >/dev/null
 for c in "$A" "$B"; do
@@ -47,10 +49,14 @@ if [ -n "$PREV2_IMG" ]; then
   docker run -d --name "$Q" --network "$NET" --cpus 2 --memory 2g -e PORT=8080 "$PREV2_IMG" >/dev/null
   PREV_ARGS+=(--prev2 "http://$Q:8080")
 fi
+if [ -n "$PREV3_IMG" ]; then
+  docker run -d --name "$R" --network "$NET" --cpus 2 --memory 2g -e PORT=8080 "$PREV3_IMG" >/dev/null
+  PREV_ARGS+=(--prev3 "http://$R:8080")
+fi
 docker run --rm --network "$NET" --cpus 2 --memory 1g \
   -v "$(win "$CLONE"):/repo:ro" -v "$(win "$OUT"):/out" \
   -e BURST_DIR=/repo/factory/tools -e PYTHONUNBUFFERED=1 \
-  "$RUNNER_IMG" python /repo/stage-3/verify/audit/audit.py \
+  "$RUNNER_IMG" python /repo/stage-4/verify/audit/audit.py \
   --base "http://$A:8080" --dest "http://$B:8080" "${PREV_ARGS[@]}" --out /out/attacks.json "$@"
 rc=$?
 docker stats --no-stream --format '{{.Name}} cpu={{.CPUPerc}} mem={{.MemUsage}}' "$A" "$B" > "$OUT/stats.txt" 2>&1 || true

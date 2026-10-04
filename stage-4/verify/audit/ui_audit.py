@@ -3,7 +3,7 @@
 
 Runs in the auditor-ui-runner container on the candidate's internal network:
 
-    python ui_audit.py --base http://auditor-s3-a:8080 [--prev http://auditor-s3-p:8080] --out /out/ui.json --shots /out/shots
+    python ui_audit.py --base http://auditor-s4-a:8080 [--prev http://auditor-s4-p:8080] --out /out/ui.json --shots /out/shots
 
 Covers: routes return HTML; every data-testid contract; grid cells mirror GET /availability (single and combination
 cells); clicking rules; booking, combination booking, confirmation; resubmit returns the same reference; a changed field

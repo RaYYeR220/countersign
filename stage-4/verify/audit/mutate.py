@@ -7,9 +7,9 @@ the Auditor battery (audit.py) and, when given, the Oracle acceptance suite (pyt
 KILLED when it crashes, never becomes healthy, or any check that passed on the unmutated baseline
 fails; SURVIVED otherwise; INVALID when it does not compile (excluded from the rate).
 
-    python mutate.py --src <clean-clone>/stage-3 --work C:/countersign/tmp/aud-mut-<k> \
+    python mutate.py --src <clean-clone>/stage-4 --work C:/countersign/tmp/aud-mut-<k> \
         --targets internal/state,internal/api --budget 1200 --workers 4 --seed 1 \
-        [--oracle <clean-clone>/stage-3/verify/oracle] --out <dir>/mutation.json
+        [--oracle <clean-clone>/stage-4/verify/oracle] --out <dir>/mutation.json
 
 Survivors are work items for the Oracle (stronger tests), never for implementers.
 """
@@ -179,7 +179,7 @@ def evaluate_docker(root: Path, scratch: Path, a, tag: str) -> dict:
         "/w/tk >/dev/null 2>/w/server.err & P=$!; i=0; "
         "until wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1; do i=$((i+1)); "
         "if [ $i -gt 150 ]; then touch /w/nohealth; exit 0; fi; sleep 0.1; done; "
-        f"timeout {kt} python /aud/stage-3/verify/audit/audit.py --base http://127.0.0.1:8080 "
+        f"timeout {kt} python /aud/stage-4/verify/audit/audit.py --base http://127.0.0.1:8080 "
         f"--rounds {getattr(a, 'rounds', 1)} --groups {a.groups} --wait 10 --out /w/audit.json >/dev/null 2>&1; echo $? >/w/audit.rc; "
         + (f"timeout {kt} python -m pytest /oracle -q -p no:cacheprovider --base-url http://127.0.0.1:8080 "
            "--junitxml=/w/oracle.xml >/dev/null 2>&1; " if a.oracle else "")

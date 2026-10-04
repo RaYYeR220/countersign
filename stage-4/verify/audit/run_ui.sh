@@ -8,9 +8,9 @@
 # <out-dir>/ui.json, screenshots of every named state to <out-dir>/shots/. Stops what it starts.
 set -u
 IMG="$1"; ROOT="$2"; OUT="$3"; shift 3
-NET=auditor-s3-ui-net
-A=auditor-s3-ua
-P=auditor-s3-up
+NET=auditor-s4-ui-net
+A=auditor-s4-ua
+P=auditor-s4-up
 PREV_IMG="${PREV_IMG:-}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export MSYS_NO_PATHCONV=1
@@ -35,4 +35,4 @@ fi
 docker run --rm --network "$NET" --shm-size 1g -v "$(win "$ROOT"):/repo:ro" -v "$(win "$OUT"):/out" \
   -e BURST_DIR=/repo/factory/tools -e PYTHONUNBUFFERED=1 -e PYTHONDONTWRITEBYTECODE=1 -w /tmp auditor-ui-runner \
   sh -c "until python -c \"import urllib.request;urllib.request.urlopen('http://$A:8080/health',timeout=1)\" 2>/dev/null; do sleep 0.2; done; \
-         python /repo/stage-3/verify/audit/ui_audit.py --base http://$A:8080 ${PREV_ARGS[*]} --out /out/ui.json --shots /out/shots $*"
+         python /repo/stage-4/verify/audit/ui_audit.py --base http://$A:8080 ${PREV_ARGS[*]} --out /out/ui.json --shots /out/shots $*"
