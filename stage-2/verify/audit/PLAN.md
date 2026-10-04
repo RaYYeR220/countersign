@@ -53,7 +53,10 @@ clone of c0f2b7b `stage-1/` if absent).
 - Browser: runner and harness mechanics verified (Chromium launches on the internal network); the checks themselves are
   validated against the first build that serves the UI.
 
-## Open points for rulings (soft until ruled)
+## Rulings applied
+R-34 and R-35 (stage-2 rulings, main 4ddffa4): the six open points below are now hard checks — `[]` → 422; non-string/null members → 400; unknown or foreign table → 404 before the undeclared-pair 422; full R-34 error order (7 precedence checks); pair responses in declared `combinable` order; reordered pair under the same key → 409; 10 refused reset fixtures (unknown table in a pair, pair of one/three, self-pair, duplicate pair either order, seed naming an undeclared pair, seed with both/neither table fields, unknown seed status), each with state unchanged. Upgrade: two-part reading confirmed.
+
+## Former open points (answered by R-34/R-35)
 1. `table_ids: []` — 422 `validation_failed`?  2. `table_ids` with non-string members — 400?  3. a pair naming an unknown
    table or a table of another restaurant — 404 `not_found` or 422 `combination_not_allowed`?  4. response order of a
    pair's `table_ids` — request order, `combinable` order, or any?  5. same key with the pair listed in the other order —

@@ -1605,6 +1605,30 @@ def g_combo(s: S, dest: Client | None = None):
     def post(body, tok=None, key=None):
         return c.req("POST", "/reservations", body, token=tok or s.ada, key=key or uuid.uuid4().hex)
 
+    # R-35: reset refuses malformed combinable / seeds with 422 and leaves state unchanged
+    def fx_with(fn):
+        fx = json.loads(json.dumps(fixture2(ctx)))
+        fn(fx)
+        return fx
+    RC = lambda fx: fx["restaurants"][0]  # noqa: E731
+    for name, fx in (("combinable names an unknown table", fx_with(lambda f: RC(f)["combinable"].append(["c_1", "zz"]))),
+                     ("combinable pair of one", fx_with(lambda f: RC(f)["combinable"].append(["c_4"]))),
+                     ("combinable pair of three", fx_with(lambda f: RC(f)["combinable"].append(["c_1", "c_3", "c_4"]))),
+                     ("table paired with itself", fx_with(lambda f: RC(f)["combinable"].append(["c_4", "c_4"]))),
+                     ("duplicate pair, same order", fx_with(lambda f: RC(f)["combinable"].append(["c_2", "c_3"]))),
+                     ("duplicate pair, other order", fx_with(lambda f: RC(f)["combinable"].append(["c_3", "c_2"]))),
+                     ("seeded table_ids names an undeclared pair", fx_with(lambda f: f["reservations"][0].update(table_ids=["c_1", "c_4"]))),
+                     ("seed with both table_id and table_ids", fx_with(lambda f: f["reservations"][0].update(table_id="c_3"))),
+                     ("seed with neither table_id nor table_ids", fx_with(lambda f: f["reservations"][0].pop("table_ids"))),
+                     ("seed status other than confirmed/cancelled", fx_with(lambda f: f["reservations"][1].update(status="pending")))):
+        c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
+        before = c.req("GET", "/_test/export").json
+        rr = c.req("POST", "/_test/reset", fx, timeout=12)
+        chk.expect(f"reset refuses fixture: {name} -> 422 (R-35)", rr, 422, "validation_failed", "S2 Model")
+        chk.check(f"reset refuses fixture: {name}: state unchanged", c.req("GET", "/_test/export").json == before, "unchanged", None, rr.req, "S2 Model")
+    c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
+    s.ada, s.bob = s.login(ADA), s.login(BOB)
+
     # availability options
     for party, hhmm, free, why in ((2, "19:00", ALL, "cancelled seed does not block"), (7, "19:00", ALL, "pairs only above single capacity"),
                                    (5, "19:00", ALL, "capacity sum filters pairs"), (2, "13:00", {"c_1", "c_2"}, "seeded pair occupies both members"),
@@ -1639,8 +1663,8 @@ def g_combo(s: S, dest: Client | None = None):
     st = resolve(f"{D}T19:00", "Europe/Berlin")
     chk.check("POST table_ids pair 201: table_ids set, table_id omitted, times", r.status == 201 and sorted(j.get("table_ids") or []) == ["c_1", "c_2"]
               and "table_id" not in j and same_instant_and_text(j.get("ends_at"), st + timedelta(minutes=90)), "201 pair", r.text(400), r.req, "S2 API POST")
-    chk.check("pair response keeps the requested/combinable order", j.get("table_ids") == ["c_2", "c_1"], ["c_2", "c_1"], j.get("table_ids"),
-              r.req, "S2 API POST", soft=True)
+    chk.check("pair response lists table_ids in declared combinable order (R-34)", j.get("table_ids") == ["c_2", "c_1"], ["c_2", "c_1"], j.get("table_ids"),
+              r.req, "S2 API POST")
     pair_ref = j.get("reference")
     g = s.get(s.ada, pair_ref)
     chk.check("GET pair reservation equals create response", g.status == 200 and g.json == j, j, g.text(300), g.req, "S2 API POST")
@@ -1680,10 +1704,20 @@ def g_combo(s: S, dest: Client | None = None):
             ("neither table_id nor table_ids", {"restaurant_id": "r_combo", "starts_at_local": T, "party_size": 2}, 422, "validation_failed", False),
             ("table_ids a string", body2("r_combo", "c_1", T, 2), 400, "malformed_request", False),
             ("table_ids null", body2("r_combo", None, T, 2), 400, "malformed_request", False),
-            ("table_ids numbers", body2("r_combo", [1, 2], T, 2), 400, "malformed_request", True),
-            ("table_ids empty", body2("r_combo", [], T, 2), 422, "validation_failed", True),
-            ("pair with an unknown table", body2("r_combo", ["c_2", "zz"], T, 2), (404, 422), None, True),
-            ("pair on a restaurant without combinable", body2("r_solo", ["s_1", "s_1"], T, 2), 422, None, True)):
+            ("table_ids numbers", body2("r_combo", [1, 2], T, 2), 400, "malformed_request", False),
+            ("table_ids with a null item", body2("r_combo", ["c_2", None], T, 2), 400, "malformed_request", False),
+            ("table_ids empty", body2("r_combo", [], T, 2), 422, "validation_failed", False),
+            ("pair with an unknown table", body2("r_combo", ["c_2", "zz"], T, 2), 404, "not_found", False),
+            ("pair with another restaurant's table", body2("r_combo", ["c_2", "s_1"], T, 2), 404, "not_found", False),
+            ("duplicate on a restaurant without combinable", body2("r_solo", ["s_1", "s_1"], T, 2), 422, "validation_failed", False),
+            # R-34 order: both → [] → duplicate → >2 → 404 → undeclared → time rules → capacity → 409
+            ("order: both fields beat []", {**body2("r_combo", [], T, 2), "table_id": "c_1"}, 422, "validation_failed", False),
+            ("order: >2 ids beat unknown table", body2("r_combo", ["c_1", "c_2", "zz"], T, 2), 422, "combination_not_allowed", False),
+            ("order: duplicate beats >2 ids", body2("r_combo", ["c_1", "c_1", "c_2"], T, 2), 422, "validation_failed", False),
+            ("order: unknown table beats undeclared pair", body2("r_combo", ["c_1", "zz"], T, 2), 404, "not_found", False),
+            ("order: undeclared pair beats off-grid time", body2("r_combo", ["c_1", "c_3"], f"{D2}T19:10", 2), 422, "combination_not_allowed", False),
+            ("order: time rules beat summed capacity", body2("r_combo", ["c_2", "c_1"], f"{D2}T19:10", 9), 422, "not_on_slot_grid", False),
+            ("order: capacity beats 409", body2("r_combo", ["c_2", "c_3"], f"{D}T19:00", 9), 422, "party_exceeds_capacity", False)):
         chk.expect(f"POST {name} -> {st_} {code or ''}", post(body), st_, code, "S2 API POST", soft=soft)
     chk.expect("party equal to summed capacity -> 201", post(body2("r_combo", ["c_2", "c_3"], T, 8)), 201, section="S2 Model")
 
@@ -1694,7 +1728,7 @@ def g_combo(s: S, dest: Client | None = None):
     r2 = post(b, key=k)
     chk.check("pair booking replay 200 identical", r1.status == 201 and r2.status == 200 and r2.json == r1.json, 200, r2.text(200), r2.req, "S2 API POST/§7")
     r3 = post({**b, "table_ids": ["c_4", "c_3"]}, key=k)
-    chk.expect("same key, pair listed in the other order (different JSON) -> 409", r3, 409, "idempotency_key_reuse", "§7", soft=True)
+    chk.expect("same key, pair listed in the other order (different JSON) -> 409 (R-35)", r3, 409, "idempotency_key_reuse", "§7")
 
     # PATCH with table_ids
     P = s.book(s.ada, "r_combo", "c_1", f"{D2}T15:00", 2)
