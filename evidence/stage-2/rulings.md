@@ -109,3 +109,22 @@ seeded pair → reset 422, and import refuses it too. Q9 → R-39 (pair cell for
 capacity ≥ party size; `data-available` true iff in available_options; no cell for pairs below the party size).
 Q10 → R-37 (export envelope stays `format_version: 1`; the inner schema number distinguishes stages; import accepts
 stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted). Q13 → confirmed (declared order).
+
+## R-41 — "Using the lookup screen while signed out" (clarifies R-40)
+- Clauses: C2.34, C2.3
+- Decision: `/lookup` is reachable by URL while signed out and shows the lookup form (C2.3 "reachable by URL").
+  Submitting a lookup while signed out navigates to `/login`; after sign-in the diner returns to `/lookup` and the
+  lookup runs. Opening `/lookup` does not by itself redirect.
+- Rationale: R-40 adopted the behaviour already built, which redirects on use (submission); redirecting on open
+  would make a required route unreachable by URL for a signed-out visitor. Tests expecting a redirect on open are
+  test defects.
+
+## R-42 — Empty or over-long ids in request bodies
+- Clauses: C1.18, C1.41, C2.46–C2.53 (extends R-19/R-35)
+- Decision: in POST /reservations, PATCH and move items, a `restaurant_id`, `table_id` or `table_ids` member that is
+  the empty string or longer than 64 characters is an invalid value → 422 `validation_failed` in the R-19 value
+  pass, before any 404. Within `table_ids`, this check runs with the other set checks after "both fields" and
+  "empty set" and before duplicates (so `[""]` → 422 validation_failed, `["", "c_1"]` → 422 validation_failed).
+  A moves `reference` that is empty is a structural error (R-22 a) → 422. Path parameters are unaffected (R-25).
+- Rationale: C1.18 makes ids non-empty strings of at most 64 characters and C1.41 makes an invalid format a 422;
+  R-8/O-11 already treat an empty fixture id as 422. Strict reading of a stated format (lesson of R-26/R-28).

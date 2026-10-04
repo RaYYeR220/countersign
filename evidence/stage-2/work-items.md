@@ -24,4 +24,9 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
-| 1 | (this commit) | WI-8/9 (builder 15035d7), WI-10..12 (stylist b2403a1), oracle d565258, auditor head | pending |
+| 1 | b4e805f | WI-8/9 (builder 15035d7), WI-10..12 (stylist b2403a1), oracle d565258, auditor head | in audit; R-41, R-42 issued (R-42 needs product rework WI-13) |
+
+## Rework
+| WI | owner | from | clauses | status |
+|----|-------|------|---------|--------|
+| WI-13 | Builder | stage-2 verdict-1 escalation Q2; R-42 | C1.18, C1.41, C2.46–C2.53 | handed off (rework round 1 of 2 on WI-8 validation) |
