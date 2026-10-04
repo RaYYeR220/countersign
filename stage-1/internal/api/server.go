@@ -22,6 +22,8 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/health", methods{http.MethodGet: s.health})
 	mux.Handle("/_test/reset", methods{http.MethodPost: s.reset})
+	mux.Handle("/_test/export", methods{http.MethodGet: s.export})
+	mux.Handle("/_test/import", methods{http.MethodPost: s.importState})
 	mux.Handle("/auth/signup", methods{http.MethodPost: s.signup})
 	mux.Handle("/auth/login", methods{http.MethodPost: s.login})
 	mux.Handle("/restaurants", methods{http.MethodGet: s.listRestaurants})
