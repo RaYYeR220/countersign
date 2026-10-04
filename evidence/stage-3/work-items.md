@@ -28,4 +28,4 @@ stage-3 rulings R-46 …. Complete clause text travels in each `[HANDOFF]`.
 |----|-------|------|---------|--------|
 | WI-21 | Stylist | stage-3 candidate 1 escalation; R-60 | C3.38 | evidence 0782d40, merged (rework round 1 of 2 on WI-20) |
 | WI-22 | Builder | Auditor observation: stage-3/RUN.md still stage-2 text | C1.6 | evidence 26a8055, merged (docs) |
-| 2 | (this commit) | + WI-21 (0782d40), WI-22 RUN.md (26a8055), C3.48 adoption tests (builder e3fb8f5, stylist 6473b73) | pending |
+| 2 | c4a828e | + WI-21 (0782d40), WI-22 RUN.md (26a8055), C3.48 adoption tests (builder e3fb8f5, stylist 6473b73) | ACCEPT (verdict 2) |
