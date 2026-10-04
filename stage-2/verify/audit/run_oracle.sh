@@ -7,9 +7,9 @@
 # outbound access, 2 CPUs / 2 GiB each; pytest runs from a runner container on the same network.
 set -u
 IMG="$1"; CLONE="$2"; OUT="$3"; shift 3
-NET=auditor-s1-oracle-net
-A=auditor-s1-oa
-B=auditor-s1-ob
+NET=auditor-s2-oracle-net
+A=auditor-s2-oa
+B=auditor-s2-ob
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export MSYS_NO_PATHCONV=1
 win() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
@@ -30,5 +30,5 @@ done
 docker run --rm --network "$NET" -v "$(win "$CLONE"):/repo:ro" -v "$(win "$OUT"):/out" -w /tmp \
   -e PYTHONDONTWRITEBYTECODE=1 auditor-runner-py \
   sh -c "until wget -qO- http://$A:8080/health >/dev/null 2>&1 && wget -qO- http://$B:8080/health >/dev/null 2>&1; do sleep 0.2; done; \
-         python -m pytest /repo/stage-1/verify/oracle -q -p no:cacheprovider -rfE \
+         python -m pytest /repo/stage-2/verify/oracle -q -p no:cacheprovider -rfE \
          --base-url http://$A:8080 --second-base-url http://$B:8080 --junitxml=/out/oracle.xml $*"
