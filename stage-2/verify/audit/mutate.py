@@ -310,6 +310,8 @@ def main(argv=None):
                 r.pop("failing", None)
             with lock:
                 results.append({"id": idx, **mt, **r})
+                # partial results after every mutant, so a hung container cannot lose the run
+                Path(a.out + ".partial").write_text(json.dumps({"partial": True, "results": results}, indent=1), encoding="utf-8")
                 k = sum(1 for x in results if x["status"] == "KILLED")
                 s = sum(1 for x in results if x["status"] == "SURVIVED")
                 print(f"[{int(time.monotonic() - t0)}s] #{idx} {mt['file']}:{mt['line']} {mt['op']} -> {r['status']}  (killed {k}, survived {s})",
