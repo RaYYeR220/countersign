@@ -203,7 +203,8 @@ def _tampers(exp: dict, second_ref: str, idem_key: str = None, token: str = None
     # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
                          ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"),
-                         ("reference", ""), ("reference", "X" * 65),
+                         ("reference", "bad ref"), ("reference", "abcdef"), ("reference", "X"), ("reference", "A" * 13),
+                         ("reference", "SEED-01"), ("reference", ""), ("reference", "X" * 65),
                          ("reservation_id", ""), ("reservation_id", "X" * 65), ("id", ""), ("id", "X" * 65)):
         e, seeds, _, _, _ = fresh()
         if all(field in rec for _, _, rec in seeds):
@@ -262,30 +263,59 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
     assert _snapshot(c, [ada, bob]) == before
 
 
-def test_C1_107_R26_fixture_style_references_round_trip(c, ada, bob):
-    """R-26: a reference carried through export/import is an opaque id (non-empty, ≤ 64 chars, unique); the
-    service must accept and keep it even when it is not one it would issue itself."""
-    before = c.get("/reservations/SEED01", token=bob).json
+def test_C1_107_C1_81_imported_references_must_conform(c, ada, bob):
+    """R-28: a reference carried in imported state must match ^[A-Z0-9]{6,12}$ and be unique; otherwise 422 and
+    the destination is unchanged. Conforming ones round-trip."""
+    before = _snapshot(c, [ada, bob])
     exp = c.export().json
-    for new_ref in ("abcdef", "r" * 64, "Ref-with.punct_1"):
+    for bad in ("abcdef", "r" * 64, "Ref-with.punct_1", "X", "seed01", "ABCDEFGHJKLMN", "SEED-01", "", "X" * 65):
         doc = copy.deepcopy(exp)
         for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
-            rec["reference"] = new_ref
+            rec["reference"] = bad
         r = c.import_(doc)
-        assert r.status == 204, (new_ref, r)
-        got = c.get(f"/reservations/{new_ref}", token=bob)
-        assert got.status == 200 and got.json["reservation_id"] == "res_seed", (new_ref, got)
-        assert {k_: v for k_, v in got.json.items() if k_ != "reference"} == {k_: v for k_, v in before.items() if k_ != "reference"}
+        assert r.status == 422 and r.code == "validation_failed", (bad, r)
+        assert _snapshot(c, [ada, bob]) == before, bad
+    for good in ("ABCDEFGHJKLM", "A1B2C3"):
+        doc = copy.deepcopy(exp)
+        for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+            rec["reference"] = good
+        assert c.import_(doc).status == 204, good
+        got = c.get(f"/reservations/{good}", token=bob)
+        assert got.status == 200 and got.json["reservation_id"] == "res_seed", (good, got)
         err(c.get("/reservations/SEED01", token=bob), 404, "not_found")
-        assert c.get("/reservations", token=bob).json["reservations"][0]["reference"] == new_ref
     assert c.import_(exp).status == 204
-    assert c.get("/reservations/SEED01", token=bob).json == before
-    # and a reset fixture may seed such a reference directly
+    assert _snapshot(c, [ada, bob]) == before
+
+
+@pytest.mark.parametrize("ref", ["X", "seed01", "ABCDEFGHJKLMN", "SEED-01", "", "X" * 65, "bad ref", "abcdef"])
+def test_C1_81_C1_30_reset_refuses_nonconforming_reference(c, ada, bob, ref):
+    """R-28: a seeded reference must match ^[A-Z0-9]{6,12}$."""
+    before = _snapshot(c, [ada, bob])
     fx = base_fixture()
-    fx["reservations"][0]["reference"] = "seed-ref_01"
-    assert c.reset(fx).status == 204
+    fx["reservations"][0]["reference"] = ref
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", (ref, r)
+    assert _snapshot(c, [ada, bob]) == before, ref
+    assert c.get("/reservations/SEED01", token=bob).status == 200
+
+
+@pytest.mark.parametrize("ref", ["SEED01", "ABCDEFGHJKLM", "A1B2C3", "000000"])
+def test_C1_81_C1_30_reset_accepts_conforming_reference(c, ref):
+    fx = base_fixture()
+    fx["reservations"][0]["reference"] = ref
+    assert c.reset(fx).status == 204, ref
     tok = c.login("bob@example.com", "bob secret 1")
-    assert c.get("/reservations/seed-ref_01", token=tok).json["reservation_id"] == "res_seed"
+    assert c.get(f"/reservations/{ref}", token=tok).json["reservation_id"] == "res_seed"
+
+
+def test_C1_81_C1_30_reset_refuses_duplicate_reference(c, ada, bob):
+    before = _snapshot(c, [ada, bob])
+    fx = base_fixture()
+    fx["reservations"].append({"id": "res_dup", "reference": "SEED01", "user_id": "u_ada", "restaurant_id": "r_all",
+                               "table_id": "a_1", "starts_at_local": f"{FUT_DAY}T12:00", "party_size": 1})
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", r
+    assert _snapshot(c, [ada, bob]) == before
 
 
 # ============================================================ O-3
