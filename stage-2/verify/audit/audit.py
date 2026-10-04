@@ -1736,6 +1736,24 @@ def g_combo(s: S, dest: Client | None = None):
             ("order: capacity beats 409", body2("r_combo", ["c_2", "c_3"], f"{D}T19:00", 9), 422, "party_exceeds_capacity", False)):
         chk.expect(f"POST {name} -> {st_} {code or ''}", post(body), st_, code, "S2 API POST", soft=soft)
     chk.expect("party equal to summed capacity -> 201", post(body2("r_combo", ["c_2", "c_3"], T, 8)), 201, section="S2 Model")
+    # R-42: empty / over-64 ids are invalid values -> 422 before any 404 (POST, PATCH, move items)
+    L65 = "x" * 65
+    for name, body in (("restaurant_id ''", booking_body("", "c_1", T, 2)), ("table_id ''", booking_body("r_combo", "", T, 2)),
+                       ("table_ids ['']", body2("r_combo", [""], T, 2)), ("table_ids ['', 'c_1']", body2("r_combo", ["", "c_1"], T, 2)),
+                       ("restaurant_id 65 chars", booking_body(L65, "c_1", T, 2)), ("table_id 65 chars", booking_body("r_combo", L65, T, 2)),
+                       ("table_ids member 65 chars", body2("r_combo", ["c_1", L65], T, 2)),
+                       ("order: empty member beats duplicate", body2("r_combo", ["", ""], T, 2))):
+        chk.expect(f"R-42 POST {name} -> 422 validation_failed", post(body), 422, "validation_failed", "C2.46,C1.41 (R-42)")
+    chk.expect("R-42 order: empty set beats empty member", post({**body2("r_combo", [], T, 2)}), 422, "validation_failed", "C2.46 (R-42)")
+    pe = s.book(s.ada, "r_combo", "c_4", f"{D3}T21:30", 2)
+    for name, b_ in (("table_id ''", {"table_id": ""}), ("table_ids ['c_2', '']", {"table_ids": ["c_2", ""]}), ("table_id 65 chars", {"table_id": L65})):
+        chk.expect(f"R-42 PATCH {name} -> 422 validation_failed", c.req("PATCH", f"/reservations/{pe['reference']}", b_, token=s.ada), 422,
+                   "validation_failed", "C2.54 (R-42)")
+    for name, item in (("move table_id ''", {"reference": pe["reference"], "table_id": ""}),
+                       ("move table_ids ['']", {"reference": pe["reference"], "table_ids": [""]}),
+                       ("move reference ''", {"reference": ""})):
+        chk.expect(f"R-42 {name} -> 422 validation_failed", c.req("POST", "/reservation-moves", {"moves": [item]}, token=s.ada, key=uuid.uuid4().hex),
+                   422, "validation_failed", "C2.58 (R-42)")
 
     # idempotency with table_ids
     k = "pair-" + uuid.uuid4().hex

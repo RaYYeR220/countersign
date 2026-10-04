@@ -1,0 +1,9 @@
+  0: {"op": "reset", "fixture": "base"}
+  1: {"op": "reset", "fixture": "other"}
+  2: {"op": "signup", "label": "s6", "email": "user6@example.com", "password": "password-6", "display_name": "User 6"}
+  3: {"op": "create", "label": "b70", "token": {"$sym": ["token", "s6"]}, "key": "k70", "body": {"restaurant_id": "r_trio", "table_ids": ["q_1", "q_2", "q_3"], "starts_at_local": "2020-06-15T19:00", "party_size": 6}, "raw": false}
+mismatch at op 3
+expected (model): {"status": 404, "error": {"code": "not_found"}}
+actual (service): {"status": 422, "error": {"code": "combination_not_allowed"}}
+reproduce: python ../repo/stage-2/verify/oracle/diff_runner.py --base-url http://auditor-s2-diff:8080 --replay /out/diff-fail-seed7.json
+[bg run] exit 1 after 26.9s; full output: C:\countersign\tmp\aud-bg\run-1791135244858.log

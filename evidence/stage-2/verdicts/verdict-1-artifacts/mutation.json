@@ -1,0 +1,955 @@
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 21,
+ "generated": 561,
+ "evaluated": 53,
+ "killed": 49,
+ "survived": 1,
+ "invalid": 3,
+ "kill_rate": 0.98,
+ "elapsed_s": 1278,
+ "baseline_failing": [
+  "oracle:test_C2_53_C2_47_validation_order"
+ ],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ],
+ "survivors": [
+  {
+   "id": 2,
+   "file": "internal/localtime/localtime.go",
+   "line": 119,
+   "op": "INV",
+   "orig": "\t\tif !start.IsZero() {",
+   "mutated": "\t\tif start.IsZero() {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  }
+ ],
+ "results": [
+  {
+   "id": 2,
+   "file": "internal/localtime/localtime.go",
+   "line": 119,
+   "op": "INV",
+   "orig": "\t\tif !start.IsZero() {",
+   "mutated": "\t\tif start.IsZero() {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 3,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 156,
+   "op": "INV",
+   "orig": "\t\tif !f.IsExported() || name == \"\" || name == \"-\" {",
+   "mutated": "\t\tif f.IsExported() || name == \"\" || name == \"-\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 1,
+   "file": "internal/state/integrity.go",
+   "line": 98,
+   "op": "NEG",
+   "orig": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes == \"24:00\"",
+   "mutated": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes != \"24:00\"",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C1_107_C1_18_round_trip_edge_values",
+    "oracle:test_C1_107_round_trip_duration_one_and_nines"
+   ]
+  },
+  {
+   "id": 0,
+   "file": "internal/state/fixture.go",
+   "line": 223,
+   "op": "NEG",
+   "orig": "\tif oh.Opens, err = o.RequiredString(\"opens\"); err != nil {",
+   "mutated": "\tif oh.Opens, err = o.RequiredString(\"opens\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/fri closes 23:30 -> last slot 22:00",
+    "audit:availability/group ran to completion",
+    "audit:availability/party 1 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 2 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 4 -> tables with capacity>=4 in fixture order"
+   ]
+  },
+  {
+   "id": 4,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "LOG",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" || utf8.RuneCountInString(id) <= MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 5,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "LOG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil && !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 6,
+   "file": "internal/api/amend.go",
+   "line": 109,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/PATCH pair onto its own overlapping interval 200",
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 7,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 106,
+   "op": "NEG",
+   "orig": "\tif err := json.Unmarshal(env[\"state\"], &raw); err != nil || raw == nil {",
+   "mutated": "\tif err := json.Unmarshal(env[\"state\"], &raw); err != nil || raw != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 10,
+   "file": "internal/state/fixture.go",
+   "line": 220,
+   "op": "INV",
+   "orig": "\tif !weekdays[oh.Weekday] {",
+   "mutated": "\tif weekdays[oh.Weekday] {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 8,
+   "file": "internal/state/integrity.go",
+   "line": 61,
+   "op": "LOG",
+   "orig": "\t\t\t(res.Status != Confirmed && res.Status != Cancelled) {",
+   "mutated": "\t\t\t(res.Status != Confirmed || res.Status != Cancelled) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 9,
+   "file": "internal/state/integrity.go",
+   "line": 90,
+   "op": "LOG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil && r.Tables == nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 11,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "CB",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min || n >= 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 12,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 190,
+   "op": "CB",
+   "orig": "\tif len(trimmed) == 0 || !(trimmed[0] == '-' || (trimmed[0] >= '0' && trimmed[0] <= '9')) {",
+   "mutated": "\tif len(trimmed) == 0 || !(trimmed[0] == '-' || (trimmed[0] > '0' && trimmed[0] <= '9')) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 13,
+   "file": "internal/api/moves.go",
+   "line": 33,
+   "op": "NEG",
+   "orig": "\t\tif err != nil || !ok {",
+   "mutated": "\t\tif err == nil || !ok {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 16,
+   "file": "internal/state/fixture.go",
+   "line": 37,
+   "op": "NEG",
+   "orig": "\tif err := loadRestaurants(st, fx); err != nil {",
+   "mutated": "\tif err := loadRestaurants(st, fx); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 14,
+   "file": "internal/api/reservations.go",
+   "line": 145,
+   "op": "NEG",
+   "orig": "\t\t\tif res.UserID == user.ID {",
+   "mutated": "\t\t\tif res.UserID != user.ID {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/new user's list is {reservations: []}",
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 15,
+   "file": "internal/api/testctl.go",
+   "line": 49,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 17,
+   "file": "internal/state/tables.go",
+   "line": 52,
+   "op": "BOOL",
+   "orig": "\t\t\treturn false",
+   "mutated": "\t\t\treturn true",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 18,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "LOG",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min && n > 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 19,
+   "file": "internal/state/integrity.go",
+   "line": 19,
+   "op": "NEG",
+   "orig": "\tif err := checkIntegrity(st); err != nil {",
+   "mutated": "\tif err := checkIntegrity(st); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 20,
+   "file": "internal/localtime/localtime.go",
+   "line": 193,
+   "op": "ARI",
+   "orig": "\treturn int(s[0]-'0')*600 + int(s[1]-'0')*60 + int(s[3]-'0')*10 + int(s[4]-'0'), true",
+   "mutated": "\treturn int(s[0]-'0')*600 + int(s[1]-'0')*60 - int(s[3]-'0')*10 + int(s[4]-'0'), true",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/fri closes 23:30 -> last slot 22:00",
+    "audit:availability/party 99 -> every slot listed with []",
+    "audit:cancel/group ran to completion",
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 23,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 25,
+   "op": "NEG",
+   "orig": "\tif err := dec.Decode(&obj); err != nil || obj == nil {",
+   "mutated": "\tif err := dec.Decode(&obj); err == nil || obj == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 25,
+   "file": "internal/state/reservations.go",
+   "line": 67,
+   "op": "ARI",
+   "orig": "\treturn userID + receiptSep + method + \" \" + path + receiptSep + key",
+   "mutated": "\treturn userID - receiptSep + method + \" \" + path + receiptSep + key",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/reservations.go:67:9: invalid operation: operator - not defined on userID (variable of type string)\n"
+  },
+  {
+   "id": 22,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 102,
+   "op": "INV",
+   "orig": "\tif !numberIs(env[\"format_version\"], FormatVersion) {",
+   "mutated": "\tif numberIs(env[\"format_version\"], FormatVersion) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 21,
+   "file": "internal/api/amend.go",
+   "line": 97,
+   "op": "LOG",
+   "orig": "\tif hasTables && !sameTables(ids, res.TableIDs) {",
+   "mutated": "\tif hasTables || !sameTables(ids, res.TableIDs) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/PATCH pair onto its own overlapping interval 200",
+    "audit:combo/PATCH party over summed capacity -> 422 party_exceeds_capacity",
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 24,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 62,
+   "op": "NEG",
+   "orig": "\tif raw[\"reservations\"], err = json.Marshal(reservations); err != nil {",
+   "mutated": "\tif raw[\"reservations\"], err = json.Marshal(reservations); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 26,
+   "file": "internal/state/fixture.go",
+   "line": 320,
+   "op": "LOG",
+   "orig": "\t\tif st.User(res.UserID) == nil || r == nil || !checkTableSet(r, res.TableIDs) {",
+   "mutated": "\t\tif st.User(res.UserID) == nil && r == nil || !checkTableSet(r, res.TableIDs) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 27,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 144,
+   "op": "LOG",
+   "orig": "\t\t\tif err := json.Unmarshal(raw, &items[i]); err != nil || items[i] == nil {",
+   "mutated": "\t\t\tif err := json.Unmarshal(raw, &items[i]); err != nil && items[i] == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 28,
+   "file": "internal/api/idempotency.go",
+   "line": 30,
+   "op": "NEG",
+   "orig": "\tif key == \"\" {",
+   "mutated": "\tif key != \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/GET pair reservation equals create response",
+    "audit:combo/POST both table_id and table_ids -> 422 validation_failed",
+    "audit:combo/POST both, consistent single -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 32,
+   "file": "internal/state/fixture.go",
+   "line": 189,
+   "op": "NEG",
+   "orig": "\t\tif tb.Capacity, err = intAtLeast(t, \"capacity\", \"tables[]\", 1); err != nil {",
+   "mutated": "\t\tif tb.Capacity, err = intAtLeast(t, \"capacity\", \"tables[]\", 1); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 29,
+   "file": "internal/api/availability.go",
+   "line": 78,
+   "op": "CB",
+   "orig": "\tif party < 1 {",
+   "mutated": "\tif party <= 1 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/party 1 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 34,
+   "file": "internal/state/fixture.go",
+   "line": 193,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"duplicate table id in restaurant \" + r.ID + \": \" + tb.ID)",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"duplicate table id in restaurant \" + r.ID + \": \" - tb.ID)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/fixture.go:193:34: invalid operation: operator - not defined on \"duplicate table id in restaurant \" + r.ID + \": \" (value of type string)\n"
+  },
+  {
+   "id": 30,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 99,
+   "op": "LOG",
+   "orig": "\tif track, ok := stringValue(env[\"track\"]); !ok || track != Track {",
+   "mutated": "\tif track, ok := stringValue(env[\"track\"]); !ok && track != Track {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 31,
+   "file": "internal/state/integrity.go",
+   "line": 65,
+   "op": "LOG",
+   "orig": "\t\tif !users[res.UserID] || r == nil || !checkTableSet(r, res.TableIDs) ||",
+   "mutated": "\t\tif !users[res.UserID] && r == nil || !checkTableSet(r, res.TableIDs) ||",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 35,
+   "file": "internal/api/auth.go",
+   "line": 158,
+   "op": "NEG",
+   "orig": "\t\tif st.User(user.ID) != user {",
+   "mutated": "\t\tif st.User(user.ID) == user {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/group ran to completion",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 33,
+   "file": "internal/state/integrity.go",
+   "line": 90,
+   "op": "NEG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables != nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 36,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "CB",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) < MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 39,
+   "file": "internal/state/fixture.go",
+   "line": 208,
+   "op": "NEG",
+   "orig": "\tif err := checkCombinable(r); err != nil {",
+   "mutated": "\tif err := checkCombinable(r); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 37,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "NEG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil || !validID(u.ID) || u.Email != \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 42,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 139,
+   "op": "NEG",
+   "orig": "\t\tif err := json.Unmarshal(o[name], &raws); err != nil {",
+   "mutated": "\t\tif err := json.Unmarshal(o[name], &raws); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 38,
+   "file": "internal/state/integrity.go",
+   "line": 59,
+   "op": "LOG",
+   "orig": "\t\tif res == nil || !validID(res.ID) || !validReference(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "mutated": "\t\tif res == nil || !validID(res.ID) && !validReference(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 40,
+   "file": "internal/api/moves.go",
+   "line": 22,
+   "op": "LOG",
+   "orig": "\tif err := json.Unmarshal(body[\"moves\"], &raws); err != nil || len(raws) == 0 || len(raws) > maxMoves {",
+   "mutated": "\tif err := json.Unmarshal(body[\"moves\"], &raws); err != nil || len(raws) == 0 && len(raws) > maxMoves {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 41,
+   "file": "internal/state/integrity.go",
+   "line": 61,
+   "op": "NEG",
+   "orig": "\t\t\t(res.Status != Confirmed && res.Status != Cancelled) {",
+   "mutated": "\t\t\t(res.Status == Confirmed && res.Status != Cancelled) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 46,
+   "file": "internal/state/fixture.go",
+   "line": 320,
+   "op": "NEG",
+   "orig": "\t\tif st.User(res.UserID) == nil || r == nil || !checkTableSet(r, res.TableIDs) {",
+   "mutated": "\t\tif st.User(res.UserID) != nil || r == nil || !checkTableSet(r, res.TableIDs) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 44,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 156,
+   "op": "LOG",
+   "orig": "\t\tif !f.IsExported() || name == \"\" || name == \"-\" {",
+   "mutated": "\t\tif !f.IsExported() || name == \"\" && name == \"-\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 43,
+   "file": "internal/api/reservations.go",
+   "line": 105,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:cancel/group ran to completion",
+    "audit:combo/GET pair reservation equals create response",
+    "audit:combo/POST order: capacity beats 409 -> 422 party_exceeds_capacity",
+    "audit:combo/POST order: time rules beat summed capacity -> 422 not_on_slot_grid"
+   ]
+  },
+  {
+   "id": 48,
+   "file": "internal/state/fixture.go",
+   "line": 140,
+   "op": "NEG",
+   "orig": "\tif r.Name, err = optionalString(o, \"name\"); err != nil {",
+   "mutated": "\tif r.Name, err = optionalString(o, \"name\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 45,
+   "file": "internal/api/server.go",
+   "line": 83,
+   "op": "NEG",
+   "orig": "\t\t\t\tif p == http.ErrAbortHandler {",
+   "mutated": "\t\t\t\tif p != http.ErrAbortHandler {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 51,
+   "file": "internal/state/reservations.go",
+   "line": 67,
+   "op": "ARI",
+   "orig": "\treturn userID + receiptSep + method + \" \" + path + receiptSep + key",
+   "mutated": "\treturn userID + receiptSep + method + \" \" + path - receiptSep + key",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/reservations.go:67:9: invalid operation: operator - not defined on userID + receiptSep + method + \" \" + path (value of type string)\n"
+  },
+  {
+   "id": 52,
+   "file": "internal/state/fixture.go",
+   "line": 58,
+   "op": "NEG",
+   "orig": "\tif id == \"\" || utf8.RuneCountInString(id) > MaxIDLength {",
+   "mutated": "\tif id != \"\" || utf8.RuneCountInString(id) > MaxIDLength {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion"
+   ]
+  },
+  {
+   "id": 47,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 106,
+   "op": "LOG",
+   "orig": "\tif err := json.Unmarshal(env[\"state\"], &raw); err != nil || raw == nil {",
+   "mutated": "\tif err := json.Unmarshal(env[\"state\"], &raw); err != nil && raw == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 49,
+   "file": "internal/api/auth.go",
+   "line": 65,
+   "op": "LOG",
+   "orig": "\treturn ok && local != \"\" && domain != \"\" && !strings.Contains(domain, \"@\") &&",
+   "mutated": "\treturn ok && local != \"\" && domain != \"\" && !strings.Contains(domain, \"@\") ||",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/email ' a@b.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email '' 422",
+    "audit:auth/email '@b' 422",
+    "audit:auth/email 'a b@x.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email 'a@' 422"
+   ]
+  },
+  {
+   "id": 50,
+   "file": "internal/state/fixture.go",
+   "line": 266,
+   "op": "NEG",
+   "orig": "\tcase err != nil:",
+   "mutated": "\tcase err == nil:",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/R-42 PATCH table_id '' -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_id 65 chars -> 422 validation_failed",
+    "audit:combo/R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id '' -> 422 validation_failed",
+    "audit:combo/R-42 POST restaurant_id 65 chars -> 422 validation_failed"
+   ]
+  }
+ ]
+}
