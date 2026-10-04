@@ -397,7 +397,9 @@ func TestSeriesOnImportedExports(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var export struct{ State struct{ Tokens map[string]string } }
+		var export struct {
+			State struct{ Tokens map[string]string }
+		}
 		json.Unmarshal(raw, &export)
 		var token string
 		for tok := range export.State.Tokens {
