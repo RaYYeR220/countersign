@@ -11,7 +11,6 @@ import argparse
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
 
 from model import Model
 
@@ -26,12 +25,15 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _dispatch(self):
-        parts = urlsplit(self.path)
+        # The raw request target: BaseHTTPRequestHandler rewrites a leading "//" in self.path, and urlsplit would
+        # read "//x" as a host. R-25 needs the path exactly as sent.
+        target = self.requestline.split(" ")[1] if len(self.requestline.split(" ")) >= 2 else self.path
+        path, _, query = target.partition("?")
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else None
         headers = {k: v for k, v in self.headers.items()}
         with LOCK:
-            status, out = MODEL.handle(self.command, parts.path, parts.query, headers, body)
+            status, out = MODEL.handle(self.command, path, query, headers, body)
         if status == 204 or out is None:
             self.send_response(status)
             self.send_header("Content-Length", "0")

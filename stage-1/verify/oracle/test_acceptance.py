@@ -238,8 +238,14 @@ def test_C1_32_C1_33_error_envelope(c, ada):
     err(c.post("/reservations", {}, token=ada), 400, "missing_idempotency_key")
 
 
-def test_C1_38_C1_32_unknown_route_and_method(c, ada):                                     # R-9
+def test_C1_38_C1_32_unknown_route_and_method(c, ada):                                     # R-9, R-25
     err(c.get("/nope"), 404, "not_found")
+    for p in ("/reservations/", "/restaurants/", "/health/", "//health", "/reservations//cancel",
+              "/reservations/SEED01/", "/reservation-moves/", "/_test/export/", "/availability/"):
+        r = c.request("GET", p, token=ada)
+        err(r, 404, "not_found")
+    err(c.request("POST", "/reservations/", json_body={"x": 1}, token=ada, key=k()), 404, "not_found")
+    err(c.post("/reservations//cancel", token=ada), 404, "not_found")
     err(c.get("/reservations/x/y/z", token=ada), 404, "not_found")
     err(c.request("DELETE", "/reservations", token=ada), 405, "method_not_allowed")
     err(c.request("PUT", "/health"), 405, "method_not_allowed")
