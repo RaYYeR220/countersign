@@ -3,9 +3,16 @@ package state
 import (
 	"crypto/rand"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// referencePattern is the only reference format, for issued, seeded and imported bookings (C1.81, R-28).
+var referencePattern = regexp.MustCompile(`^[A-Z0-9]{6,12}$`)
+
+// validReference reports whether ref has the reference format of C1.81.
+func validReference(ref string) bool { return referencePattern.MatchString(ref) }
 
 // referenceLength is within the 6–12 characters of A-Z0-9 that §8 allows; rand.Text uses A-Z2-7.
 const referenceLength = 8

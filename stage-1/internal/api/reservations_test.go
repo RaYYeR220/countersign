@@ -412,3 +412,19 @@ func TestAmend(t *testing.T) {
 	expect(t, e.req("POST", "/reservations/"+v.Reference+"/cancel", e.ada, "", ""), 200, "")
 	expect(t, patch(v.Reference, `{"party_size":0}`), 409, "reservation_cancelled")
 }
+
+// A fixture with a malformed seeded reference is refused and the previous state stays (R-28).
+func TestResetRejectsBadSeedReferenceWithoutChange(t *testing.T) {
+	e := newEnv(t)
+	v := e.mustBook(e.ada, "a", "t_2", "2026-09-24T19:00", 2)
+	for _, ref := range []string{"X", "seed01", "ABCDEFGHJKLMN", "SEED-01", "", strings.Repeat("A", 65)} {
+		body := strings.Replace(bookingFixture, `"SEED01"`, fmt.Sprintf("%q", ref), 1)
+		expect(t, do(e.h, "POST", "/_test/reset", body), 422, "validation_failed")
+	}
+	if got := decodeView(t, e.req("GET", "/reservations/"+v.Reference, e.ada, "", "")); got != v {
+		t.Errorf("state changed by a refused reset: %+v", got)
+	}
+	if !referencePattern.MatchString(v.Reference) {
+		t.Errorf("issued reference %q", v.Reference)
+	}
+}

@@ -56,7 +56,7 @@ func checkIntegrity(st *State) error {
 	}
 	ids, refs := map[string]bool{}, map[string]bool{}
 	for _, res := range st.Reservations {
-		if res == nil || !validID(res.ID) || !validID(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||
+		if res == nil || !validID(res.ID) || !validReference(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||
 			res.PartySize < 1 || res.StartsAt.IsZero() || res.EndsAt.IsZero() || res.CreatedAt.IsZero() ||
 			(res.Status != Confirmed && res.Status != Cancelled) {
 			return invalid("reservation entry incomplete")

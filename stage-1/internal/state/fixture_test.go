@@ -57,6 +57,14 @@ func TestFromFixtureSample(t *testing.T) {
 	}
 }
 
+func TestFromFixtureReferenceBounds(t *testing.T) {
+	for _, ref := range []string{"SEED01", "ABCDEFGHJKLM"} {
+		if _, err := load(t, strings.Replace(sampleFixture, `"SEED01"`, `"`+ref+`"`, 1)); err != nil {
+			t.Errorf("reference %s: %v", ref, err)
+		}
+	}
+}
+
 func TestFromFixtureEmptyObject(t *testing.T) {
 	st, err := load(t, `{}`)
 	if err != nil || len(st.Users)+len(st.Restaurants)+len(st.Reservations) != 0 {
@@ -78,6 +86,12 @@ func TestFromFixtureErrors(t *testing.T) {
 		"id too long":         {`{"users":[{"id":"` + long + `","email":"a@b.c","password":"pw"}]}`, "validation_failed"},
 		"duplicate email":     {`{"users":[{"id":"u1","email":"a@b.c","password":"pw"},{"id":"u2","email":"A@b.c","password":"pw"}]}`, "validation_failed"},
 		"dangling user":       {strings.Replace(sampleFixture, `"user_id": "u_ada"`, `"user_id": "u_bob"`, 1), "validation_failed"},
+		"reference lowercase": {strings.Replace(sampleFixture, `"SEED01"`, `"seed01"`, 1), "validation_failed"},
+		"reference too short": {strings.Replace(sampleFixture, `"SEED01"`, `"X"`, 1), "validation_failed"},
+		"reference 13 chars":  {strings.Replace(sampleFixture, `"SEED01"`, `"ABCDEFGHJKLMN"`, 1), "validation_failed"},
+		"reference hyphen":    {strings.Replace(sampleFixture, `"SEED01"`, `"SEED-01"`, 1), "validation_failed"},
+		"reference empty":     {strings.Replace(sampleFixture, `"SEED01"`, `""`, 1), "validation_failed"},
+		"reference 65 chars":  {strings.Replace(sampleFixture, `"SEED01"`, `"`+strings.Repeat("A", 65)+`"`, 1), "validation_failed"},
 		"bad local start":     {strings.Replace(sampleFixture, `2026-09-24T19:00`, `2026-09-24T19:00+02:00`, 1), "validation_failed"},
 	}
 	for name, c := range cases {
