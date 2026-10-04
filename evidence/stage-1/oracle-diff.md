@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-diff sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-diff sha=16ca596
 
 # Evidence — Oracle differential runner, stage 1
 
