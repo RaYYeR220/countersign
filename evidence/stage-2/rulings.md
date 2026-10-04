@@ -98,3 +98,14 @@ clauses are appended at reconciliation. R-29 … R-38 were issued from entry A b
   diner returns to `/` with the search and selection restored and the booking form open. Using the lookup screen
   while signed out navigates to `/login` and returns to `/lookup` after sign-in. (The spec allows `auth-error` or
   navigation; navigation is the behaviour already built.)
+
+## Answers to entry B's open questions (stage 2)
+Q1 → R-35 (`[]` → 422, confirmed). Q2 → R-35 (404 before the combination rule, confirmed). Q3 → R-35 (after 404,
+before invalid_local_time / hours / grid / capacity / overlap, confirmed). Q4 → a single option's capacity is the
+table's capacity (confirmed). Q5 → R-35 (declared order everywhere, confirmed). Q6 → R-35 (types 400; duplicates
+→ validation_failed before the more-than-two rule, confirmed). Q7 → R-36 + R-22 (422 at that item in input order,
+confirmed). Q8 → R-34 OVERRULES the B default: a seeded set must be one table or a DECLARED pair; an undeclared
+seeded pair → reset 422, and import refuses it too. Q9 → R-39 (pair cell for every declared pair whose summed
+capacity ≥ party size; `data-available` true iff in available_options; no cell for pairs below the party size).
+Q10 → R-37 (export envelope stays `format_version: 1`; the inner schema number distinguishes stages; import accepts
+stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted). Q13 → confirmed (declared order).
