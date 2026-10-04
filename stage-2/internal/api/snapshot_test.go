@@ -37,10 +37,10 @@ func TestExportShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	st, ok := env["state"].(map[string]any)
-	if env["track"] != "tablekeeper" || env["format_version"] != float64(1) || !ok || st["schema"] != float64(1) {
+	if env["track"] != "tablekeeper" || env["format_version"] != float64(1) || !ok || st["schema"] != float64(2) {
 		t.Fatalf("export envelope = %v", env)
 	}
-	for _, k := range []string{"users", "restaurants", "reservations", "tokens"} {
+	for _, k := range []string{"users", "restaurants", "reservations", "tokens", "receipts"} {
 		if st[k] == nil {
 			t.Errorf("empty state lacks %s: %v", k, st)
 		}

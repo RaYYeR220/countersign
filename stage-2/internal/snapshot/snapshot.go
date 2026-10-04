@@ -9,6 +9,7 @@ package snapshot
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strings"
 
@@ -20,12 +21,53 @@ import (
 const (
 	Track         = "tablekeeper"
 	FormatVersion = 1
-	// Current is the schema written by Export.
-	Current = 1
+	// Current is the schema written by Export. Schema 1 is the stage-1 service's state.
+	Current = 2
 )
 
 // migrations[n] turns a schema-n state object into a schema-(n+1) one.
-var migrations = map[int]func(map[string]json.RawMessage) (map[string]json.RawMessage, error){}
+var migrations = map[int]func(map[string]json.RawMessage) (map[string]json.RawMessage, error){
+	1: schema1to2,
+}
+
+// schema1to2 (stage 1 → stage 2): a reservation's table_id becomes the one-member set
+// table_ids, and every restaurant gains an empty combinable list. Users, tokens, references,
+// timestamps and receipts (with their original response bytes) are carried over unchanged.
+func schema1to2(raw map[string]json.RawMessage) (map[string]json.RawMessage, error) {
+	var reservations []map[string]json.RawMessage
+	if err := json.Unmarshal(raw["reservations"], &reservations); err != nil {
+		return nil, err
+	}
+	for _, res := range reservations {
+		tableID, ok := res["table_id"]
+		if res == nil || !ok {
+			return nil, errors.New("a schema-1 reservation has no table_id")
+		}
+		res["table_ids"] = json.RawMessage("[" + string(tableID) + "]")
+		delete(res, "table_id")
+	}
+	var restaurants []map[string]json.RawMessage
+	if err := json.Unmarshal(raw["restaurants"], &restaurants); err != nil {
+		return nil, err
+	}
+	for _, r := range restaurants {
+		if r == nil {
+			return nil, errors.New("a schema-1 restaurant is null")
+		}
+		if _, ok := r["combinable"]; !ok {
+			r["combinable"] = json.RawMessage("[]")
+		}
+	}
+	var err error
+	if raw["reservations"], err = json.Marshal(reservations); err != nil {
+		return nil, err
+	}
+	if raw["restaurants"], err = json.Marshal(restaurants); err != nil {
+		return nil, err
+	}
+	raw["schema"] = json.RawMessage("2")
+	return raw, nil
+}
 
 // Export serialises st. Call it under the store's read lock: the returned bytes are a complete,
 // immutable snapshot that later writes cannot change.
