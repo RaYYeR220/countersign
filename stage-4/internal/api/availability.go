@@ -131,7 +131,8 @@ func buildAvailability(st *state.State, restaurantID, date string, party int64, 
 	p := rest.PolicyFor(date)
 	resp := &availabilityResponse{RestaurantID: rest.ID, Date: date, Timezone: rest.Timezone, Slots: []availabilitySlot{}}
 	for _, slot := range localtime.Slots(loc, p.OpeningHours, p.SlotMinutes, p.ReservationDurationMinutes, date) {
-		free := func(id string) bool { return !tableBusy(booked, id, slot) }
+		// A table is free when no confirmed booking and no applied closure overlaps the slot (R-68).
+		free := func(id string) bool { return !rest.Closed(id, slot.Start, slot.End) && !tableBusy(booked, id, slot) }
 		ids := []string{}
 		options := []availableOption{}
 		var why []tableExplain

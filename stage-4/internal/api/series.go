@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/rand"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -205,4 +206,105 @@ func (s *Server) getSeries(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+var clockPattern = regexp.MustCompile(`^(?:[01][0-9]|2[0-3]):[0-5][0-9]$`)
+
+// amendInt reads expected_revision or from_index for a series amendment: any non-integer, including
+// booleans, strings, null and fractions, is 422 validation_failed.
+func amendInt(body jsonin.Object, name string) (int64, error) {
+	n, _, err := body.Int(name)
+	if err != nil || body.Kind(name) != jsonin.Number {
+		return 0, apperr.Validation(name + " must be an integer")
+	}
+	return n, nil
+}
+
+// amendSeries is POST /series/{id}/amend (stage 4). keyedWrite supplies 401 → 400 body → key →
+// replay/reuse; then 404 (unknown or another owner's series) → 422 fields (types, missing, values;
+// field order expected_revision, from_index, local_time) → 409 stale_revision → each eligible
+// occurrence in index order (real changes only: old accepted cutoff, then the resulting date's
+// policy) → occupancy of all resulting occurrences → apply. Nothing is written unless every check
+// passes; series and restaurant revisions rise once when anything changed; no exception is marked.
+func (s *Server) amendSeries(w http.ResponseWriter, r *http.Request, user *state.User) {
+	s.keyedWrite(w, r, user, func(st *state.State, body jsonin.Object) (any, error) {
+		series := st.Series[r.PathValue("id")]
+		if series == nil || series.UserID != user.ID {
+			return nil, apperr.NotFound("no such series")
+		}
+		for _, name := range []string{"expected_revision", "from_index"} {
+			if body.Has(name) && body.Kind(name) != jsonin.Number {
+				return nil, apperr.Validation(name + " must be an integer")
+			}
+		}
+		if body.Has("local_time") && body.Kind("local_time") != jsonin.String {
+			return nil, apperr.Validation("local_time must be a string HH:MM")
+		}
+		for _, name := range []string{"expected_revision", "from_index", "local_time"} {
+			if !body.Has(name) {
+				return nil, apperr.Validation(name + " is required")
+			}
+		}
+		revision, err := amendInt(body, "expected_revision")
+		if err != nil {
+			return nil, err
+		}
+		if revision < 1 {
+			return nil, apperr.Validation("expected_revision must be a positive integer")
+		}
+		from, err := amendInt(body, "from_index")
+		if err != nil {
+			return nil, err
+		}
+		if from < 0 || from >= int64(len(series.Occurrences)) {
+			return nil, apperr.Validation("from_index is out of range")
+		}
+		clock, _, _ := body.String("local_time")
+		if !clockPattern.MatchString(clock) {
+			return nil, apperr.Validation("local_time must be HH:MM from 00:00 to 23:59")
+		}
+		if int(revision) != series.Revision {
+			return nil, staleRevision()
+		}
+
+		now := s.now()
+		var changes []*change
+		for i := int(from); i < len(series.Occurrences); i++ {
+			o := series.Occurrences[i]
+			res := st.ReservationByRef(o.Reference)
+			if o.Exception || res == nil || res.Status != state.Confirmed {
+				continue
+			}
+			// An eligible occurrence was never moved individually, so its date is its scheduled date.
+			local := state.LocalDate(res.StartsAtLocal) + "T" + clock
+			if local == res.StartsAtLocal {
+				continue // no-op: keeps its terms, checks nothing
+			}
+			if withinCutoff(res, now) {
+				return nil, cutoffPassed()
+			}
+			rest := st.Restaurant(res.RestaurantID)
+			loc, err := localtime.Location(rest.Timezone)
+			if err != nil {
+				return nil, err
+			}
+			pol := rest.PolicyFor(state.LocalDate(local))
+			start, err := localtime.CheckStart(loc, pol.OpeningHours, pol.SlotMinutes, pol.ReservationDurationMinutes, local)
+			if err != nil {
+				return nil, err
+			}
+			if res.PartySize > pol.Capacity(res.TableIDs) {
+				return nil, apperr.PartyExceedsCapacity()
+			}
+			changes = append(changes, &change{res: res, tableIDs: res.TableIDs, local: local, party: res.PartySize,
+				start: start, end: localtime.End(start, pol.ReservationDurationMinutes), terms: pol.Terms, real: true})
+		}
+		if conflicts(st, changes) {
+			return nil, apperr.TableUnavailable()
+		}
+		// The shared PATCH apply: one changed entry and revision per occurrence, the series and the
+		// restaurant revision once; series amendments mark no exceptions.
+		apply(st, changes, now, false)
+		return viewSeries(st, series), nil
+	})
 }
