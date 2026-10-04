@@ -17,6 +17,10 @@ import (
 // MaxIDLength bounds every id, including ids supplied by fixtures (§3.4).
 const MaxIDLength = 64
 
+// maxFixtureInt is the largest integer a fixture field may hold (R-75); every computation with
+// these values is exact.
+const maxFixtureInt = 1<<31 - 1
+
 var (
 	weekdays     = map[string]bool{"mon": true, "tue": true, "wed": true, "thu": true, "fri": true, "sat": true, "sun": true}
 	clockPattern = regexp.MustCompile(`^(?:[01][0-9]|2[0-3]):[0-5][0-9]$`)
@@ -66,7 +70,7 @@ func intAtLeast(o jsonin.Object, field, where string, min int64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if n < min || n > 1<<31-1 {
+	if n < min || n > maxFixtureInt {
 		return 0, apperr.Validation(fmt.Sprintf("%s.%s must be an integer of at least %d", where, field, min))
 	}
 	return int(n), nil
