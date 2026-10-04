@@ -501,7 +501,8 @@
     const party = Number(R.params.party) || 0;
     const selected = S.selection && S.selection.startsAtLocal === slot.starts_at_local &&
       S.selection.tableIds.join("+") === ids.join("+") && S.selection.params.restaurantId === R.params.restaurantId;
-    const sub = available ? cap + " seats" : (cap < party ? "Seats " + cap : "Booked");
+    // "Taken" covers a booking and a closure alike: the API does not say which.
+    const sub = available ? cap + " seats" : (cap < party ? "Seats " + cap : "Taken");
     const name = tablesText(rest, ids);
     const btn = h("button", {
       type: "button",
