@@ -1,0 +1,797 @@
+{
+ "meta": {
+  "base": "http://auditor-s1-a:8080",
+  "dest": "http://auditor-s1-b:8080",
+  "now": "2026-10-04T14:47:16.254216+00:00",
+  "now_tz": "UTC",
+  "thu": "2026-10-29",
+  "near": "2026-10-04T15:15",
+  "far": "2026-10-04T19:00",
+  "past": "2026-10-03T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 96,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "export": {
+   "pass": 96,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "export",
+   "name": "export setup ok",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "harness"
+  },
+  {
+   "group": "export",
+   "name": "export 200 {track: tablekeeper, format_version: 1, state: object}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.106"
+  },
+  {
+   "group": "export",
+   "name": "export does not contain plaintext passwords",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.55"
+  },
+  {
+   "group": "export",
+   "name": "export reflects later writes (new snapshot differs)",
+   "ok": true,
+   "soft": true,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import {} (missing fields) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import {} (missing fields): destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import wrong track -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import wrong track: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version 2 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version 2: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version '1' -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version '1': destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state missing -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state missing: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state not object -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state not object: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state {} -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state {}: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state garbage -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state garbage: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import tampered export (duplicate reference) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import tampered export: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import export 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[same server] previous destination token rejected",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] previous destination account gone",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] signup of an account that only existed at destination is free",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] existing bearer token works; reservations identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] seeded user's token and reservations preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] hashed-password login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] seeded user login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] restaurant config preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] create replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] create key with different body still 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] batch replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.124"
+  },
+  {
+   "group": "export",
+   "name": "[same server] failed key reusable after import 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] new reference does not collide with imported ones",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[same server] repeated import 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[same server] repeated import restores exported state without duplicates",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[same server] reset after import clears imported tokens",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] reset after import clears imported accounts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import {} (missing fields) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import {} (missing fields): destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import wrong track -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import wrong track: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version 2 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version 2: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version '1' -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version '1': destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state missing -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state missing: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state not object -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state not object: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state {} -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state {}: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state garbage -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state garbage: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import tampered export (duplicate reference) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import tampered export: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import export 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] previous destination token rejected",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] previous destination account gone",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] signup of an account that only existed at destination is free",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] existing bearer token works; reservations identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] seeded user's token and reservations preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] hashed-password login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] seeded user login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] restaurant config preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] create replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] create key with different body still 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] batch replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.124"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] failed key reusable after import 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] new reference does not collide with imported ones",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] imported occupancy enforced (t_1 19:00 held by moved booking)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] repeated import 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] repeated import restores exported state without duplicates",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] reset after import clears imported tokens",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] reset after import clears imported accounts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "concurrent exports during writes all 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  }
+ ]
+}

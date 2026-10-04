@@ -526,6 +526,8 @@ def g_core(s: S):
         ("restaurant id 65 chars", variant(lambda fx: R0(fx).update(id="r" * 65)), 422),
         ("user id 65 chars", variant(lambda fx: fx["users"][0].update(id="u" * 65)), 422),
         ("unknown timezone", variant(lambda fx: R0(fx).update(timezone="Mars/Olympus")), 422),
+        ("timezone 'Local' (not an IANA name)", variant(lambda fx: R0(fx).update(timezone="Local")), 422),
+        ("timezone empty", variant(lambda fx: R0(fx).update(timezone="")), 422),
         ("opens not HH:MM", variant(lambda fx: R0(fx)["opening_hours"][0].update(opens="6pm")), 422),
         ("weekday not mon..sun", variant(lambda fx: R0(fx)["opening_hours"][0].update(weekday="thursday")), 422),
         ("closes not later than opens", variant(lambda fx: R0(fx)["opening_hours"][0].update(closes="17:00")), 422),
@@ -1218,7 +1220,8 @@ def g_moves(s: S):
     for name, b in (("moves not array", {"moves": "x"}), ("moves object", {"moves": {"reference": "x"}}),
                     ("item not object", {"moves": ["SEED01"]}), ("reference number", {"moves": [{"reference": 7}]})):
         chk.expect(f"moves {name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
-    for name, b in (("moves null", {"moves": None}), ("reference null", {"moves": [{"reference": None}]})):
+    for name, b in (("moves null", {"moves": None}), ("reference null", {"moves": [{"reference": None}]}),
+                    ("moves item null", {"moves": [None]}), ("moves item null after a valid item", {"moves": [{"reference": "SEED01"}, None]})):
         chk.expect(f"{name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
     r = c.req("POST", "/reservation-moves", {"moves": [{"reference": f"SEED0{i}"} for i in range(1, 9)]}, token=s.ada, key=uuid.uuid4().hex)
     chk.expect("8 moves allowed 201", r, 201, section="§11")
