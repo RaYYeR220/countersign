@@ -46,6 +46,11 @@ clone of c0f2b7b `stage-1/` if absent).
 - Step 6: race proofs for every guard, incl. any new one for combination occupancy.
 - Step 8: holdout `harness_win.py run --track tablekeeper --stage 2 --mode isolated` only after 1–7 are green.
 
+## Clause mapping (master ledger, main 6c768ee)
+Every HTTP check maps to C2.n / C1.n via `CLAUSE_RULES_S2` in `audit.py`; every browser check names its C2 clauses and
+ruling (R-29 absent-not-hidden, R-32 HH:MM + ISO date, R-38 key/body reuse, R-39 combination cells, R-40 signed-out
+navigation, R-30/R-37 upgrade).
+
 ## Self-test status
 - HTTP: stage-1 groups unchanged (pass on the stage-1 build); `combo` 78/78 and `comboburst` 30/30 (5 rounds) on an
   interim Builder build (seat/builder 91230e1, WI-8 only); `upgrade` mechanics verified stage-1→stage-1 (14/18; the 4
@@ -62,3 +67,10 @@ R-34 and R-35 (stage-2 rulings, main 4ddffa4): the six open points below are now
    pair's `table_ids` — request order, `combinable` order, or any?  5. same key with the pair listed in the other order —
    a different body (409) or the same request?  6. reset fixture validation for `combinable` (unknown table, a pair of one
    or three, a table paired with itself, duplicate pairs) and for seeded `table_ids` naming an undeclared pair.
+
+### Dry run on the Stylist branch d066ce9 (WI-8 + WI-9 + UI; not a candidate, not a verdict)
+- HTTP battery incl. upgrade from the stage-1 image: 718 checks, 0 failures.
+- Browser: after fixing three harness bugs (stale session in the login helper; 22:00 cells beyond the last 21:30 slot;
+  a 25-press Tab budget too small for a 140-cell grid), the only failures are against rulings issued after that build:
+  R-39 (cells for pairs below the party size at party 7), R-40 (signed-out lookup does not navigate to /login), R-32
+  (summary/details show "Thu, 29 Oct 2026 · 19:00" without the ISO date).

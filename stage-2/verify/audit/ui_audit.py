@@ -115,6 +115,10 @@ class UI:
         return email, pw, (r.json or {}).get("token")
 
     def ui_login(self, page, email, pw):
+        page.goto(self.a.base + "/")
+        if self.t(page, "logout-button").count():            # sign out any previous session first
+            self.t(page, "logout-button").first.click()
+            self.absent(page, "current-user", 4000)
         page.goto(self.a.base + "/login")
         self.t(page, "login-email").fill(email)
         self.t(page, "login-password").fill(pw)
@@ -427,8 +431,7 @@ class UI:
 
     def u_out_of_order(self, page):
         email, pw, tok = self.new_user()
-        self.api.req("POST", "/reservations", booking_body("r_combo", "c_4", f"{self.D}T22:00", 2), token=tok, key=uuid.uuid4().hex)  # makes A differ from B
-        self.api.req("POST", "/reservations", booking_body("r_combo", "c_4", f"{self.D}T21:30", 2), token=tok, key=uuid.uuid4().hex)
+        self.api.req("POST", "/reservations", booking_body("r_combo", "c_4", f"{self.D}T21:30", 2), token=tok, key=uuid.uuid4().hex)  # makes A differ from B
         self.ui_login(page, email, pw)
         page.goto(self.a.base + "/")
         held = []
@@ -453,13 +456,14 @@ class UI:
         time.sleep(1.5)
         page.unroute(re.compile(r".*/availability\?.*"))
         slots_b = self.api_slots("r_combo", self.D2, 2)
-        b_val = "true" if any(s["starts_at_local"].endswith("22:00") and "c_4" in s.get("available_table_ids", []) for s in slots_b) else "false"
-        cell = page.get_by_test_id("slot-c_4-22:00").get_attribute("data-available") if page.get_by_test_id("slot-c_4-22:00").count() else None
+        b_val = "true" if any(s["starts_at_local"].endswith("21:30") and "c_4" in s.get("available_table_ids", []) for s in slots_b) else "false"
+        cell = page.get_by_test_id("slot-c_4-21:30").get_attribute("data-available") if page.get_by_test_id("slot-c_4-21:30").count() else None
         self.check("late response of search A does not replace search B's grid", held and cell == b_val, b_val, cell, "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)")
         self.grid_matches(page, "r_combo", self.D2, 2, "after out-of-order responses (B)")
-        page.get_by_test_id("slot-c_4-22:00").click()
+        page.get_by_test_id("slot-c_4-21:30").click()
         summary = self.text(page, "booking-summary") if self.visible(page, "booking-form", 3000) else ""
-        self.check("booking form after out-of-order search describes B", str(self.D2) in (summary or "") or "22:00" in (summary or ""), str(self.D2), summary,
+        day_b = self.D2.strftime("%d").lstrip("0") + " " + self.D2.strftime("%b")
+        self.check("booking form after out-of-order search describes B", str(self.D2) in (summary or "") or day_b in (summary or ""), [str(self.D2), day_b], summary,
                    "C2.5,C2.6,C2.7,C2.8,C2.9 (R-38)", soft=True)
         self.t(page, "logout-button").first.click()
 
@@ -556,12 +560,12 @@ class UI:
         self.check("keyboard focus is visible on controls", not outline.startswith("none|0px|none"), "outline or ring", outline, "C2.11,C2.12,C2.14,C2.15")
         self.search(page, "r_combo", self.D, 2)
         self.visible(page, "availability-grid")
-        page.get_by_test_id("slot-c_3-22:00").focus()
+        page.get_by_test_id("slot-c_3-21:30").focus()
         page.keyboard.press("Enter")
         self.check("an available cell opens the form from the keyboard (Enter)", self.visible(page, "booking-form", 3000), "booking-form", None,
                    "C2.11,C2.12,C2.14,C2.15")
         got = False
-        for _ in range(25):
+        for _ in range(400):                                   # the grid may hold 100+ focusable cells before the form
             page.keyboard.press("Tab")
             if page.evaluate("() => document.activeElement && document.activeElement.getAttribute('data-testid')") == "booking-submit":
                 got = True
