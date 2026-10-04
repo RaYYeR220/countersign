@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=O-5,O-6,O-7 sha=<filled at commit>
+[EVIDENCE] stage=1 wi=O-5,O-6,O-7 sha=b39257a
 
 # Evidence — Oracle test hardening from the candidate-2 mutation survivors
 
