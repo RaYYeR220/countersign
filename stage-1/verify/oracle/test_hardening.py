@@ -116,7 +116,15 @@ def _reservation_records(state, **match):
     return owned or found
 
 
-def _tampers(exp: dict, second_ref: str):
+def _top_key_with_value(state: dict, value):
+    """Top-level key of the collection that holds `value` anywhere inside it, or None."""
+    for key, coll in state.items():
+        if any(v == value or (isinstance(v, str) and isinstance(value, str) and value in v) for _, _, v in _walk(coll)):
+            return key   # substring match too: a receipt may store the key inside a composite string
+    return None
+
+
+def _tampers(exp: dict, second_ref: str, idem_key: str = None, token: str = None):
     """Yield (name, tampered export) pairs. Each is built from a deep copy of the real export.
 
     Every tamper is applied to *all* reservation records that match, so an implementation that stores a record
@@ -162,6 +170,18 @@ def _tampers(exp: dict, second_ref: str):
         e = copy.deepcopy(exp)
         del e["state"][_top_key_of(e["state"], locate(e["state"]))]
         yield f"missing {which} collection", e
+    # O-8: only the receipts / only the tokens collection removed, located by a value each must contain; skipped when
+    # the layout has no separate collection for it (for example tokens nested under users, or hashed tokens)
+    main_keys = {_top_key_of(state0, _records(state0, email="ada@example.com")[0][2]),
+                 _top_key_of(state0, _records(state0, id="r_anker")[0][2]),
+                 _top_key_of(state0, _reservation_records(state0, reference="SEED01")[0][2])}
+    for which, value in (("receipts", idem_key), ("tokens", token)):
+        key = _top_key_with_value(state0, value) if value is not None else None
+        if key is None or key in main_keys:
+            continue
+        e = copy.deepcopy(exp)
+        del e["state"][key]
+        yield f"missing {which} collection", e
     # invalid restaurant
     for field, value in (("timezone", "Nope/Zone"), ("slot_minutes", -5), ("reservation_duration_minutes", 0),
                          ("name", 5), ("tables", "none"), ("slot_minutes", 0), ("reservation_duration_minutes", -1),
@@ -181,13 +201,21 @@ def _tampers(exp: dict, second_ref: str):
     # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
                          ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref"),
-                         ("reference", ""), ("reference", "X" * 65), ("reservation_id", ""), ("reservation_id", "X" * 65),
-                         ("id", ""), ("id", "X" * 65)):
+                         ("reference", ""), ("reference", "X" * 65), ("reference", "abcdef"),
+                         ("reservation_id", ""), ("reservation_id", "X" * 65), ("id", ""), ("id", "X" * 65)):
         e, seeds, _, _, _ = fresh()
         if all(field in rec for _, _, rec in seeds):
             for _, _, rec in seeds:
                 rec[field] = value
             yield f"invalid reservation ({field}={str(value)[:8]!r}{'…' if len(str(value)) > 8 else ''})", e
+    # O-8: zero or empty start/end timestamps on the record, whatever the field is called
+    for field in ("starts_at", "ends_at", "start", "end", "starts_at_utc", "ends_at_utc", "start_at", "end_at"):
+        for value in ("", 0, "0001-01-01T00:00:00Z"):
+            e, seeds, _, _, _ = fresh()
+            if all(field in rec for _, _, rec in seeds):
+                for _, _, rec in seeds:
+                    rec[field] = value
+                yield f"reservation {field}={value!r}", e
     # wrong JSON types
     for which, locate in (("users", lambda s: _records(s, email="ada@example.com")[0][2]),
                           ("restaurants", lambda s: _records(s, id="r_anker")[0][2])):
@@ -220,12 +248,12 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
     assert exp.status == 200
     before = _snapshot(c, [ada, bob])
     applied = 0
-    for name, doc in _tampers(exp.json, other["reference"]):
+    for name, doc in _tampers(exp.json, other["reference"], idem_key=key, token=ada):
         r = c.import_(doc)
         assert r.status == 422 and r.code == "validation_failed", (name, r)
         assert _snapshot(c, [ada, bob]) == before, f"destination changed after refused import: {name}"
         applied += 1
-    assert applied >= 25, applied
+    assert applied >= 30, applied
     # the untouched export still imports, and receipts survive
     assert c.import_(exp.json).status == 204
     assert c.book(ada, key, "r_all", "a_2", f"{FUT_DAY}T13:00", 2).status == 200

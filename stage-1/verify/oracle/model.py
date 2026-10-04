@@ -615,6 +615,7 @@ class Model:
             need(parse_local(s_["starts_at_local"]) is not None)
             start, end, created = (parse_rfc3339(s_[f]) for f in ("start", "end", "created"))
             need(start is not None and end is not None and created is not None and end > start)
+            need(min(start.year, end.year, created.year) >= 1000)     # a zero timestamp is not a value we produced
             need(s_["reservation_id"] not in new.reservations and s_["reference"] not in new.references)
             new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
                                  s_["table_id"], int(s_["party_size"]), s_["starts_at_local"], start, end, created)
