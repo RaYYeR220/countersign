@@ -1,0 +1,1651 @@
+{
+ "meta": {
+  "base": "http://auditor-s2-a:8080",
+  "dest": "http://auditor-s2-b:8080",
+  "prev": null,
+  "now": "2026-10-04T17:44:28.140963+00:00",
+  "now_tz": "UTC",
+  "thu": "2026-10-29",
+  "near": "2026-10-04T18:00",
+  "far": "2026-10-04T21:45",
+  "past": "2026-10-03T12:00",
+  "health_A_s": 0.03,
+  "health_B_s": 0.0
+ },
+ "checks": 122,
+ "hard_failures": 13,
+ "soft_failures": 0,
+ "per_group": {
+  "combo": {
+   "pass": 109,
+   "fail": 13,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [
+  {
+   "group": "combo",
+   "name": "R-42 POST restaurant_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "cdcb4a1e6246482b8ab0bc77298a1f41"
+    },
+    "body": "{\"restaurant_id\": \"\", \"table_id\": \"c_1\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "0731f64402de4a1a950b983dd09666ab"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_id\": \"\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids [''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "1d1cb8bf9e654193a8510f0d48e3e498"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids ['', 'c_1'] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "71b85bae55144bcb9d1d5dbf61c2a2e1"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"\", \"c_1\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST restaurant_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "dc4652bbb79e4557aafdd2786a116b04"
+    },
+    "body": "{\"restaurant_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"table_id\": \"c_1\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "51205e0099514afc90958c5a501b6326"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids member 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "11050380c3f143d6aefee41febdcd972"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"c_1\", \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_id\": \"\"}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_ids\": [\"c_2\", \"\"]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "f2d770bbbaf148e0979421d701d8fd8d"
+    },
+    "body": "{\"moves\": [{\"reference\": \"O47QHNI2\", \"table_id\": \"\"}]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move table_ids [''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "b08fdcdf350d45c1b984bea5cb6072aa"
+    },
+    "body": "{\"moves\": [{\"reference\": \"O47QHNI2\", \"table_ids\": [\"\"]}]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move reference '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such reservation\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "e8de95199f824a9ba4e8c9f86d75dd10"
+    },
+    "body": "{\"moves\": [{\"reference\": \"\"}]}"
+   }
+  }
+ ],
+ "soft": [],
+ "results": [
+  {
+   "group": "combo",
+   "name": "reset accepts combinable pairs, seeded table_ids and status",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable names an unknown table -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable names an unknown table: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable pair of one -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable pair of one: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable pair of three -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: combinable pair of three: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: table paired with itself -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: table paired with itself: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: duplicate pair, same order -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: duplicate pair, same order: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: duplicate pair, other order -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: duplicate pair, other order: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seeded table_ids names an undeclared pair -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seeded table_ids names an undeclared pair: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed with both table_id and table_ids -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed with both table_id and table_ids: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed with neither table_id nor table_ids -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed with neither table_id nor table_ids: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed status other than confirmed/cancelled -> 422 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "reset refuses fixture: seed status other than confirmed/cancelled: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 2 19:00: cancelled seed does not block",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 2 19:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 7 19:00: pairs only above single capacity",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 7 19:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 5 19:00: capacity sum filters pairs",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 5 19:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 2 13:00: seeded pair occupies both members",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 2 13:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 2 12:00: overlap with seeded pair",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 2 12:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 2 14:30: half-open after seeded pair",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 2 14:30",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "available_options party 11 19:00: no option fits",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "available_table_ids unchanged (singles only) party 11 19:00",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API availability",
+   "clause": "C2.44"
+  },
+  {
+   "group": "combo",
+   "name": "restaurant without combinable: options are singles only",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40,C2.44 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "seeded table_ids: table_ids carried, table_id omitted",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "seeded status cancelled kept; single carries table_id and table_ids",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "seeded single given as table_ids: response has table_id",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.43 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids pair 201: table_ids set, table_id omitted, times",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C2.48"
+  },
+  {
+   "group": "combo",
+   "name": "pair response lists table_ids in declared combinable order (R-34)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.48 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "GET pair reservation equals create response",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C2.48"
+  },
+  {
+   "group": "combo",
+   "name": "list entry for pair has the same shape",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C2.48"
+  },
+  {
+   "group": "combo",
+   "name": "pair occupies both tables: singles and every pair touching them gone",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Combined tables",
+   "clause": "C2.38,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "pair released at end (half-open)",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Combined tables",
+   "clause": "C2.38,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "single on a pair member, overlapping -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.51"
+  },
+  {
+   "group": "combo",
+   "name": "single on the other member -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.51"
+  },
+  {
+   "group": "combo",
+   "name": "pair sharing one taken member -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.51"
+  },
+  {
+   "group": "combo",
+   "name": "pair given in reverse order is the same declared pair -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.40 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "table_ids with one member: response has table_id and table_ids",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.39,C2.47,C2.48"
+  },
+  {
+   "group": "combo",
+   "name": "table_id still accepted: response carries table_ids [t]",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.39,C2.47,C2.48"
+  },
+  {
+   "group": "combo",
+   "name": "POST pair not declared (non-transitive c_1+c_3) -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.41,C2.49"
+  },
+  {
+   "group": "combo",
+   "name": "POST pair not declared (c_1+c_4) -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.41,C2.49"
+  },
+  {
+   "group": "combo",
+   "name": "POST three tables -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.50"
+  },
+  {
+   "group": "combo",
+   "name": "POST four tables -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.50"
+  },
+  {
+   "group": "combo",
+   "name": "POST duplicate table id -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST both table_id and table_ids -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47"
+  },
+  {
+   "group": "combo",
+   "name": "POST both, consistent single -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47"
+  },
+  {
+   "group": "combo",
+   "name": "POST party exceeds summed capacity -> 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.42,C2.52"
+  },
+  {
+   "group": "combo",
+   "name": "POST neither table_id nor table_ids -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids a string -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.34 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids null -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.34 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids numbers -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.34 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids with a null item -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.34 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST table_ids empty -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST pair with an unknown table -> 404 not_found",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.88 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST pair with another restaurant's table -> 404 not_found",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.46,C1.88 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST duplicate on a restaurant without combinable -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.40,C2.44 (R-34)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: both fields beat [] -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: >2 ids beat unknown table -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: duplicate beats >2 ids -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: unknown table beats undeclared pair -> 404 not_found",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: undeclared pair beats off-grid time -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: time rules beat summed capacity -> 422 not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "POST order: capacity beats 409 -> 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST",
+   "clause": "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "party equal to summed capacity -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model",
+   "clause": "C2.42,C2.52"
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST restaurant_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "cdcb4a1e6246482b8ab0bc77298a1f41"
+    },
+    "body": "{\"restaurant_id\": \"\", \"table_id\": \"c_1\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "0731f64402de4a1a950b983dd09666ab"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_id\": \"\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids [''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "1d1cb8bf9e654193a8510f0d48e3e498"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids ['', 'c_1'] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "71b85bae55144bcb9d1d5dbf61c2a2e1"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"\", \"c_1\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST restaurant_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "dc4652bbb79e4557aafdd2786a116b04"
+    },
+    "body": "{\"restaurant_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"table_id\": \"c_1\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "51205e0099514afc90958c5a501b6326"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\", \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST table_ids member 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "11050380c3f143d6aefee41febdcd972"
+    },
+    "body": "{\"restaurant_id\": \"r_combo\", \"table_ids\": [\"c_1\", \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"], \"starts_at_local\": \"2026-11-05T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 POST order: empty member beats duplicate -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "C2.46,C1.41 (R-42)",
+   "clause": "C2.46,C1.41 (R-42)"
+  },
+  {
+   "group": "combo",
+   "name": "R-42 order: empty set beats empty member",
+   "ok": true,
+   "soft": false,
+   "section": "C2.46 (R-42)",
+   "clause": "C2.46 (R-42)"
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_id\": \"\"}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_ids ['c_2', ''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_ids\": [\"c_2\", \"\"]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 PATCH table_id 65 chars -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.54 (R-42)",
+   "clause": "C2.54 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "PATCH",
+    "path": "/reservations/O47QHNI2",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>"
+    },
+    "body": "{\"table_id\": \"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move table_id '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "f2d770bbbaf148e0979421d701d8fd8d"
+    },
+    "body": "{\"moves\": [{\"reference\": \"O47QHNI2\", \"table_id\": \"\"}]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move table_ids [''] -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such table in this restaurant\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "b08fdcdf350d45c1b984bea5cb6072aa"
+    },
+    "body": "{\"moves\": [{\"reference\": \"O47QHNI2\", \"table_ids\": [\"\"]}]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "R-42 move reference '' -> 422 validation_failed",
+   "ok": false,
+   "soft": false,
+   "section": "C2.58 (R-42)",
+   "clause": "C2.58 (R-42)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 404,
+    "body": "{\"error\":{\"code\":\"not_found\",\"message\":\"no such reservation\"}}\n"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservation-moves",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "e8de95199f824a9ba4e8c9f86d75dd10"
+    },
+    "body": "{\"moves\": [{\"reference\": \"\"}]}"
+   }
+  },
+  {
+   "group": "combo",
+   "name": "pair booking replay 200 identical",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API POST/\u00a77",
+   "clause": "C2.46,C1.62,C1.63 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "same key, pair listed in the other order (different JSON) -> 409 (R-35)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C2.46,C1.62,C1.63 (R-35)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH single -> pair 200: table_ids set, table_id omitted",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "after PATCH both members occupied",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH undeclared pair -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH undeclared pair: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH both table_id and table_ids -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH both table_id and table_ids: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH party over summed capacity -> 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH party over summed capacity: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH duplicate ids -> 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH duplicate ids: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH three tables -> 422 combination_not_allowed",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH three tables: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH table_ids a string -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH table_ids a string: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH pair onto its own overlapping interval 200",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "PATCH pair -> single via table_id: table_id back, table_ids [t]",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "old pair released after PATCH to single",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API PATCH",
+   "clause": "C2.54 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "cancel frees every table in the set",
+   "ok": true,
+   "soft": false,
+   "section": "S2 API cancel",
+   "clause": "C2.54"
+  },
+  {
+   "group": "combo",
+   "name": "moves swap single <-> pair with table_ids 201",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "moves whose results share a table -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "failed table_ids batch changed nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "moves undeclared pair -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "moves both table_id and table_ids -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "moves table_ids a string -> 400",
+   "ok": true,
+   "soft": false,
+   "section": "S2 moves",
+   "clause": "C2.58 (R-36)"
+  },
+  {
+   "group": "combo",
+   "name": "import of an export holding pairs -> 204",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model/\u00a710",
+   "clause": "C2.38,C1.107"
+  },
+  {
+   "group": "combo",
+   "name": "pair reservation survives export/import unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model/\u00a710",
+   "clause": "C2.38,C1.107"
+  },
+  {
+   "group": "combo",
+   "name": "available_options identical after import",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Model/\u00a710",
+   "clause": "C2.44,C2.45"
+  },
+  {
+   "group": "combo",
+   "name": "combo group: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C2.38,C2.59"
+  },
+  {
+   "group": "combo",
+   "name": "combo group: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "S2 Combined tables",
+   "clause": "C2.38,C2.59"
+  }
+ ]
+}
