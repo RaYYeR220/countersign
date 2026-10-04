@@ -9,6 +9,7 @@ import (
 
 	"tablekeeper/internal/apperr"
 	"tablekeeper/internal/state"
+	"tablekeeper/internal/web"
 )
 
 // Server serves the Tablekeeper API over one state store.
@@ -40,9 +41,14 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	})
 	mux.Handle("/reservations/{reference}/cancel", methods{http.MethodPost: s.authed(s.cancelReservation)})
 	mux.Handle("/reservation-moves", methods{http.MethodPost: s.authed(s.moveReservations)})
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	notFound := func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))
-	})
+	}
+	for _, route := range web.Routes {
+		mux.Handle(route, methods{http.MethodGet: web.Page, http.MethodHead: web.Page})
+	}
+	mux.Handle("/assets/{name}", methods{http.MethodGet: web.Asset(notFound), http.MethodHead: web.Asset(notFound)})
+	mux.HandleFunc("/", notFound)
 	return recoverer(cleanPaths(mux))
 }
 
