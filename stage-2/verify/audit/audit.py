@@ -1636,7 +1636,9 @@ def g_combo(s: S, dest: Client | None = None):
                      ("seeded table_ids names an undeclared pair", fx_with(lambda f: f["reservations"][0].update(table_ids=["c_1", "c_4"]))),
                      ("seed with both table_id and table_ids", fx_with(lambda f: f["reservations"][0].update(table_id="c_3"))),
                      ("seed with neither table_id nor table_ids", fx_with(lambda f: f["reservations"][0].pop("table_ids"))),
-                     ("seed status other than confirmed/cancelled", fx_with(lambda f: f["reservations"][1].update(status="pending")))):
+                     ("seed status other than confirmed/cancelled", fx_with(lambda f: f["reservations"][1].update(status="pending"))),
+                     ("seeded starts_at_local is not a calendar date", fx_with(lambda f: f["reservations"][0].update(starts_at_local="2027-02-30T13:00"))),
+                     ("seeded starts_at_local malformed", fx_with(lambda f: f["reservations"][0].update(starts_at_local="2027-02-03 13:00")))):
         c.req("POST", "/_test/reset", fixture2(ctx), timeout=12)
         before = c.req("GET", "/_test/export").json
         rr = c.req("POST", "/_test/reset", fx, timeout=12)
@@ -1649,7 +1651,10 @@ def g_combo(s: S, dest: Client | None = None):
     for party, hhmm, free, why in ((2, "19:00", ALL, "cancelled seed does not block"), (7, "19:00", ALL, "pairs only above single capacity"),
                                    (5, "19:00", ALL, "capacity sum filters pairs"), (2, "13:00", {"c_1", "c_2"}, "seeded pair occupies both members"),
                                    (2, "12:00", {"c_1", "c_2"}, "overlap with seeded pair"), (2, "14:30", ALL, "half-open after seeded pair"),
-                                   (11, "19:00", ALL, "no option fits")):
+                                   (11, "19:00", ALL, "no option fits"),
+                                   (6, "19:00", ALL, "capacity exactly equal to the party (single and pair)"),
+                                   (10, "19:00", ALL, "pair whose summed capacity equals the party"),
+                                   (8, "19:00", ALL, "middle pair exactly at capacity")):
         sl, rr = _slot(s, "r_combo", D, party, hhmm)
         want = _filter(party, free)
         chk.check(f"available_options party {party} {hhmm}: {why}", sl is not None and opts(sl) == want, want, opts(sl), rr.req, "S2 API availability")

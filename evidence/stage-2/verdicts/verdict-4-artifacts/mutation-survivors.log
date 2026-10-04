@@ -1,0 +1,33 @@
+15 mutants generated
+baseline: 0 failing checks (excluded from kill criteria)
+[214s] #2 internal/localtime/localtime.go:272 LOG -> SURVIVED  (killed 0, survived 1)
+[218s] #0 internal/localtime/localtime.go:182 LOG -> SURVIVED  (killed 0, survived 2)
+[223s] #3 internal/state/integrity.go:39 LOG -> SURVIVED  (killed 0, survived 3)
+[223s] #1 internal/state/integrity.go:99 LOG -> SURVIVED  (killed 0, survived 4)
+[343s] #6 internal/localtime/localtime.go:288 CB -> SURVIVED  (killed 0, survived 5)
+[343s] #4 internal/state/integrity.go:33 LOG -> SURVIVED  (killed 0, survived 6)
+[344s] #7 internal/snapshot/snapshot.go:175 CB -> SURVIVED  (killed 0, survived 7)
+[460s] #9 internal/state/integrity.go:81 LOG -> SURVIVED  (killed 0, survived 8)
+[463s] #8 internal/jsonin/jsonin.go:111 CB -> SURVIVED  (killed 0, survived 9)
+[465s] #5 internal/api/availability.go:123 CB -> KILLED  (killed 1, survived 9)
+[468s] #10 internal/state/integrity.go:33 LOG -> SURVIVED  (killed 1, survived 10)
+[582s] #11 internal/snapshot/snapshot.go:173 NEG -> SURVIVED  (killed 1, survived 11)
+[584s] #12 internal/snapshot/snapshot.go:80 NEG -> SURVIVED  (killed 1, survived 12)
+[585s] #13 internal/localtime/localtime.go:237 CB -> SURVIVED  (killed 1, survived 13)
+[589s] #14 internal/api/amend.go:30 CB -> SURVIVED  (killed 1, survived 14)
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 25,
+ "generated": 15,
+ "evaluated": 15,
+ "killed": 1,
+ "survived": 14,
+ "invalid": 0,
+ "kill_rate": 0.067,
+ "elapsed_s": 589,
+ "baseline_failing": [],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ]
+}

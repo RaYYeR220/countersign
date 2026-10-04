@@ -252,6 +252,7 @@ def main(argv=None):
     ap.add_argument("--pytest-python", default=sys.executable)
     ap.add_argument("--killer-timeout", type=float, default=240)
     ap.add_argument("--native", action="store_true", help="build and run on the host instead of in containers")
+    ap.add_argument("--only-survivors", help="mutation.json of an earlier run: re-evaluate only its survivors (same mutants)")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     a.docker = not a.native
@@ -263,6 +264,10 @@ def main(argv=None):
     shutil.copytree(a.src, base, ignore=shutil.ignore_patterns("verify", ".git"))
     mutants = gen_mutants(base, [t.strip() for t in a.targets.split(",") if t.strip()])
     random.Random(a.seed).shuffle(mutants)
+    if a.only_survivors:
+        prev = json.loads(Path(a.only_survivors).read_text(encoding="utf-8"))
+        keep = {(r["file"], r["line"], r["op"], r["mutated"]) for r in prev.get("survivors", [])}
+        mutants = [m for m in mutants if (m["file"], m["line"], m["op"], m["mutated"]) in keep]
     print(f"{len(mutants)} mutants generated", flush=True)
     base_scratch = work / "scratch-base"
     base_scratch.mkdir(parents=True)
