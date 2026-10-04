@@ -4,9 +4,10 @@ import "time"
 
 // History events.
 const (
-	EventCreated   = "created"
-	EventChanged   = "changed"
-	EventCancelled = "cancelled"
+	EventCreated    = "created"
+	EventChanged    = "changed"
+	EventCancelled  = "cancelled"
+	EventReassigned = "reassigned" // a seating repair moved the booking (stage 4)
 )
 
 // FieldChange is one field's change in a history entry; From is nil on creation.
@@ -24,6 +25,7 @@ type HistoryEntry struct {
 	Changes       []FieldChange `json:"changes"`
 	Revision      int           `json:"revision"`
 	AcceptedTerms Terms         `json:"accepted_terms"`
+	PlanID        string        `json:"plan_id,omitempty"` // only on reassigned entries
 }
 
 // Record appends an event carrying the reservation's current revision and terms.

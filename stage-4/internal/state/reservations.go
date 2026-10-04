@@ -35,9 +35,16 @@ func (st *State) AddReservation(res *Reservation) {
 	st.reservationsByRef[res.Reference] = res
 }
 
-// TableBusy reports whether a confirmed reservation other than those skip accepts occupies any
-// of the tables over any part of [start, end). skip may be nil.
+// TableBusy reports whether an applied closure, or a confirmed reservation other than those skip
+// accepts, occupies any of the tables over any part of [start, end). skip may be nil.
 func (st *State) TableBusy(restaurantID string, tableIDs []string, start, end time.Time, skip func(*Reservation) bool) bool {
+	if r := st.Restaurant(restaurantID); r != nil {
+		for _, id := range tableIDs {
+			if r.Closed(id, start, end) {
+				return true
+			}
+		}
+	}
 	for _, res := range st.Reservations {
 		if res.Status != Confirmed || res.RestaurantID != restaurantID || !SharesTable(res.TableIDs, tableIDs) {
 			continue
