@@ -1,6 +1,6 @@
 """Stage-4 HTTP acceptance suite (Oracle): seating replans (preview, apply, closures), series amendments, the
-restaurant revision, upgrades from stages 1-3, and the stage-3 leftover O-15. Test names carry the entry-B ids
-(evidence/stage-4/ledger-B.md) until C4 ids exist.
+restaurant revision, upgrades from stages 1-3, and the stage-3 leftover O-15. Test names carry the master-ledger ids C4.<n>
+(evidence/stage-4/ledger.md); clauses4.json maps the entry-B ids.
 """
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def rev_of(c, mia, rid="r_trio") -> int:
 
 
 # ============================================================ preview (B5-B17)
-def test_B5_B6_B13_B14_preview_shape_and_validation(c, ada, bob, mia):
+def test_C4_3_C4_4_C4_9_preview_shape_and_validation(c, ada, bob, mia):
     a = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T19:00", 3)
     b = book_single(c, bob, "r_trio", "q_1", f"{FUT_FRI}T19:00", 2)
     frm, to = inst(FUT_FRI, "18:00"), inst(FUT_FRI, "23:00")
@@ -64,8 +64,10 @@ def test_B5_B6_B13_B14_preview_shape_and_validation(c, ada, bob, mia):
     for body in ({"from": frm, "to": to}, {"table_id": "q_2", "to": to}, {"table_id": "q_2", "from": frm}):
         err(c.post("/restaurants/r_trio/replans", body, token=mia, key=k()), 422, "validation_failed")
     err(c.post("/restaurants/r_trio/replans", {"table_id": 5, "from": frm, "to": to}, token=mia, key=k()), 400, "malformed_request")
-    for bad_from, bad_to in ((to, frm), (frm, frm), (f"{FUT_FRI}T18:00:00Z", to), (f"{FUT_FRI}T18:00:00", to), ("garbage", to), (frm, "")):
-        err(preview(c, mia, "r_trio", "q_2", bad_from, bad_to), 422, "validation_failed")
+    for bad_from, bad_to in ((to, frm), (frm, frm), (f"{FUT_FRI}T18:00:00", to), ("garbage", to), (frm, ""), (5, to), (frm, None), (frm, True)):
+        err(preview(c, mia, "r_trio", "q_2", bad_from, bad_to), 422, "validation_failed")      # R-62: every from/to problem
+    z = preview(c, mia, "r_trio", "q_2", f"{FUT_FRI}T16:00:00Z", f"{FUT_FRI}T21:00:00.500+02:00")   # Z and fractions accepted
+    assert z.status == 201 and z.json["closure"]["from"] == f"{FUT_FRI}T18:00:00+02:00" and not z.json["closure"]["to"].endswith("Z"), z
     err(preview(c, mia, "r_trio", "zzz", frm, to), 404, "not_found")
     err(preview(c, mia, "r_trio", "t_1", frm, to), 404, "not_found")
     err(preview(c, mia, "r_trio", "", frm, to), 422, "validation_failed")
@@ -89,7 +91,7 @@ def test_B5_B6_B13_B14_preview_shape_and_validation(c, ada, bob, mia):
     assert c.availability("r_trio", FUT_FRI, 1).json["slots"][2]["available_table_ids"] == ["q_3"]
 
 
-def test_B7_considered_set(c, ada, bob, mia):
+def test_C4_4_considered_set(c, ada, bob, mia):
     ends_at_from = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T18:00", 2)      # [18:00, 19:30) ends exactly at from
     inside = book_single(c, bob, "r_trio", "q_2", f"{FUT_FRI}T19:30", 2)            # overlaps
     starts_at_to = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T21:30", 2)      # starts exactly at to
@@ -101,7 +103,7 @@ def test_B7_considered_set(c, ada, bob, mia):
     assert refs[inside["reference"]]["table_ids"] == ["q_3"] and p["moved_count"] == 1
 
 
-def test_B10_B11_B12_optimality(c, ada, bob, mia):
+def test_C4_7_C4_8_optimality(c, ada, bob, mia):
     """Capacity under each booking's own terms, no cutoff protection, and the three-level objective."""
     # policy for Friday: q_1 seats 1 only -> a party of 2 booked under it cannot go to q_1 even though the fixture says 2
     assert publish(c, mia, "r_trio", policy(FUT_FRI, capacities={"q_1": 1, "q_2": 4, "q_3": 4})).status == 201
@@ -142,7 +144,7 @@ def test_B10_B11_B12_optimality(c, ada, bob, mia):
     assert r.status == 201 and r.json["reservations"][0]["table_ids"] == ["q_1"] and r.json["reservations"][0]["status"] == "confirmed"
 
 
-def test_B8_planning_limit(c, ada, bob, mia):
+def test_C4_6_planning_limit(c, ada, bob, mia):
     fx = base_fixture()
     big = {"id": "r_big", "name": "Big", "timezone": "Europe/Berlin", "slot_minutes": 30, "reservation_duration_minutes": 90,
            "cancellation_cutoff_minutes": 60, "opening_hours": [{"weekday": d, "opens": "18:00", "closes": "23:00"} for d in ALL_DAYS],
@@ -157,7 +159,7 @@ def test_B8_planning_limit(c, ada, bob, mia):
     assert len(c.get("/reservations", token=ada).json["reservations"]) == 7
 
 
-def test_B15_B16_B17_restaurant_revision_and_no_plan(c, ada, bob, mia):
+def test_C4_10_C4_11_restaurant_revision_and_no_plan(c, ada, bob, mia):
     assert rev_of(c, mia) == 0
     a = book_single(c, ada, "r_trio", "q_1", f"{FUT_FRI}T19:00", 2)                       # +1
     assert rev_of(c, mia) == 1
@@ -184,7 +186,7 @@ def test_B15_B16_B17_restaurant_revision_and_no_plan(c, ada, bob, mia):
 
 
 # ============================================================ apply (B18-B28)
-def test_B18_B19_B20_B21_B22_B23_B24_apply(c, ada, bob, mia):
+def test_C4_12_C4_13_C4_14_apply(c, ada, bob, mia):
     a = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T19:00", 3)
     b = book_single(c, bob, "r_trio", "q_1", f"{FUT_FRI}T19:00", 2)
     frm, to = inst(FUT_FRI, "18:00"), inst(FUT_FRI, "23:00")
@@ -229,7 +231,7 @@ def test_B18_B19_B20_B21_B22_B23_B24_apply(c, ada, bob, mia):
     assert rp.status == 200 and rp.json == r.json
 
 
-def test_B25_B26_closures_block(c, ada, bob, mia):
+def test_C4_15_closures_block(c, ada, bob, mia):
     a = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T19:00", 3)
     p = preview(c, mia, "r_trio", "q_2", inst(FUT_FRI, "19:00"), inst(FUT_FRI, "21:00")).json
     assert apply(c, mia, "r_trio", p["plan_id"]).status == 201
@@ -247,13 +249,18 @@ def test_B25_B26_closures_block(c, ada, bob, mia):
     err(c.post("/reservation-moves", {"moves": [{"reference": a["reference"], "table_ids": ["q_2"]}]}, token=ada, key=k()), 409, "table_unavailable")
     assert c.book(bob, k(), "r_trio", "q_2", f"{FUT_FRI}T21:00", 2).status == 201
     assert c.book(bob, k(), "r_trio", "q_2", f"{FUT_FRI2}T19:00", 2).status == 201
+    # R-73: a second closure on the already-closed table is planned and applied like any other
+    p2 = preview(c, mia, "r_trio", "q_2", inst(FUT_FRI, "20:00"), inst(FUT_FRI, "22:00"))
+    assert p2.status == 201 and p2.json["moved_count"] == 1, p2                               # bob's 21:00 booking moves
+    assert apply(c, mia, "r_trio", p2.json["plan_id"]).status == 201
+    err(c.book(bob, k(), "r_trio", "q_2", f"{FUT_FRI}T21:00", 2), 409, "table_unavailable")
     # the closure persists through export/import
     exp = c.export().json
     assert c.import_(exp).status == 204
     err(c.book(bob, k(), "r_trio", "q_2", f"{FUT_FRI}T19:30", 2), 409, "table_unavailable")
 
 
-def test_B27_B28_concurrent_apply_and_other_restaurant(c, ada, bob, mia):
+def test_C4_16_concurrent_apply_and_other_restaurant(c, ada, bob, mia):
     a = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T19:00", 3)
     b = book_single(c, bob, "r_trio", "q_2", f"{FUT_FRI}T21:00", 2)
     p = preview(c, mia, "r_trio", "q_2", inst(FUT_FRI, "18:00"), inst(FUT_FRI, "23:00")).json
@@ -270,7 +277,7 @@ def test_B27_B28_concurrent_apply_and_other_restaurant(c, ada, bob, mia):
     assert len(history(c, ada, a["reference"])) == 2 and len(history(c, bob, b["reference"])) == 2
 
 
-def test_B39_plan_moves_series_members(c, ada, mia):
+def test_C4_22_plan_moves_series_members(c, ada, mia):
     o = book_single(c, ada, "r_trio", "q_2", f"{FUT_FRI}T19:00", 3)
     s = adopt(c, ada, o["reference"], 3, 1).json
     assert c.patch(f"/reservations/{s['occurrences'][2]['reference']}", {"party_size": 2}, token=ada).status == 200   # exception at 2
@@ -295,7 +302,7 @@ def series_for(c, ada, count=4, table="q_2", party=3):
     return adopt(c, ada, o["reference"], count, 1).json
 
 
-def test_B29_B30_amend_preconditions(c, ada, bob):
+def test_C4_17_C4_18_amend_preconditions(c, ada, bob):
     s = series_for(c, ada)
     sid = s["series_id"]
     err(c.post(f"/series/{sid}/amend", {"expected_revision": 1, "from_index": 0, "local_time": "20:00"}, key=k()), 401, "unauthenticated")
@@ -318,7 +325,7 @@ def test_B29_B30_amend_preconditions(c, ada, bob):
     assert r.status == 201
 
 
-def test_B31_B32_B33_B36_B37_B38_amend_semantics(c, ada, bob, mia):
+def test_C4_19_C4_21_amend_semantics(c, ada, bob, mia):
     s = series_for(c, ada, count=5)
     sid, refs = s["series_id"], [x["reference"] for x in s["occurrences"]]
     assert c.patch(f"/reservations/{refs[2]}", {"party_size": 2}, token=ada).status == 200       # exception at 2
@@ -360,7 +367,7 @@ def test_B31_B32_B33_B36_B37_B38_amend_semantics(c, ada, bob, mia):
     assert rev_of(c, mia) == before + 1
 
 
-def test_B33_B34_B35_amend_failures(c, ada, bob, mia):
+def test_C4_19_C4_20_amend_failures(c, ada, bob, mia):
     s = series_for(c, ada, count=4)
     sid, refs = s["series_id"], [x["reference"] for x in s["occurrences"]]
     # index 2 closed on Fridays from FUT_FRI3 (policy), index 3 occupied at the new time: index order wins
@@ -388,7 +395,7 @@ def test_B33_B34_B35_amend_failures(c, ada, bob, mia):
     assert fx_s.status == 409 and fx_s.code == "cutoff_passed"
 
 
-def test_B40_concurrent_amends(c, ada):
+def test_C4_23_concurrent_amends(c, ada):
     s = series_for(c, ada, count=3)
     sid = s["series_id"]
     res = burst([(lambda i=i: amend(Client(c.base_url, timeout=15), ada, sid, 1, 0, f"{19 + i % 3}:30")) for i in range(12)])
@@ -432,7 +439,7 @@ def older_exports4(request):
 
 
 @pytest.mark.parametrize("stage", [1, 2, 3])
-def test_B41_upgrade_from_older_exports(c, mia, older_exports4, stage):
+def test_C4_24_upgrade_from_older_exports(c, mia, older_exports4, stage):
     if stage not in older_exports4:
         pytest.skip(f"no stage-{stage} source")
     src = older_exports4[stage]

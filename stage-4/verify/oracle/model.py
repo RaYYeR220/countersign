@@ -1463,13 +1463,11 @@ class Model:
     # ------------------------------------------------------------------ seating replans (stage 4)
     @staticmethod
     def _instant(v: Any) -> datetime:
-        """B6 (Q1): an RFC 3339 instant with a numeric offset; `Z` is not an explicit offset."""
+        """R-62: an RFC 3339 instant with an explicit offset (`Z` or ±HH:MM); every problem, including a wrong type, is 422."""
         if not isinstance(v, str):
-            raise Err(400, "malformed_request", "instants must be strings")
-        if v.endswith("Z") or v.endswith("z"):
-            raise Err(422, "validation_failed", "instants need an explicit numeric offset")
+            raise Err(422, "validation_failed", "instants must be RFC 3339 strings")
         dt = parse_rfc3339(v)
-        if dt is None or not re.search(r"[+-]\d{2}:\d{2}$", v):
+        if dt is None or not re.search(r"(Z|z|[+-]\d{2}:\d{2})$", v):
             raise Err(422, "validation_failed", "instants must be RFC 3339 with an explicit offset")
         return dt
 
