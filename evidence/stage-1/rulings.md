@@ -134,3 +134,60 @@ reconciliation is a new numbered ruling that supersedes the old one explicitly.
 - Clauses: C1.57–C1.67
 - Decision: records are keyed by (user, method, path, key); only 2xx outcomes are stored (with the canonical
   body and the original response); claim, execute and store happen in one serialised step.
+
+---
+Rulings below were issued at reconciliation with entry B (Oracle's Q1–Q10 and the A/B conflicts).
+
+## R-19 — Field-check order inside a body (supersedes the per-field order sentence of R-7)
+- Clauses: C1.34, C1.40–C1.42, C1.44, C1.80 (Oracle Q1)
+- Ambiguity: R-7 checked each field fully (missing → type → format) in field order; entry B checks all types
+  first. They differ for e.g. `{"table_id": 5}` with `restaurant_id` missing.
+- Decision: after R-1's header/idempotency steps, body fields are checked in three passes over the endpoint's
+  fields in their documented order: (1) wrong JSON type → 400 `malformed_request` (R-2: null is a wrong type;
+  `party_size` never gives 400); (2) missing required field → 422 `validation_failed`; (3) value format/range
+  (incl. every invalid `party_size`) → 422 `validation_failed`. Applies to signup, login, POST /reservations,
+  PATCH, move items.
+- Rationale: §5 reserves 400 for a malformed body; a malformed body is reported before an incomplete one.
+  Rejected: per-field interleaving (R-7 wording), which makes the code depend on field order for no reason.
+
+## R-20 — Reset fixture referential checks (extends R-8 and R-16)
+- Clauses: C1.12, C1.18, C1.26, C1.28, C1.30 (Oracle Q10)
+- Decision: reset → 422 `validation_failed`, state unchanged, when: duplicate user ids, emails (case-insensitive),
+  restaurant ids, table ids within a restaurant, reservation ids or references; a seeded reservation naming an
+  unknown user, restaurant or a table not of that restaurant; `closes` not later than `opens`; a duplicate
+  weekday within a restaurant. Seeded reservations are not checked against grid, hours, capacity or overlap.
+- Rationale: referential integrity of stored state; rejecting is conservative. Rejected: silently accepting.
+
+## R-21 — Timestamp offsets
+- Clauses: C1.15
+- Decision: every timestamp in a response carries a numeric `±HH:MM` offset; `Z` is never used. `created_at`
+  is in UTC written `+00:00`, with whole seconds (no fraction). `starts_at`/`ends_at` use the restaurant's zone.
+- Rationale: entry B reads "explicit offset" as excluding `Z`; the spec example uses `+00:00` for created_at.
+
+## R-22 — Reservation-moves error order (supersedes the ordering part of R-15)
+- Clauses: C1.114, C1.115, C1.117, C1.118 (Oracle Q5 and B170)
+- Decision: after R-1: (a) structure → 422 `validation_failed`: `moves` missing, not an array, length 0 or > 8,
+  an item not an object, `reference` missing or not a string, duplicate references; (b) wrong JSON type of an
+  item's `table_id`/`starts_at_local` → 400 `malformed_request`; (c) then for each item in input order, the
+  ordinary amendment checks: 404 `not_found` (unknown or another user's reference) → 422 `validation_failed`
+  (booking's restaurant differs from the first item's booking) → 409 `reservation_cancelled` → 409
+  `cutoff_passed` (also for no-op items) → 422 field values → 404 table → `invalid_local_time` →
+  `outside_opening_hours` → `not_on_slot_grid` → `party_exceeds_capacity`; the first failing item decides;
+  (d) only then occupancy of all resulting bookings → 409 `table_unavailable`.
+- Rationale: "take precedence in input order" literally means the first item's error wins whatever its kind.
+  Rejected: resolving all references before any other item check (R-15's old wording).
+
+## R-23 — End-of-day check on DST days (confirms R-5 against entry B's Q8 default)
+- Clauses: C1.74, C1.84, C1.103
+- Decision: "slot + duration ≤ closes" and "would end after closes" compare absolute instants:
+  `instant(start) + duration ≤ instant(closes on that local date)`. If `closes` falls in a skipped hour its
+  instant is the transition instant; if repeated, its first occurrence. The grid itself stays wall-clock (R-5).
+- Rationale: §9 makes duration absolute and §8 speaks of when the reservation *ends*; its real end is what a
+  diner experiences (ends_at local reading). Rejected: wall-clock minute arithmetic (B's default), which
+  would admit a booking whose ends_at reads after closes on spring-forward nights.
+
+## Answers to entry B's open questions
+Q1 → R-1 + R-19. Q2 → R-7 (B default confirmed). Q3 → R-7 (B default confirmed). Q4 → R-13/R-14 (B default
+confirmed). Q5 → R-22 (non-string `reference` → 422; `moves` not an array or item not an object → 422).
+Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, then reference). Q8 → R-23
+(absolute, overrides B default). Q9 → R-12 (422, B default confirmed). Q10 → R-20.
