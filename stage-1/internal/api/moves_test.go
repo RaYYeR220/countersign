@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -140,7 +139,7 @@ func TestMoveCutoffMeasuredOnCurrentStart(t *testing.T) {
 	expect(t, e.move(e.ada, "m", fmt.Sprintf(`{"moves":[{"reference":%q,"starts_at_local":"2026-09-24T18:00"}]}`, a.Reference)), 201, "")
 }
 
-// Receipts of both keyed paths survive export → import into a fresh server (C1.124, C1.67).
+// Receipts of both keyed paths survive export → import into a fresh server byte for byte (C1.124, C1.67).
 func TestReceiptsSurviveExportImport(t *testing.T) {
 	e := newEnv(t)
 	created := e.book(e.ada, "k-book", booking("t_2", "2026-09-24T19:00", 2))
@@ -160,7 +159,7 @@ func TestReceiptsSurviveExportImport(t *testing.T) {
 		{fresh.book(e.ada, "k-book", booking("t_2", "2026-09-24T19:00", 2)), created},
 		{fresh.move(e.ada, "k-move", moveBody), moved},
 	} {
-		if c.got.Code != 200 || !jsonEqual(c.got.Body.Bytes(), c.want.Body.Bytes()) {
+		if c.got.Code != 200 || c.got.Body.String() != c.want.Body.String() {
 			t.Errorf("replay after import = %d %s, want 200 %s", c.got.Code, c.got.Body, c.want.Body)
 		}
 	}
@@ -168,12 +167,4 @@ func TestReceiptsSurviveExportImport(t *testing.T) {
 	if got := decodeView(t, fresh.req("GET", "/reservations/"+v.Reference, e.ada, "", "")); got.TableID != "t_1" || got.CreatedAt != v.CreatedAt {
 		t.Errorf("imported booking = %+v", got)
 	}
-}
-
-func jsonEqual(a, b []byte) bool {
-	var x, y any
-	if json.Unmarshal(a, &x) != nil || json.Unmarshal(b, &y) != nil {
-		return false
-	}
-	return reflect.DeepEqual(x, y)
 }

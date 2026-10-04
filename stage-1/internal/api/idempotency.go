@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"net/http"
 	"unicode/utf8"
 
@@ -59,6 +60,7 @@ func (s *Server) keyedWrite(w http.ResponseWriter, r *http.Request, user *state.
 		if resp, err = encodeJSON(out); err != nil {
 			return
 		}
+		resp = bytes.TrimSpace(resp) // compact form: export/import re-encodes receipts byte-identically
 		status = http.StatusCreated
 		st.StoreReceipt(rk, &state.Receipt{Body: canonical, Status: status, Response: resp})
 	})
