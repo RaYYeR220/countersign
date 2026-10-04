@@ -1,0 +1,93 @@
+# Stage 4 rulings
+
+Decided by: Foreman. R-1 … R-60 continue to bind. Master ids `C4.<n>` = stage-4 entry-A row `A<n>` where both readers
+agree. R-61 … R-72 were issued from entry A before reconciliation.
+
+## R-61 — The considered set
+- Clauses: C4.5, C4.7
+- Decision: considered = every `confirmed` booking of the restaurant whose occupancy `[starts_at, ends_at)` overlaps
+  the closure `[from, to)`, on ANY table (not only the closed one). All other confirmed bookings of the restaurant
+  are fixed. A considered booking may keep its current set (unchanged) when that set does not contain the closed
+  table; the objective (C4.8) moves bookings only when needed.
+- Rationale: literal reading of "Consider every confirmed booking at this restaurant overlapping that interval".
+
+## R-62 — Replan preview: order and errors
+- Clauses: C4.3, C4.4, C4.6, C4.11
+- Decision: 401 → 400 body not a JSON object → 400 missing key → 422 key length → idempotency (replay 200 / 409 reuse)
+  → 404 unknown restaurant → 403 non-manager → body: `table_id` missing → 422, not a string → 400, empty or > 64
+  characters → 422 (R-42); `from`/`to` missing, not a string, not RFC 3339 with an explicit offset (`Z` or `±HH:MM`
+  both count as explicit), or `from >= to` → 422 → 404 table not in this restaurant → 422 `planning_limit` (R-63)
+  → 409 `no_feasible_plan` → 201. A preview with no considered bookings is feasible (empty assignments, 0, 0).
+
+## R-63 — Planning limit
+- Clauses: C4.6
+- Decision: 422 `planning_limit` when the restaurant has more than 6 tables, more than 4 declared pairs, or more than
+  6 considered bookings; otherwise the planner must return the optimal plan.
+
+## R-64 — Feasibility details
+- Clauses: C4.7, C4.15
+- Decision: an option is a single table or a declared pair; its capacity is computed from the booking's OWN
+  `accepted_terms.capacities` (sum for a pair). An option conflicts when any member is (a) occupied by a fixed
+  confirmed booking over an overlapping interval, (b) used by another considered booking's assignment over an
+  overlapping interval, (c) covered by a previously applied closure overlapping the booking, or (d) the closed table
+  (every considered booking overlaps the proposed closure). Cutoffs are ignored.
+
+## R-65 — Preview response
+- Clauses: C4.9, C4.10
+- Decision: exactly `{plan_id, restaurant_revision, closure: {table_id, from, to}, assignments: [{reference,
+  table_ids, changed}], moved_count, unused_seats}`. `restaurant_revision` is the restaurant's revision when the plan
+  was computed. `closure.from`/`to` are the instants as RFC 3339 in the restaurant's timezone offset, whole seconds
+  (never `Z`). `assignments` in ascending reference order; `table_ids` in declared order; `changed` = the set
+  differs from the current set; `moved_count` = number of `changed`; `unused_seats` = Σ(capacity under own terms −
+  party_size). `plan_id` is an opaque id ≤ 64 characters.
+
+## R-66 — Apply: order and effects
+- Clauses: C4.12–C4.14, C4.16, C4.22
+- Decision: 401 → 400 body not a JSON object → key checks → idempotency (replay 200 with the original body) → 404
+  unknown restaurant → 403 non-manager → 404 plan unknown or of another restaurant → 409 `plan_already_applied` (the
+  plan was applied under another key) → 409 `stale_plan` (restaurant revision differs from the plan's) → apply in one
+  serialised step: record the closure; set each changed booking's table set, revision +1, one `reassigned` entry;
+  each affected series revision +1 once; restaurant revision +1 once. 201 `{plan_id, restaurant_revision (after
+  apply), reservations: [ordinary reservation responses of every considered booking, reference order]}`.
+
+## R-67 — `reassigned` history entry
+- Clauses: C4.14
+- Decision: `{seq, at, event: "reassigned", changes: [{field: "table_ids", from: [old set], to: [new set]}],
+  plan_id, revision, accepted_terms}` — the change always uses `table_ids` (full lists, declared order), even for
+  single-to-single; accepted_terms and times unchanged.
+
+## R-68 — Effects of applied closures
+- Clauses: C4.15, C4.20
+- Decision: an applied closure on table T over `[from, to)` makes T unavailable for any interval overlapping it:
+  availability removes T and every pair containing T; explain reports `no_overlap: false` for T; POST /reservations,
+  PATCH, moves, series adoption and series amend that would occupy T over an overlapping interval → 409
+  `table_unavailable` (in the occupancy position). Closures are never removed in stage 4.
+
+## R-69 — Restaurant revision visibility
+- Clauses: C4.9, C4.10, C4.12
+- Decision: the revision counter of R-54 is observable only through the preview and apply responses. It counts
+  exactly R-54's writes plus plan application, now also including successful series amends that changed something.
+
+## R-70 — Series amend: order and errors
+- Clauses: C4.17, C4.18, C4.20
+- Decision: 401 → 400 body not an object → key checks → idempotency → 404 series unknown or not the caller's →
+  field validation: `expected_revision` (positive integer), `from_index` (integer 0..count−1), `local_time`
+  (string exactly `HH:MM`, 00:00..23:59) — missing, wrong type (booleans, strings, null, fractions) or out of range
+  → 422 → 409 `stale_revision` → per eligible occurrence in index order: 409 `cutoff_passed` (old accepted terms,
+  current start) → R-7 chain under the resulting date's policy (`invalid_local_time`, `outside_opening_hours`,
+  `not_on_slot_grid`, `party_exceeds_capacity`); first failing index wins → then occupancy for all changed
+  occurrences (against unchanged occurrences, other bookings and applied closures) → 409 `table_unavailable`.
+
+## R-71 — Series amend semantics
+- Clauses: C4.19, C4.21, C4.22
+- Decision: eligible = occurrences with index ≥ from_index that are neither cancelled nor exceptions. Each one's new
+  local start = its scheduled local date (anchor's local date + index × interval × 7 days, unaffected by seating
+  repairs) at `local_time`; resolved by stage-1 rules (nonexistent → `invalid_local_time`, repeated → first). Table
+  set and party size unchanged. A no-op occurrence (same local start) is not checked beyond eligibility and keeps
+  terms, revision and history. Success → 201 with the current series response; series and restaurant revisions +1
+  once if anything changed; amended occurrences are not marked exceptions.
+
+## R-72 — Upgrade to stage 4
+- Clauses: C4.24
+- Decision: import accepts schema 1–3 (and its own schema 4) states, envelope `format_version: 1`; migrated states
+  have no plans and no closures; stage-3 series, histories, revisions and restaurant revisions are kept.
