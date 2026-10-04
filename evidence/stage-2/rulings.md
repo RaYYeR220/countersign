@@ -1,0 +1,100 @@
+# Stage 2 rulings
+
+Decided by: Foreman. Stage-1 rulings R-1 … R-28 continue to bind (R-26 withdrawn). Stage-2 rulings continue the
+numbering. Clause ids: master `C2.<n>` = entry-A row `A<n>` (stage 2) where both readers found it; entry-B-only
+clauses are appended at reconciliation. R-29 … R-38 were issued from entry A before reconciliation.
+
+## R-29 — Conditional UI elements are absent, not hidden
+- Clauses: C2.8, C2.18, C2.19, C2.20, C2.27, C2.31, C2.34
+- Decision: `auth-error`, `booking-error`, `booking-uncertain`, `reservation-error`, `confirmation`,
+  `reservation-detail`, `no-slots`, `current-user`, `logout-button`, `reservation-cancel-button` are in the DOM
+  only while their state holds; otherwise they are absent (not merely hidden). `current-user` and `logout-button`
+  are absent when signed out. When `slots` is empty, `no-slots` is rendered and `availability-grid` is absent;
+  when there are slots, `availability-grid` is rendered and `no-slots` is absent.
+- Rationale: "Present only when there is one", "Shown instead of the grid", "Absent once cancelled" — absence is
+  the literal and least ambiguous observable. Rejected: CSS-hidden elements.
+
+## R-30 — Session in the browser
+- Clauses: C2.19, C2.35, C2.37
+- Decision: the token, user id and display name are kept in `localStorage` so every route knows the session and a
+  session survives navigation and an export/import upgrade (tokens survive import). Logout clears them. A 401 from
+  the API clears the session and shows `auth-error`.
+
+## R-31 — Signed-out actions
+- Clauses: C2.30, C2.34
+- Decision: clicking an available cell while signed out shows `auth-error` on `/` (with a link to `/login`) and
+  keeps the search; using the lookup screen while signed out shows `auth-error` with a link to `/login`.
+
+## R-32 — Rendering of local start time
+- Clauses: C2.31, C2.33
+- Decision: `booking-summary` and `confirmation-details` contain the local start time as 24-hour `HH:MM` (exactly as
+  in `starts_at_local`) and the local date (both the ISO `YYYY-MM-DD` and a readable weekday/day/month form).
+  Table labels appear as given in the fixture (e.g. "Table 1"-style wording may wrap them, but the fixture label
+  text must appear verbatim).
+
+## R-33 — Combination cells
+- Clauses: C2.55, C2.28
+- Decision: a combination cell `slot-{t_a}+{t_b}-{HH:MM}` (ids in `combinable` order) is rendered only when that
+  pair is in the slot's `available_options` for the searched party size, and then carries `data-available="true"`.
+  Single cells exist for every table for every slot with `data-available` per C2.28. `HH:MM` is taken from
+  `starts_at_local`.
+- Rationale: "shown when a declared pair is available for the searched party size".
+
+## R-34 — `combinable` fixture validation
+- Clauses: C2.40, C2.43 (extends R-8/R-20)
+- Decision: `combinable` is optional (absent → `[]`). Reset → 422 `validation_failed`, state unchanged, when an
+  entry is not an array of exactly 2 strings, repeats a table, names a table not in that restaurant, or repeats a
+  pair (in either order). Seeded reservations: `status` absent → confirmed; `"confirmed"` or `"cancelled"` only,
+  else 422; exactly one of `table_id` / `table_ids` (both or neither → 422); a seeded `table_ids` follows the same
+  set rules as POST (1 table, or a declared pair). Seeded cancelled bookings occupy nothing.
+
+## R-35 — Table-set validation order (POST, PATCH, move items)
+- Clauses: C2.46–C2.53, C2.58
+- Decision: after R-1/R-19 (types 400 → missing 422 → values 422): both `table_id` and `table_ids` present → 422
+  `validation_failed`; `table_ids` not an array of strings → 400; empty → 422 `validation_failed`; duplicate id →
+  422 `validation_failed`; more than two ids → 422 `combination_not_allowed`; then 404 (restaurant, any table
+  unknown or of another restaurant); then a pair not declared → 422 `combination_not_allowed`; then the stage-1
+  time rules (R-7); then `party_exceeds_capacity` against the summed capacity; then 409 `table_unavailable` if any
+  member is occupied. POST requires one of the two fields (neither → 422).
+- Responses: `table_ids` is `[id]` for a single table and the declared `combinable` order for a pair, whatever the
+  input order; `table_id` present exactly when one table.
+- Idempotency compares parsed JSON values literally (§7): a replay that lists a pair in the other order is a
+  different body → 409 `idempotency_key_reuse`.
+
+## R-36 — PATCH and moves with table sets
+- Clauses: C2.54, C2.58
+- Decision: PATCH/move items accept either `table_id` (a set of one) or `table_ids`; both → 422. Supplying the
+  same set in the other order is not a change. Occupancy checks cover every member of every resulting set.
+
+## R-37 — Upgrade from stage-1 exports
+- Clauses: C2.35–C2.37
+- Decision: import accepts `format_version: 1` exports from the stage-1 service (state schema 1) and migrates them:
+  every reservation gains `table_ids: [table_id]`, restaurants gain `combinable: []`; users, tokens, references,
+  timestamps and idempotency receipts (with their original stage-1 response bodies, replayed verbatim) are kept.
+  The envelope stays `track: "tablekeeper", format_version: 1`; the inner schema number distinguishes versions.
+
+## R-38 — Retries in the browser
+- Clauses: C2.8, C2.32
+- Decision: the booking form generates one idempotency key per distinct (table set, start, party size) submission
+  and keeps it in memory until a field changes. A resubmission with unchanged fields reuses key and body exactly
+  (byte-identical JSON). A network failure or a 5xx keeps the key and shows `booking-uncertain`; a 4xx shows
+  `booking-error` (409 also refreshes availability, keeping the form).
+
+## R-39 — Combination cells (supersedes R-33)
+- Clauses: C2.55, C2.28
+- Ambiguity: "combination cells, shown when a declared pair is available for the searched party size" next to
+  "Carries `data-available` like a single cell". R-33 read "available" as "free", which makes `data-available`
+  always true and the second sentence pointless; the Stylist built a cell for every pair in every slot.
+- Decision: in every slot, a combination cell `slot-{t_a}+{t_b}-{HH:MM}` (ids in `combinable` order) is rendered for
+  every declared pair whose summed capacity ≥ the searched party size; it carries `data-available="true"` exactly
+  when the pair is in that slot's `available_options`, else `"false"`. Pairs whose summed capacity is below the
+  party size have no cell. Clicking a `false` combination cell does nothing.
+- Rationale: "available for the searched party size" = able to seat that party; "like a single cell" = true/false by
+  occupancy. Rejected: R-33 (free-only), and a cell for every pair regardless of capacity.
+
+## R-40 — Signed-out actions (supersedes R-31)
+- Clauses: C2.30, C2.34
+- Decision: clicking an available cell while signed out navigates to `/login`; after a successful sign-in the
+  diner returns to `/` with the search and selection restored and the booking form open. Using the lookup screen
+  while signed out navigates to `/login` and returns to `/lookup` after sign-in. (The spec allows `auth-error` or
+  navigation; navigation is the behaviour already built.)
