@@ -1,4 +1,9 @@
-"""Tablekeeper stage-2 reference model (Oracle seat).
+"""Tablekeeper stage-3 reference model (Oracle seat).
+
+Stage 3 adds dated booking policies (publication, selection by local start date, accepted terms and revisions on
+every reservation), availability explanations, reservation history and decision, expected_revision, recurring
+series, and the upgrade path from stage-1 (v1) and stage-2 (v2) model states. Precedence defaults are the Q1..Q25
+of evidence/stage-3/ledger-B.md until ruled.
 
 Stage 2 adds combinable table pairs (`table_ids`, `available_options`, `combination_not_allowed`), seeded
 `status`, and the upgrade path: an export of the stage-1 model (schema oracle-model-v1) imports into this model.
@@ -38,8 +43,11 @@ DIGITS_RE = re.compile(r"^[0-9]+$")
 ID_MAX = 64
 TRACK = "tablekeeper"
 FORMAT_VERSION = 1
-STATE_MARKER = "oracle-model-v2"
+STATE_MARKER = "oracle-model-v3"
+STATE_MARKER_V2 = "oracle-model-v2"
 STATE_MARKER_V1 = "oracle-model-v1"
+TERMS_KEYS = ("policy_version", "slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes",
+              "opening_hours", "capacities")
 _SEQ = itertools.count(1)   # process-wide: ids and references are never reissued after a reset or import (C1.81, C1.112)
 
 
@@ -203,6 +211,10 @@ ROUTES = [  # (method, pattern as list of segments; "*" matches one segment)
     ("GET", ["reservations"]), ("POST", ["reservations"]),
     ("GET", ["reservations", "*"]), ("PATCH", ["reservations", "*"]),
     ("POST", ["reservations", "*", "cancel"]), ("POST", ["reservation-moves"]),
+    # stage 3
+    ("POST", ["restaurants", "*", "policies"]), ("GET", ["restaurants", "*", "policies"]),
+    ("GET", ["reservations", "*", "history"]), ("GET", ["reservations", "*", "decision"]),
+    ("POST", ["series"]), ("GET", ["series", "*"]),
 ]
 
 
@@ -236,11 +248,13 @@ class Model:
         self.reservation_order: list[str] = []
         self.references: set[str] = set()
         self.idem: dict[str, dict] = {}           # "user|METHOD|path|key" -> {"body","status","response"}
+        self.series: dict[str, dict] = {}         # series_id -> {series_id,user_id,revision,interval_weeks,count,occurrences}
+        self.series_order: list[str] = []
         self.counters = {"user": 0, "reservation": 0}
 
     def _adopt(self, other: "Model") -> None:
         for attr in ("users", "user_order", "tokens", "restaurants", "restaurant_order",
-                     "reservations", "reservation_order", "references", "idem", "counters"):
+                     "reservations", "reservation_order", "references", "idem", "counters", "series", "series_order"):
             setattr(self, attr, getattr(other, attr))
 
     # ------------------------------------------------------------------ id generation
@@ -314,12 +328,25 @@ class Model:
             return self.login(self._json_object(body))
         if parts == ["restaurants"]:
             return self.list_restaurants()
-        if parts[0] == "restaurants":
+        if method == "GET" and len(parts) == 2 and parts[0] == "restaurants":
             return self.get_restaurant(parts[1])
         if parts == ["availability"]:
             return self.availability(self._query(query))
+        if method == "GET" and len(parts) == 3 and parts[0] == "restaurants":
+            return self.list_policies(parts[1])                                     # public (B40)
+        if method == "GET" and len(parts) == 3 and parts[0] == "reservations":        # history / decision: 404, never 401 (B55)
+            user_id = self._auth_or_404(headers)
+            return (self.history if parts[2] == "history" else self.decision)(user_id, parts[1])
+        if method == "GET" and parts[0] == "series":
+            return self.get_series(self._auth_or_404(headers), parts[1])             # B69
         # protected endpoints: 401 first (R-1, C1.36), then body parsing
         user_id = self._auth(headers)
+        if method == "POST" and parts[0] == "restaurants":
+            rid = parts[1]
+            return self._keyed(user_id, "POST", f"/restaurants/{rid}/policies", headers, body,
+                               lambda u, o: self.publish_policy(u, rid, o))
+        if method == "POST" and parts == ["series"]:
+            return self._keyed(user_id, "POST", "/series", headers, body, self.create_series)
         if method == "POST" and parts == ["reservations"]:
             return self._keyed(user_id, "POST", "/reservations", headers, body, self.create_reservation)
         if method == "GET" and parts == ["reservations"]:
@@ -384,6 +411,12 @@ class Model:
     def _query(query: str) -> dict[str, str]:
         qs = parse_qs(query, keep_blank_values=True)
         return {k_: v[0] for k_, v in qs.items()}
+
+    def _auth_or_404(self, headers: dict) -> str:
+        try:
+            return self._auth(headers)
+        except Err:
+            raise Err(404, "not_found", "no such reservation")
 
     def _auth(self, headers: dict) -> str:
         raw = headers.get("authorization")
@@ -512,11 +545,30 @@ class Model:
                 if any({a, b} == set(pair) for a, b in combinable):
                     raise Err(422, "validation_failed", "duplicate combinable pair")
                 combinable.append([pair[0], pair[1]])
+            managers = self._flist(r, "manager_user_ids")                                  # stage 3 (B22)
+            for m in managers:
+                if not isinstance(m, str):
+                    raise Err(400, "malformed_request", "manager_user_ids must be strings")
+                if m not in self.users:
+                    raise Err(422, "validation_failed", "unknown manager user id")         # Q7
+            if len(set(managers)) != len(managers):
+                raise Err(422, "validation_failed", "duplicate manager user id")
+            revision = r.get("revision", 0)
+            if not is_json_int(revision) or int(revision) < 0:
+                raise Err(422, "validation_failed", "revision must be a non-negative integer")
             self.restaurants[rid] = {
                 "id": rid, "name": name, "timezone": tz, "slot_minutes": slot,
                 "reservation_duration_minutes": dur, "cancellation_cutoff_minutes": cutoff,
                 "opening_hours": hours, "tables": tables, "combinable": combinable,
+                "manager_user_ids": list(managers), "policies": [], "revision": int(revision),
             }
+            for i, pol in enumerate(self._flist(r, "policies")):                           # only from imported state
+                self._fobj(pol, "policy")
+                norm = self._validate_policy(self.restaurants[rid], pol)
+                if not is_json_int(pol.get("policy_version")) or int(pol["policy_version"]) != i + 1:
+                    raise Err(422, "validation_failed", "policy versions must be dense from 1")
+                norm["policy_version"] = i + 1
+                self.restaurants[rid]["policies"].append(norm)
             self.restaurant_order.append(rid)
         for s in self._flist(fx, "reservations"):
             self._fobj(s, "reservation")
@@ -556,17 +608,157 @@ class Model:
                 raise Err(422, "validation_failed", "duplicate reservation id/reference")  # R-20
             created = parse_rfc3339(s.get("created_at")) or self.now()                   # R-16
             self._add_reservation(rid, ref, uid, restaurant_id, table_ids, party, local, start,
-                                  start + timedelta(minutes=r["reservation_duration_minutes"]), created)
-            self.reservations[rid]["status"] = status
+                                  start + timedelta(minutes=r["reservation_duration_minutes"]), created,
+                                  self._policy0(r))                                         # B45: revision 1, policy 0
+            if status == "cancelled":                                                       # Q19
+                self._cancel_record(self.reservations[rid], created)
 
-    def _add_reservation(self, rid, ref, uid, restaurant_id, table_ids, party, local, start, end, created):
-        self.reservations[rid] = {
+    def _add_reservation(self, rid, ref, uid, restaurant_id, table_ids, party, local, start, end, created,
+                         terms: dict, history: Optional[list] = None):
+        rec = {
             "reservation_id": rid, "reference": ref, "user_id": uid, "restaurant_id": restaurant_id,
             "table_ids": list(table_ids), "party_size": party, "status": "confirmed",
             "starts_at_local": local, "start": start, "end": end, "created": created,
+            "revision": 1, "terms": json.loads(json.dumps(terms)), "history": [],
+            "series_id": None, "series_index": None,
         }
+        self.reservations[rid] = rec
         self.reservation_order.append(rid)
         self.references.add(ref)
+        if history is not None:
+            rec["history"] = history
+        else:
+            tf = "table_id" if len(table_ids) == 1 else "table_ids"                       # B17, B78
+            tv = table_ids[0] if len(table_ids) == 1 else list(table_ids)
+            self._record(rec, "created", [{"field": tf, "from": None, "to": tv},
+                                          {"field": "starts_at_local", "from": None, "to": local},
+                                          {"field": "party_size", "from": None, "to": party}], created)
+
+    def _record(self, rec: dict, event: str, changes: list, at: datetime) -> None:
+        zone = ZoneInfo(self.restaurants[rec["restaurant_id"]]["timezone"])
+        rec["history"].append({"seq": len(rec["history"]) + 1, "at": fmt(at, zone), "event": event,    # Q4: zone
+                               "changes": changes, "revision": rec["revision"],
+                               "accepted_terms": json.loads(json.dumps(rec["terms"]))})
+
+    def _cancel_record(self, rec: dict, at: datetime) -> None:
+        rec["status"] = "cancelled"
+        rec["revision"] += 1                                                               # B51
+        self._record(rec, "cancelled", [], at)
+        self._bump_series(rec, exception=False)
+
+    def _bump_series(self, rec: dict, exception: bool) -> None:
+        sid = rec.get("series_id")
+        if sid and sid in self.series:
+            ser = self.series[sid]
+            ser["revision"] += 1
+            if exception:
+                ser["occurrences"][rec["series_index"]]["exception"] = True
+
+    @staticmethod
+    def _diff(ids_before: list, ids_after: list, local_before: str, local_after: str, party_before: int, party_after: int) -> list:
+        """B18/B78: changed fields in the order table(s), starts_at_local, party_size."""
+        changes = []
+        if list(ids_before) != list(ids_after):
+            if len(ids_before) == 1 and len(ids_after) == 1:
+                changes.append({"field": "table_id", "from": ids_before[0], "to": ids_after[0]})
+            else:
+                changes.append({"field": "table_ids", "from": list(ids_before), "to": list(ids_after)})
+        if local_before != local_after:
+            changes.append({"field": "starts_at_local", "from": local_before, "to": local_after})
+        if party_before != party_after:
+            changes.append({"field": "party_size", "from": party_before, "to": party_after})
+        return changes
+
+    # ------------------------------------------------------------------ policies (stage 3)
+    @staticmethod
+    def _policy0(r: dict) -> dict:
+        return {"policy_version": 0, "slot_minutes": r["slot_minutes"],
+                "reservation_duration_minutes": r["reservation_duration_minutes"],
+                "cancellation_cutoff_minutes": r["cancellation_cutoff_minutes"],
+                "opening_hours": json.loads(json.dumps(r["opening_hours"])),
+                "capacities": {t["id"]: t["capacity"] for t in r["tables"]}}
+
+    def _policy_for(self, r: dict, day: date) -> dict:
+        """B32: greatest effective_from not later than the local date; ties -> greatest policy_version; else policy 0."""
+        best = None
+        key = day.isoformat()
+        for pol in r["policies"]:
+            if pol["effective_from"] <= key and (best is None or (pol["effective_from"], pol["policy_version"]) >
+                                                 (best["effective_from"], best["policy_version"])):
+                best = pol
+        if best is None:
+            return self._policy0(r)
+        return {k_: json.loads(json.dumps(best[k_])) for k_ in TERMS_KEYS}
+
+    def _validate_policy(self, r: dict, obj: dict) -> dict:
+        """B35-B37 (Q9): types 400 (booleans in integer fields 422) -> missing 422 -> values 422. Returns a normalised policy."""
+        int_fields = ("slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes")
+        for f, kind in (("effective_from", str), ("opening_hours", list), ("capacities", dict)):      # pass 1
+            if f in obj and not isinstance(obj[f], kind):
+                raise Err(400, "malformed_request", f"{f} has the wrong type")
+        for f in int_fields:
+            if f in obj and not isinstance(obj[f], bool) and not isinstance(obj[f], (int, float)):
+                raise Err(400, "malformed_request", f"{f} must be an integer")
+        for f in ("effective_from",) + int_fields + ("opening_hours", "capacities"):               # pass 2
+            if f not in obj:
+                raise Err(422, "validation_failed", f"{f} is required")
+        if parse_date(obj["effective_from"]) is None:                                                # pass 3
+            raise Err(422, "validation_failed", "effective_from must be a real YYYY-MM-DD date")
+        out = {"effective_from": obj["effective_from"]}
+        for f, lo, hi in (("slot_minutes", 1, 1440), ("reservation_duration_minutes", 1, 1440),
+                          ("cancellation_cutoff_minutes", 0, 10080)):
+            v = obj[f]
+            if not is_json_int(v) or not lo <= int(v) <= hi:
+                raise Err(422, "validation_failed", f"{f} must be an integer {lo}..{hi}")
+            out[f] = int(v)
+        hours, seen_wd = [], set()
+        for h in obj["opening_hours"]:
+            self._fobj(h, "opening_hours entry")
+            wd = self._fstr(h, "weekday")
+            if wd not in WEEKDAYS or wd in seen_wd:
+                raise Err(422, "validation_failed", "weekday must be mon..sun and unique")
+            seen_wd.add(wd)
+            o, c = self._fstr(h, "opens"), self._fstr(h, "closes")
+            om, cm = hhmm_to_minutes(o), hhmm_to_minutes(c)
+            if om is None or cm is None or om == 24 * 60 or cm <= om:
+                raise Err(422, "validation_failed", "opens/closes must be HH:MM with closes later than opens")
+            hours.append({"weekday": wd, "opens": o, "closes": c})
+        out["opening_hours"] = hours
+        caps = obj["capacities"]
+        if set(caps) != {t["id"] for t in r["tables"]}:
+            raise Err(422, "validation_failed", "capacities must name exactly the restaurant's tables")
+        out["capacities"] = {}
+        for t in r["tables"]:
+            v = caps[t["id"]]
+            if not isinstance(v, bool) and not isinstance(v, (int, float)):
+                raise Err(400, "malformed_request", "capacities must be integers")
+            if not is_json_int(v) or not 1 <= int(v) <= 100:
+                raise Err(422, "validation_failed", "capacities must be integers 1..100")
+            out["capacities"][t["id"]] = int(v)
+        return out
+
+    def publish_policy(self, user_id: str, rid: str, obj: dict):
+        r = self.restaurants.get(rid)
+        if r is None:
+            raise Err(404, "not_found", "no such restaurant")                                      # B23
+        if user_id not in r["manager_user_ids"]:
+            raise Err(403, "forbidden", "not a manager of this restaurant")
+        pol = self._validate_policy(r, obj)
+        pol["policy_version"] = len(r["policies"]) + 1                                             # B27, B28
+        r["policies"].append(pol)
+        return 201, json.loads(json.dumps(pol))
+
+    def list_policies(self, rid: str):
+        r = self.restaurants.get(rid)
+        if r is None:
+            raise Err(404, "not_found", "no such restaurant")                                      # Q22
+        return 200, {"policies": json.loads(json.dumps(r["policies"]))}
+
+    def _restaurant_detail(self, r: dict) -> dict:
+        """B41: the original fixture configuration (policies and the revision counter are not part of it)."""
+        return json.loads(json.dumps({k_: r[k_] for k_ in ("id", "name", "timezone", "slot_minutes",
+                                                            "reservation_duration_minutes", "cancellation_cutoff_minutes",
+                                                            "opening_hours", "tables", "combinable", "manager_user_ids")}))
 
     # ------------------------------------------------------------------ table sets (stage 2)
     @staticmethod
@@ -634,6 +826,7 @@ class Model:
             ],
             "idempotency": [{"key": k_, **v} for k_, v in self.idem.items()],
             "counters": dict(self.counters),
+            "series": [self.series[s_] for s_ in self.series_order],
         }
         return json.loads(json.dumps({"track": TRACK, "format_version": FORMAT_VERSION, "state": state}))
 
@@ -641,10 +834,14 @@ class Model:
         if doc.get("track") != TRACK or doc.get("format_version") != FORMAT_VERSION:
             raise Err(422, "validation_failed", "wrong track or format_version")
         state = doc.get("state")
-        if not isinstance(state, dict) or state.get("schema") not in (STATE_MARKER, STATE_MARKER_V1):
+        if not isinstance(state, dict) or state.get("schema") not in (STATE_MARKER, STATE_MARKER_V2, STATE_MARKER_V1):
             raise Err(422, "validation_failed", "state is not one this service produced")   # R-24
         if state.get("schema") == STATE_MARKER_V1:
             state = self._migrate_v1(state)                                                  # stage 2 (B52)
+        if state.get("schema") == STATE_MARKER_V2:
+            state = json.loads(json.dumps(state))
+            state["schema"] = STATE_MARKER
+            state.setdefault("series", [])        # stage-3 (B76): records without revision/terms/history are filled in
         new = self._validated_state(state)
         self._adopt(new)
         return 204, None
@@ -659,7 +856,7 @@ class Model:
         for rec in state.get("reservations") or []:
             if isinstance(rec, dict) and "table_id" in rec and "table_ids" not in rec:
                 rec["table_ids"] = [rec.pop("table_id")]
-        state["schema"] = STATE_MARKER
+        state["schema"] = STATE_MARKER_V2
         return state
 
     def _validated_state(self, state: dict) -> "Model":
@@ -711,9 +908,27 @@ class Model:
             need(start is not None and end is not None and created is not None and end > start)
             need(min(start.year, end.year, created.year) >= 1000)     # a zero timestamp is not a value we produced
             need(s_["reservation_id"] not in new.reservations and s_["reference"] not in new.references)
-            new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
-                                 new._declared_order(r, ids), int(s_["party_size"]), s_["starts_at_local"], start, end, created)
-            new.reservations[s_["reservation_id"]]["status"] = s_["status"]
+            if "revision" in s_ or "terms" in s_ or "history" in s_:                      # stage-3 record
+                need(is_json_int(s_.get("revision")) and int(s_["revision"]) >= 1)
+                need(isinstance(s_.get("terms"), dict) and set(s_["terms"]) == set(TERMS_KEYS))
+                need(isinstance(s_.get("history"), list) and len(s_["history"]) >= 1)
+                for i_, h in enumerate(s_["history"]):
+                    need(isinstance(h, dict) and h.get("seq") == i_ + 1 and h.get("event") in ("created", "changed", "cancelled"))
+                    need(isinstance(h.get("changes"), list) and parse_rfc3339(h.get("at")) is not None)
+                    need(is_json_int(h.get("revision")) and isinstance(h.get("accepted_terms"), dict))
+                new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
+                                     new._declared_order(r, ids), int(s_["party_size"]), s_["starts_at_local"], start, end,
+                                     created, s_["terms"], history=json.loads(json.dumps(s_["history"])))
+                rec = new.reservations[s_["reservation_id"]]
+                rec["revision"] = int(s_["revision"])
+                rec["series_id"], rec["series_index"] = s_.get("series_id"), s_.get("series_index")
+                rec["status"] = s_["status"]
+            else:                                                                          # v1/v2 record: B76, Q19
+                new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
+                                     new._declared_order(r, ids), int(s_["party_size"]), s_["starts_at_local"], start, end,
+                                     created, new._policy0(r))
+                if s_["status"] == "cancelled":
+                    new._cancel_record(new.reservations[s_["reservation_id"]], created)
         for i in alist("idempotency"):
             need(isinstance(i, dict) and isinstance(i.get("key"), str) and i["key"] not in new.idem)
             need(isinstance(i.get("body"), dict) and is_json_int(i.get("status")) and i.get("response") is not None)
@@ -724,6 +939,22 @@ class Model:
         for k_ in ("user", "reservation"):
             need(is_json_int(counters.get(k_)) and int(counters[k_]) >= 0)
         new.counters = {k_: int(counters[k_]) for k_ in ("user", "reservation")}
+        for ser in alist("series"):
+            need(isinstance(ser, dict) and isinstance(ser.get("series_id"), str) and ser["series_id"] not in new.series)
+            need(ser.get("user_id") in new.users and is_json_int(ser.get("revision")) and int(ser["revision"]) >= 1)
+            need(is_json_int(ser.get("interval_weeks")) and 1 <= int(ser["interval_weeks"]) <= 4)
+            occ = ser.get("occurrences")
+            need(isinstance(occ, list) and 2 <= len(occ) <= 12 and is_json_int(ser.get("count")) and int(ser["count"]) == len(occ))
+            for i_, o in enumerate(occ):
+                need(isinstance(o, dict) and o.get("index") == i_ and o.get("reservation_id") in new.reservations
+                     and isinstance(o.get("exception"), bool))
+                rec = new.reservations[o["reservation_id"]]
+                need(rec["user_id"] == ser["user_id"] and rec.get("series_id") == ser["series_id"] and rec.get("series_index") == i_)
+            new.series[ser["series_id"]] = {"series_id": ser["series_id"], "user_id": ser["user_id"], "revision": int(ser["revision"]),
+                                            "interval_weeks": int(ser["interval_weeks"]), "count": int(ser["count"]),
+                                            "occurrences": [{"index": o["index"], "reservation_id": o["reservation_id"],
+                                                             "exception": o["exception"]} for o in occ]}
+            new.series_order.append(ser["series_id"])
         return new
 
     # ------------------------------------------------------------------ auth (R-4, R-19)
@@ -765,13 +996,13 @@ class Model:
         r = self.restaurants.get(rid)
         if r is None:
             raise Err(404, "not_found", "no such restaurant")
-        return 200, json.loads(json.dumps(r))
+        return 200, self._restaurant_detail(r)
 
     # ------------------------------------------------------------------ availability (R-5, R-12, R-23)
-    def _window(self, r: dict, day: date) -> Optional[tuple[int, int, datetime]]:
-        """(opens_minutes, closes_minutes, closes_instant) for the local day, or None when closed."""
+    def _window(self, r: dict, pol: dict, day: date) -> Optional[tuple[int, int, datetime]]:
+        """(opens_minutes, closes_minutes, closes_instant) for the local day under `pol`, or None when closed."""
         wd = WEEKDAYS[day.weekday()]
-        h = next((h for h in r["opening_hours"] if h["weekday"] == wd), None)
+        h = next((h for h in pol["opening_hours"] if h["weekday"] == wd), None)
         if h is None:
             return None
         opens, closes = hhmm_to_minutes(h["opens"]), hhmm_to_minutes(h["closes"])
@@ -779,14 +1010,14 @@ class Model:
         midnight = datetime(day.year, day.month, day.day)
         return opens, closes, closes_instant(midnight + timedelta(minutes=closes), zone)
 
-    def _slots_for(self, r: dict, day: date) -> list[tuple[str, datetime]]:
+    def _slots_for(self, r: dict, pol: dict, day: date) -> list[tuple[str, datetime]]:
         """(starts_at_local, utc_start) for every grid slot of `day`: wall-clock grid, absolute end check."""
-        w = self._window(r, day)
+        w = self._window(r, pol, day)
         if w is None:
             return []
         opens, closes, closes_at = w
         zone = ZoneInfo(r["timezone"])
-        dur = timedelta(minutes=r["reservation_duration_minutes"])
+        dur = timedelta(minutes=pol["reservation_duration_minutes"])
         midnight = datetime(day.year, day.month, day.day)
         out: list[tuple[str, datetime]] = []
         t = opens
@@ -795,7 +1026,7 @@ class Model:
             utc = resolve_local(naive, zone)
             if utc is not None and utc + dur <= closes_at:                       # R-23
                 out.append((naive.strftime("%Y-%m-%dT%H:%M"), utc))
-            t += r["slot_minutes"]
+            t += pol["slot_minutes"]
         return out
 
     def availability(self, q: dict[str, str]):
@@ -808,22 +1039,32 @@ class Model:
         if not DIGITS_RE.match(q["party_size"]) or int(q["party_size"]) < 1:
             raise Err(422, "validation_failed", "party_size must be plain decimal digits >= 1")
         party = int(q["party_size"])
+        explain = "explain" in q                                                            # B5 (Q2, Q3)
+        if explain and q["explain"] != "true":
+            raise Err(422, "validation_failed", "explain accepts only true")
         r = self.restaurants.get(q["restaurant_id"])
         if r is None:
             raise Err(404, "not_found", "no such restaurant")
+        pol = self._policy_for(r, day)                                                      # B41, Q12
         zone = ZoneInfo(r["timezone"])
-        dur = timedelta(minutes=r["reservation_duration_minutes"])
+        dur = timedelta(minutes=pol["reservation_duration_minutes"])
         slots = []
-        caps = {t["id"]: t["capacity"] for t in r["tables"]}
-        for local, start in self._slots_for(r, day):
+        caps = pol["capacities"]
+        for local, start in self._slots_for(r, pol, day):
             free = {t["id"] for t in r["tables"] if not self._table_busy(t["id"], start, start + dur, None)}
-            ids = [t["id"] for t in r["tables"] if t["capacity"] >= party and t["id"] in free]
+            ids = [t["id"] for t in r["tables"] if caps[t["id"]] >= party and t["id"] in free]
             options = [{"table_ids": [x], "capacity": caps[x]} for x in ids]
             for a, b in r["combinable"]:                                                   # stage 2 (B67, B68)
                 if a in free and b in free and caps[a] + caps[b] >= party:
                     options.append({"table_ids": [a, b], "capacity": caps[a] + caps[b]})
-            slots.append({"starts_at_local": local, "starts_at": fmt(start, zone),
-                          "available_table_ids": ids, "available_options": options})
+            slot = {"starts_at_local": local, "starts_at": fmt(start, zone),
+                    "available_table_ids": ids, "available_options": options}
+            if explain:                                                                     # B7-B10
+                slot["explain"] = [{"table_id": t["id"], "policy_version": pol["policy_version"],
+                                    "available": caps[t["id"]] >= party and t["id"] in free,
+                                    "rules": [{"rule": "capacity", "holds": caps[t["id"]] >= party},
+                                              {"rule": "no_overlap", "holds": t["id"] in free}]} for t in r["tables"]]
+            slots.append(slot)
         return 200, {"restaurant_id": r["id"], "date": q["date"], "timezone": r["timezone"], "slots": slots}
 
     def _table_busy(self, table_id: str, start: datetime, end: datetime, exclude: Optional[set[str]]) -> bool:
@@ -837,22 +1078,22 @@ class Model:
         return False
 
     # ------------------------------------------------------------------ booking rules (R-7)
-    def _resolve_booking(self, r: dict, table_ids: list[str], naive: datetime, party: int,
+    def _resolve_booking(self, r: dict, pol: dict, table_ids: list[str], naive: datetime, party: int,
                          exclude: Optional[set[str]] = None, check_overlap: bool = True):
         """404 table -> combination rules -> invalid_local_time -> outside_opening_hours -> not_on_slot_grid ->
-        capacity (summed) -> overlap on any member. Returns (start, end, ids in declared order)."""
+        capacity (summed, from `pol`) -> overlap on any member. Returns (start, end, ids in declared order)."""
         table_ids = self._check_combination(r, table_ids)
-        caps = {t["id"]: t["capacity"] for t in r["tables"]}
+        caps = pol["capacities"]
         zone = ZoneInfo(r["timezone"])
         start = resolve_local(naive, zone)
         if start is None:
             raise Err(422, "invalid_local_time", "local time does not exist")
-        dur = timedelta(minutes=r["reservation_duration_minutes"])
-        w = self._window(r, naive.date())
+        dur = timedelta(minutes=pol["reservation_duration_minutes"])
+        w = self._window(r, pol, naive.date())
         minutes = naive.hour * 60 + naive.minute
         if w is None or not (w[0] <= minutes < w[1]) or start + dur > w[2]:        # R-23
             raise Err(422, "outside_opening_hours", "slot outside opening hours")
-        if (minutes - w[0]) % r["slot_minutes"] != 0:
+        if (minutes - w[0]) % pol["slot_minutes"] != 0:
             raise Err(422, "not_on_slot_grid", "starts_at_local is not on the slot grid")
         if party > sum(caps[x] for x in table_ids):
             raise Err(422, "party_exceeds_capacity", "party_size exceeds the capacity of the selection")
@@ -872,6 +1113,8 @@ class Model:
         }
         if len(rec["table_ids"]) == 1:                                     # stage 2 (B71): table_id iff one member
             out["table_id"] = rec["table_ids"][0]
+        out["revision"] = rec["revision"]                                   # stage 3 (B43)
+        out["accepted_terms"] = json.loads(json.dumps(rec["terms"]))
         return out
 
     # ------------------------------------------------------------------ reservations
@@ -891,11 +1134,12 @@ class Model:
         r = self.restaurants.get(obj["restaurant_id"])
         if r is None:
             raise Err(404, "not_found", "no such restaurant")
-        start, end, table_ids = self._resolve_booking(r, table_ids, naive, party)
+        pol = self._policy_for(r, naive.date())                              # B41: the selected policy decides
+        start, end, table_ids = self._resolve_booking(r, pol, table_ids, naive, party)
         rid = self._new_reservation_id()
         ref = self._new_reference()
         self._add_reservation(rid, ref, user_id, obj["restaurant_id"], table_ids, party,
-                              obj["starts_at_local"], start, end, self.now())
+                              obj["starts_at_local"], start, end, self.now(), pol)
         return 201, self._view(self.reservations[rid])
 
     def list_reservations(self, user_id: str):
@@ -914,7 +1158,7 @@ class Model:
         return 200, self._view(self._mine(user_id, reference))
 
     def _cutoff_passed(self, rec: dict) -> bool:
-        cutoff = self.restaurants[rec["restaurant_id"]]["cancellation_cutoff_minutes"]
+        cutoff = rec["terms"]["cancellation_cutoff_minutes"]               # B48: the accepted cutoff
         return rec["start"] - self.now() <= timedelta(minutes=cutoff)       # R-6: boundary is "within"
 
     def cancel(self, user_id: str, reference: str):                       # R-13
@@ -923,7 +1167,7 @@ class Model:
             return 200, self._view(rec)
         if self._cutoff_passed(rec):
             raise Err(409, "cutoff_passed", "within the cancellation cutoff")
-        rec["status"] = "cancelled"
+        self._cancel_record(rec, self.now())                                 # B51, B71
         return 200, self._view(rec)
 
     AMEND_FIELDS = [("table_id", False, "str"), ("table_ids", False, "list"), ("starts_at_local", False, "str"),
@@ -939,18 +1183,53 @@ class Model:
         party = party_value(obj["party_size"]) if "party_size" in obj else rec["party_size"]
         return table_ids, local, naive, party
 
-    def patch(self, user_id: str, reference: str, obj: dict):             # R-14
+    @staticmethod
+    def _expected_revision(rec: dict, obj: dict) -> None:
+        """B52 (Q8): invalid type/range -> 422; a positive integer differing from the current revision -> 409."""
+        if "expected_revision" not in obj:
+            return
+        v = obj["expected_revision"]
+        if not is_json_int(v) or int(v) < 1:
+            raise Err(422, "validation_failed", "expected_revision must be a positive integer")
+        if int(v) != rec["revision"]:
+            raise Err(409, "stale_revision", "expected_revision does not match the current revision")
+
+    def _plan_amendment(self, rec: dict, obj: dict):
+        """Shared by PATCH and move items: returns None for a no-op, else (ids, local, party, start, end, pol)."""
+        table_ids, local, naive, party = self._amend_values(rec, obj)
+        r = self.restaurants[rec["restaurant_id"]]
+        same_set = set(table_ids) == set(rec["table_ids"]) and len(table_ids) == len(rec["table_ids"])
+        if same_set and local == rec["starts_at_local"] and party == rec["party_size"]:
+            return None                                                     # B50: no-op
+        pol = self._policy_for(r, naive.date())                              # B49: the resulting date's policy
+        start, end, table_ids = self._resolve_booking(r, pol, table_ids, naive, party,
+                                                      exclude={rec["reservation_id"]}, check_overlap=False)
+        return table_ids, local, party, start, end, pol
+
+    def _apply_amendment(self, rec: dict, plan, at: datetime) -> None:
+        table_ids, local, party, start, end, pol = plan
+        changes = self._diff(rec["table_ids"], table_ids, rec["starts_at_local"], local, rec["party_size"], party)
+        rec.update({"table_ids": table_ids, "starts_at_local": local, "party_size": party, "start": start, "end": end,
+                    "terms": json.loads(json.dumps(pol)), "revision": rec["revision"] + 1})
+        self._record(rec, "changed", changes, at)
+        self._bump_series(rec, exception=True)                              # B70
+
+    def patch(self, user_id: str, reference: str, obj: dict):             # R-14, Q8
         self._both_table_fields(obj)                                      # R-43
         check_fields(obj, self.AMEND_FIELDS)                              # wrong types 400 before 404
         rec = self._mine(user_id, reference)
         if rec["status"] == "cancelled":
             raise Err(409, "reservation_cancelled", "reservation is cancelled")
+        self._expected_revision(rec, obj)                                 # B52
         if self._cutoff_passed(rec):
             raise Err(409, "cutoff_passed", "within the amendment cutoff")
-        table_ids, local, naive, party = self._amend_values(rec, obj)
-        r = self.restaurants[rec["restaurant_id"]]
-        start, end, table_ids = self._resolve_booking(r, table_ids, naive, party, exclude={rec["reservation_id"]})
-        rec.update({"table_ids": table_ids, "starts_at_local": local, "party_size": party, "start": start, "end": end})
+        plan = self._plan_amendment(rec, obj)
+        if plan is None:
+            return 200, self._view(rec)
+        table_ids, _, _, start, end, _ = plan
+        if any(self._table_busy(x, start, end, {rec["reservation_id"]}) for x in table_ids):
+            raise Err(409, "table_unavailable", "a table is taken for an overlapping interval")
+        self._apply_amendment(rec, plan, self.now())
         return 200, self._view(rec)
 
     # ------------------------------------------------------------------ atomic moves (R-22)
@@ -978,20 +1257,117 @@ class Model:
                 raise Err(422, "validation_failed", "bookings belong to different restaurants")
             if rec["status"] == "cancelled":
                 raise Err(409, "reservation_cancelled", "reservation is cancelled")
+            self._expected_revision(rec, m)                                 # B80 (Q20)
             if self._cutoff_passed(rec):
                 raise Err(409, "cutoff_passed", "within the amendment cutoff")
-            table_ids, local, naive, party = self._amend_values(rec, m)
-            r = self.restaurants[rec["restaurant_id"]]
-            start, end, table_ids = self._resolve_booking(r, table_ids, naive, party, check_overlap=False)
-            resolved.append((rec, table_ids, local, party, start, end))
+            plan = self._plan_amendment(rec, m)                              # B79, B81
+            if plan is None:
+                resolved.append((rec, list(rec["table_ids"]), rec["start"], rec["end"], None))
+            else:
+                resolved.append((rec, plan[0], plan[3], plan[4], plan))
         listed = {rec["reservation_id"] for rec, *_ in resolved}          # (d) occupancy over every member (B85)
-        for i, (rec, ids, _, _, start, end) in enumerate(resolved):
+        for i, (rec, ids, start, end, _) in enumerate(resolved):
             if any(self._table_busy(x, start, end, exclude=listed) for x in ids):
                 raise Err(409, "table_unavailable", "overlap with an unlisted booking")
-            for j, (_, ids2, _, _, start2, end2) in enumerate(resolved):
+            for j, (_, ids2, start2, end2, _) in enumerate(resolved):
                 if i != j and set(ids) & set(ids2) and start < end2 and start2 < end:
                     raise Err(409, "table_unavailable", "overlap among listed bookings")
-        for rec, ids, local, party, start, end in resolved:
-            rec.update({"table_ids": ids, "starts_at_local": local, "party_size": party,
-                        "start": start, "end": end})
+        at = self.now()
+        changed_series: set[str] = set()
+        any_change = False
+        for rec, _, _, _, plan in resolved:
+            if plan is not None:                                            # B83: one revision and one entry per change
+                any_change = True
+                sid = rec.get("series_id")
+                self._apply_amendment_in_batch(rec, plan, at, changed_series)
+        if any_change:
+            self.restaurants[first_restaurant]["revision"] += 1             # B83 (Q1)
+        for sid in changed_series:                                          # B84: once per affected series
+            self.series[sid]["revision"] += 1
         return 201, {"reservations": [self._view(rec) for rec, *_ in resolved]}
+
+    def _apply_amendment_in_batch(self, rec: dict, plan, at: datetime, changed_series: set) -> None:
+        table_ids, local, party, start, end, pol = plan
+        changes = self._diff(rec["table_ids"], table_ids, rec["starts_at_local"], local, rec["party_size"], party)
+        rec.update({"table_ids": table_ids, "starts_at_local": local, "party_size": party, "start": start, "end": end,
+                    "terms": json.loads(json.dumps(pol)), "revision": rec["revision"] + 1})
+        self._record(rec, "changed", changes, at)
+        sid = rec.get("series_id")
+        if sid and sid in self.series:
+            self.series[sid]["occurrences"][rec["series_index"]]["exception"] = True
+            changed_series.add(sid)
+
+    # ------------------------------------------------------------------ history and decision (stage 3)
+    def history(self, user_id: str, reference: str):
+        rec = self._mine(user_id, reference)
+        return 200, {"reference": rec["reference"], "entries": json.loads(json.dumps(rec["history"]))}
+
+    def decision(self, user_id: str, reference: str):
+        rec = self._mine(user_id, reference)
+        return 200, {"reference": rec["reference"], "revision": rec["revision"],
+                     "accepted_terms": json.loads(json.dumps(rec["terms"]))}
+
+    # ------------------------------------------------------------------ recurring series (stage 3)
+    def _series_view(self, ser: dict) -> dict:
+        return {"series_id": ser["series_id"], "revision": ser["revision"], "interval_weeks": ser["interval_weeks"],
+                "occurrences": [{"index": o["index"], "reference": self.reservations[o["reservation_id"]]["reference"],
+                                 "exception": o["exception"],
+                                 "reservation": self._view(self.reservations[o["reservation_id"]])}
+                                for o in ser["occurrences"]]}
+
+    def create_series(self, user_id: str, obj: dict):
+        """Q13/Q14: types (anchor 400) -> missing 422 -> values 422 -> 404 anchor -> 409 cancelled -> 409 in series ->
+        409 cutoff -> occurrences in index order (first failure decides)."""
+        if "anchor_reference" in obj and not isinstance(obj["anchor_reference"], str):
+            raise Err(400, "malformed_request", "anchor_reference must be a string")
+        for f in ("anchor_reference", "count", "interval_weeks"):
+            if f not in obj:
+                raise Err(422, "validation_failed", f"{f} is required")
+        if obj["anchor_reference"] == "":
+            raise Err(422, "validation_failed", "anchor_reference must not be empty")
+        count, interval = obj["count"], obj["interval_weeks"]
+        if not is_json_int(count) or not 2 <= int(count) <= 12:
+            raise Err(422, "validation_failed", "count must be an integer 2..12")
+        if not is_json_int(interval) or not 1 <= int(interval) <= 4:
+            raise Err(422, "validation_failed", "interval_weeks must be an integer 1..4")
+        count, interval = int(count), int(interval)
+        anchor = self._mine(user_id, obj["anchor_reference"])
+        if anchor["status"] == "cancelled":
+            raise Err(409, "reservation_cancelled", "anchor is cancelled")
+        if anchor.get("series_id"):
+            raise Err(409, "already_in_series", "anchor already belongs to a series")
+        if self._cutoff_passed(anchor):
+            raise Err(409, "cutoff_passed", "anchor is within its cutoff")
+        r = self.restaurants[anchor["restaurant_id"]]
+        base = parse_local(anchor["starts_at_local"])
+        planned = []
+        for i in range(1, count):                                              # B60-B65
+            naive = base + timedelta(days=7 * i * interval)
+            pol = self._policy_for(r, naive.date())
+            start, end, ids = self._resolve_booking(r, pol, list(anchor["table_ids"]), naive, anchor["party_size"])
+            for _, _, s2, e2, ids2 in planned:                                  # Q16: siblings too
+                if set(ids) & set(ids2) and start < e2 and s2 < end:
+                    raise Err(409, "table_unavailable", "occurrences overlap")
+            planned.append((naive, pol, start, end, ids))
+        now = self.now()
+        sid = f"ser_{next(_SEQ)}"
+        ser = {"series_id": sid, "user_id": user_id, "revision": 1, "interval_weeks": interval, "count": count,
+               "occurrences": [{"index": 0, "reservation_id": anchor["reservation_id"], "exception": False}]}
+        anchor["series_id"], anchor["series_index"] = sid, 0
+        for i, (naive, pol, start, end, ids) in enumerate(planned, start=1):
+            rid = self._new_reservation_id()
+            ref = self._new_reference()
+            self._add_reservation(rid, ref, user_id, anchor["restaurant_id"], ids, anchor["party_size"],
+                                  naive.strftime("%Y-%m-%dT%H:%M"), start, end, now, pol)
+            self.reservations[rid]["series_id"], self.reservations[rid]["series_index"] = sid, i
+            ser["occurrences"].append({"index": i, "reservation_id": rid, "exception": False})
+        self.series[sid] = ser
+        self.series_order.append(sid)
+        r["revision"] += 1                                                     # B73
+        return 201, self._series_view(ser)
+
+    def get_series(self, user_id: str, sid: str):
+        ser = self.series.get(sid)
+        if ser is None or ser["user_id"] != user_id:
+            raise Err(404, "not_found", "no such series")
+        return 200, self._series_view(ser)

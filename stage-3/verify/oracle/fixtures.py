@@ -9,6 +9,7 @@ import copy
 
 ADA = {"id": "u_ada", "email": "ada@example.com", "password": "correct horse", "display_name": "Ada"}
 BOB = {"id": "u_bob", "email": "bob@example.com", "password": "bob secret 1", "display_name": "Bob"}
+MIA = {"id": "u_mia", "email": "mia@example.com", "password": "mia manages", "display_name": "Mia"}   # manager (stage 3)
 
 ALL_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
@@ -38,6 +39,7 @@ def anker() -> dict:
         ],
         "tables": [{"id": "t_1", "label": "1", "capacity": 2}, {"id": "t_2", "label": "2", "capacity": 4}],
         "combinable": [["t_1", "t_2"]],
+        "manager_user_ids": ["u_mia"],
     }
 
 
@@ -50,6 +52,7 @@ def trio() -> dict:
         "tables": [{"id": "q_1", "label": "Window", "capacity": 2}, {"id": "q_2", "label": "Centre", "capacity": 4},
                    {"id": "q_3", "label": "Garden", "capacity": 4}],
         "combinable": [["q_1", "q_2"], ["q_2", "q_3"]],
+        "manager_user_ids": ["u_mia", "u_ada"],
     }
 
 
@@ -77,7 +80,7 @@ def ny() -> dict:
 
 def base_fixture() -> dict:
     return {
-        "users": [copy.deepcopy(ADA), copy.deepcopy(BOB)],
+        "users": [copy.deepcopy(ADA), copy.deepcopy(BOB), copy.deepcopy(MIA)],
         "restaurants": [anker(), r_all(), ny(), trio()],
         "reservations": [
             {"id": "res_seed", "reference": "SEED01", "user_id": "u_bob", "restaurant_id": "r_anker",
@@ -101,8 +104,27 @@ def other_fixture() -> dict:
 
 
 def stage1_fixture() -> dict:
-    """The stage-1 shape (no `combinable`, single `table_id` seeds): reset must still accept it."""
+    """The stage-1 shape (no `combinable`, no managers, single `table_id` seeds): reset must still accept it."""
     fx = base_fixture()
     for r in fx["restaurants"]:
         r.pop("combinable", None)
+        r.pop("manager_user_ids", None)
     return fx
+
+
+def stage2_fixture() -> dict:
+    """The stage-2 shape (pairs, no managers)."""
+    fx = base_fixture()
+    for r in fx["restaurants"]:
+        r.pop("manager_user_ids", None)
+    return fx
+
+
+def policy(effective_from: str, **over) -> dict:
+    """A complete policy for r_anker (tables t_1, t_2), with overrides."""
+    p = {"effective_from": effective_from, "slot_minutes": 30, "reservation_duration_minutes": 90,
+         "cancellation_cutoff_minutes": 120,
+         "opening_hours": [{"weekday": d, "opens": "18:00", "closes": "23:00"} for d in ALL_DAYS],
+         "capacities": {"t_1": 2, "t_2": 4}}
+    p.update(over)
+    return p

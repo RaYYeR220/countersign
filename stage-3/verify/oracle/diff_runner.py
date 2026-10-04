@@ -38,7 +38,8 @@ TIMES = [f"{h:02d}:{m:02d}" for h in range(24) for m in (0, 15, 30, 45)]
 RESTAURANTS = {"r_anker": ["t_1", "t_2"], "r_all": ["a_1", "a_2", "a_3"], "r_ny": ["n_1"], "r_trio": ["q_1", "q_2", "q_3"]}
 PAIRS = {"r_anker": [["t_1", "t_2"]], "r_all": [["a_1", "a_2"], ["a_2", "a_3"]], "r_ny": [["n_1", "n_1"]],
          "r_trio": [["q_1", "q_2"], ["q_2", "q_3"], ["q_1", "q_3"]]}
-FIXTURE_USERS = [("ada@example.com", "correct horse"), ("bob@example.com", "bob secret 1")]
+FIXTURE_USERS = [("ada@example.com", "correct horse"), ("bob@example.com", "bob secret 1"), ("mia@example.com", "mia manages")]
+POLICY_DATES = ["2027-09-01", "2027-10-01", "2027-06-01", "2020-01-01", FUT_FRI, FUT_DAY]
 CAPS = {t["id"]: t["capacity"] for r_ in base_fixture()["restaurants"] for t in r_["tables"]}
 
 
@@ -154,6 +155,25 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
     def emit(op: dict) -> tuple[int, Any]:
         ops.append(op)
         return execute(op, probe)
+
+    series_labels: list[str] = []
+
+    def policy_body(restaurant: str) -> dict:
+        caps = {t: CAPS[t] for t in RESTAURANTS[restaurant]}
+        body = {"effective_from": rng.choice(POLICY_DATES), "slot_minutes": rng.choice([15, 30, 60]),
+                "reservation_duration_minutes": rng.choice([60, 90, 120]), "cancellation_cutoff_minutes": rng.choice([0, 60, 120]),
+                "opening_hours": [{"weekday": d, "opens": "18:00", "closes": "23:00"} for d in ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]],
+                "capacities": {t: rng.choice([1, 2, 4, 6]) for t in caps}}
+        r = rng.random()
+        if r < 0.05:
+            body["slot_minutes"] = rng.choice([0, 1441, True, "30"])
+        elif r < 0.08:
+            body["capacities"] = {t: 2 for t in list(caps)[:-1]} if len(caps) > 1 else {"zzz": 2}
+        elif r < 0.10:
+            body.pop(rng.choice(list(body)))
+        elif r < 0.12:
+            body["effective_from"] = "2027-02-30"
+        return body
 
     def tok() -> Sym:
         if users and rng.random() > 0.05:
@@ -314,8 +334,40 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
         elif r < 0.13:
             rest = rng.choice(list(RESTAURANTS) + ["nope"])
             ps = rng.choice(["1", "2", "3", "4", "5", "7", "0", "-1", "4.0", "1e9", "+4", "", "x"])
+            extra = "&foo=1" if rng.random() < 0.1 else ""
+            if rng.random() < 0.5:
+                extra += "&explain=" + rng.choice(["true", "true", "true", "false", "1", "", "TRUE"])
             emit({"op": "availability", "restaurant_id": rest, "date": rng.choice(DATES + ["2027-02-30", "bad"]),
-                  "party_size": ps, "extra": "&foo=1" if rng.random() < 0.1 else ""})
+                  "party_size": ps, "extra": extra})
+        elif r < 0.18:
+            t = tok()
+            rest = rng.choice(list(RESTAURANTS) + ["nope"])
+            key = f"pk{i}"
+            if rng.random() < 0.15 and i > 3:
+                key = f"pk{rng.randint(1, i)}"
+            emit({"op": "policy", "token": t, "restaurant_id": rest, "key": key, "body": policy_body(rest if rest in RESTAURANTS else "r_anker")})
+        elif r < 0.20:
+            emit({"op": "policies", "restaurant_id": rng.choice(list(RESTAURANTS) + ["nope"])})
+        elif r < 0.25:
+            t = tok()
+            emit({"op": rng.choice(["history", "decision"]), "token": t if rng.random() > 0.1 else Sym("token", "none"), "reference": some_ref(t, prefer_confirmed=False)})
+        elif r < 0.29:
+            t = tok()
+            key = f"sk{i}"
+            body = {"anchor_reference": some_ref(t), "count": rng.choice([2, 2, 3, 4, 1, 13, True]), "interval_weeks": rng.choice([1, 1, 2, 4, 0, "1"])}
+            if rng.random() < 0.15 and series_labels:
+                key = rng.choice(series_labels)
+            st, out = emit({"op": "series", "label": f"s{i}", "token": t, "key": key, "body": body})
+            if st == 201:
+                series_labels.append(key)
+                for occ in out.get("occurrences", [])[1:]:
+                    lab = f"s{i}o{occ['index']}"
+                    bookings.append(lab)
+                    owner[lab] = t.label
+        elif r < 0.31:
+            t = tok()
+            emit({"op": "get_series", "token": t if rng.random() > 0.1 else Sym("token", "none"),
+                  "series": Sym("series", rng.choice(series_labels)) if series_labels and rng.random() > 0.1 else "nope"})
         elif r < 0.40:
             t = tok()
             body = booking_body()
@@ -354,6 +406,8 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
             body = amendment(ref)
             if rng.random() < 0.03:
                 body["table_id"] = 5
+            if rng.random() < 0.3:
+                body["expected_revision"] = rng.choice([1, 1, 2, 3, 0, "1", True])
             emit({"op": "patch", "token": t, "reference": ref, "body": body})
         elif r < 0.88:
             t = tok()
@@ -362,6 +416,8 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
             for _ in range(n):
                 ref = some_ref(t)
                 m: dict = {"reference": ref, **amendment(ref, 0.4)}
+                if rng.random() < 0.2:
+                    m["expected_revision"] = rng.choice([1, 2, 0])
                 moves.append(m)
             if moves and rng.random() < 0.05:
                 moves.append(dict(moves[0]))
@@ -447,6 +503,28 @@ def execute(op: dict, t: Target) -> tuple[int, Any]:
         if op["key"] != "":
             hdr["Idempotency-Key"] = op["key"]
         return t.raw_call("POST", "/reservation-moves", "", hdr, t.resolve(op["body"]))
+    if kind == "policy":
+        if op["key"] != "":
+            hdr["Idempotency-Key"] = op["key"]
+        return t.raw_call("POST", f"/restaurants/{op['restaurant_id']}/policies", "", hdr, op["body"])
+    if kind == "policies":
+        return t.raw_call("GET", f"/restaurants/{op['restaurant_id']}/policies", "", {}, None)
+    if kind in ("history", "decision"):
+        return t.raw_call("GET", f"/reservations/{t.resolve(op['reference'])}/{kind}", "", hdr, None)
+    if kind == "series":
+        hdr["Idempotency-Key"] = op["key"]
+        st, out = t.raw_call("POST", "/series", "", hdr, t.resolve(op["body"]))
+        if st == 201 and isinstance(out, dict):
+            t.bind("series", op["key"], out.get("series_id"))
+            for occ in out.get("occurrences", [])[1:]:
+                lab = f"{op['label']}o{occ['index']}"
+                res = occ.get("reservation") or {}
+                t.bind("ref", lab, occ.get("reference"))
+                t.bind("rid", lab, res.get("reservation_id"))
+                t.bind("created", lab, res.get("created_at"))
+        return st, out
+    if kind == "get_series":
+        return t.raw_call("GET", f"/series/{t.resolve(op['series'])}", "", hdr, None)
     if kind == "export":
         st, out = t.raw_call("GET", "/_test/export", "", {}, None)
         if st == 200:
@@ -483,6 +561,30 @@ def normalise(status: int, body: Any, t: Target, op: dict) -> Any:
 
     if isinstance(body, dict) and "error" in body and isinstance(body["error"], dict):
         return {"status": status, "error": {"code": body["error"].get("code")}}
+    if op["op"] == "history" and isinstance(body, dict) and isinstance(body.get("entries"), list):
+        ents = []
+        for e in body["entries"]:
+            e = dict(e) if isinstance(e, dict) else e
+            if isinstance(e, dict) and isinstance(e.get("at"), str) and RFC3339.match(e["at"]):
+                e["at"] = "<at>"                       # implementation clock; format checked, value not compared
+            ents.append(e)
+        rl = t.label_of("ref", body.get("reference"))
+        return {"status": status, "body": {**body, "reference": f"<ref:{rl}>" if rl else body.get("reference"), "entries": ents}}
+    if op["op"] == "decision" and isinstance(body, dict) and "reference" in body:
+        rl = t.label_of("ref", body.get("reference"))
+        return {"status": status, "body": {**body, "reference": f"<ref:{rl}>" if rl else body.get("reference")}}
+    if op["op"] in ("series", "get_series") and isinstance(body, dict) and "occurrences" in body:
+        lab = t.label_of("series", body.get("series_id"))
+        occs = []
+        for o in body["occurrences"]:
+            o = dict(o)
+            if isinstance(o.get("reservation"), dict):
+                o["reservation"] = res(o["reservation"])
+            rl = t.label_of("ref", o.get("reference"))
+            if rl:
+                o["reference"] = f"<ref:{rl}>"
+            occs.append(o)
+        return {"status": status, "body": {**body, "series_id": f"<series:{lab}>" if lab else body.get("series_id"), "occurrences": occs}}
     if op["op"] in ("signup", "login") and isinstance(body, dict):
         b = dict(body)
         if "token" in b:

@@ -316,7 +316,7 @@ def test_C2_34_lookup_and_cancel(page, c, ada):
     tid(page, "reservation-detail").wait_for()
     assert tid(page, "reservation-status").inner_text().strip() == "confirmed"
     tid(page, "reservation-cancel-button").click()
-    page.wait_for_function("document.querySelector('[data-testid=\"reservation-status\"]').textContent.trim() === 'cancelled'")
+    page.wait_for_function("(() => { const e = document.querySelector('[data-testid=\"reservation-status\"]'); return !!e && e.textContent.trim() === 'cancelled'; })()")
     assert tid(page, "reservation-cancel-button").count() == 0
     assert c.get(f"/reservations/{o['reference']}", token=ada).json["status"] == "cancelled"
     tid(page, "lookup-reference-input").fill(past["reference"])
