@@ -25,3 +25,5 @@ criteria are carried in each `[HANDOFF]` message (generated from `ledger-A.md` r
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
+| 1 | bd108ef | WI-1..WI-6, oracle suite b7496b1 | REJECT (F-1: differential runner not delivered; no product finding; verdict-1.md on seat/auditor 740c805) |
+| 2 | 4f54736 | + oracle aligned 3f407bf (runner), builder 507019c, stylist 14083c1 | pending |
