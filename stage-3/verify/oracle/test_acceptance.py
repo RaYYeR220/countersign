@@ -669,7 +669,8 @@ def test_C1_91_C1_92_cancel_frees_table(c, ada):
     x = c.post(f"/reservations/{o['reference']}/cancel", token=ada)
     assert x.status == 200 and x.json["status"] == "cancelled" and x.json["reference"] == o["reference"], x
     check_reservation_shape(x.json)
-    assert {k_: v for k_, v in x.json.items() if k_ != "status"} == {k_: v for k_, v in o.items() if k_ != "status"}
+    skip = ("status", "revision")      # stage 3: cancel increments the revision
+    assert {k_: v for k_, v in x.json.items() if k_ not in skip} == {k_: v for k_, v in o.items() if k_ not in skip}
     by = {s["starts_at_local"][-5:]: s["available_table_ids"] for s in c.availability("r_anker", FUT_FRI, 2).json["slots"]}
     assert by["19:00"] == ["t_1", "t_2"] and by["20:00"] == ["t_1", "t_2"]
     assert c.book(ada, k(), "r_anker", "t_1", f"{FUT_FRI}T19:00").status == 201
