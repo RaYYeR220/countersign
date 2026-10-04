@@ -152,6 +152,23 @@ def _tampers(exp: dict, second_ref: str):
     if isinstance(r.get("tables"), list) and r["tables"] and isinstance(r["tables"][0], dict) and "capacity" in r["tables"][0]:
         r["tables"][0]["capacity"] = 0
         yield "invalid restaurant (table capacity 0)", e
+    # O-5: slot/duration 0 or negative, duplicate table id inside one restaurant
+    for field, value in (("slot_minutes", 0), ("reservation_duration_minutes", -1), ("slot_minutes", -30)):
+        e, _, _, (_, _, r), _ = fresh()
+        if field in r:
+            r[field] = value
+            yield f"invalid restaurant ({field}={value})", e
+    e, _, _, (_, _, r), _ = fresh()
+    if isinstance(r.get("tables"), list) and len(r["tables"]) >= 2 and all(isinstance(t, dict) and "id" in t for t in r["tables"]):
+        r["tables"][1]["id"] = r["tables"][0]["id"]
+        yield "duplicate table id inside one restaurant", e
+    # O-5: reservation id / reference empty or longer than 64 characters
+    for field in ("reference", "reservation_id", "id"):
+        for value in ("", "X" * 65):
+            e, (_, _, rec), *_ = fresh()
+            if field in rec and isinstance(rec[field], str):
+                rec[field] = value
+                yield f"invalid reservation ({field}={value[:8]!r}{'…' if value else ''})", e
     # invalid reservation record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
                          ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref")):
@@ -172,6 +189,13 @@ def _tampers(exp: dict, second_ref: str):
     e, (_, _, rec), *_ = fresh()
     rec["reservation_id" if "reservation_id" in rec else "id"] = False
     yield "reservation id is a boolean", e
+    # O-5: a boolean field holding a non-boolean (only when the implementation's state has one)
+    e = copy.deepcopy(exp)
+    for parent, key, v in _walk(e["state"]):
+        if isinstance(v, bool) and parent is not None:
+            parent[key] = "yes"
+            yield f"boolean field {key!r} holds a string", e
+            break
 
 
 def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
@@ -187,7 +211,7 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
         assert r.status == 422 and r.code == "validation_failed", (name, r)
         assert _snapshot(c, [ada, bob]) == before, f"destination changed after refused import: {name}"
         applied += 1
-    assert applied >= 15, applied
+    assert applied >= 25, applied
     # the untouched export still imports, and receipts survive
     assert c.import_(exp.json).status == 204
     assert c.book(ada, key, "r_all", "a_2", f"{FUT_DAY}T13:00", 2).status == 200
@@ -260,6 +284,66 @@ def test_C1_107_C1_18_round_trip_edge_values(c, second_base_url):
         assert c2.get("/reservations", token=edge).json == before["edge"]
         assert c2.availability(LONG_R, FUT_DAY, 1).json == before["avail"]
         assert c2.book(edge, key, LONG_R, LONG_T, f"{FUT_DAY}T23:00", 1).status == 200
+
+
+# ============================================================ O-6
+def test_C1_107_round_trip_duration_one_and_nines(c, second_base_url):
+    fx = base_fixture()
+    fx["restaurants"].append({
+        "id": "r_min", "name": "Minute", "timezone": "Europe/Berlin", "slot_minutes": 20,
+        "reservation_duration_minutes": 1, "cancellation_cutoff_minutes": 9,
+        "opening_hours": [{"weekday": d, "opens": "23:00", "closes": "24:00"} for d in ALL_DAYS],
+        "tables": [{"id": "m_9", "label": "nine", "capacity": 9}, {"id": "m_99", "label": "ninety-nine", "capacity": 99}],
+    })
+    assert c.reset(fx).status == 204
+    ada = c.login("ada@example.com", "correct horse")
+    r = c.get("/restaurants/r_min").json
+    assert r["reservation_duration_minutes"] == 1 and r["cancellation_cutoff_minutes"] == 9
+    assert [t["capacity"] for t in r["tables"]] == [9, 99]
+    sl = [s["starts_at_local"][-5:] for s in c.availability("r_min", FUT_DAY, 99).json["slots"]]
+    assert sl == ["23:00", "23:20", "23:40"], sl
+    assert all(s["available_table_ids"] == ["m_99"] for s in c.availability("r_min", FUT_DAY, 10).json["slots"])
+    key = k()
+    o = c.book(ada, key, "r_min", "m_9", f"{FUT_DAY}T23:40", 9)
+    assert o.status == 201 and o.json["ends_at"] == f"{FUT_DAY}T23:41:00+02:00", o
+    o2 = book_all(c, ada, "r_min", "m_99", f"{FUT_DAY}T23:00", 99)
+    assert o2["ends_at"] == f"{FUT_DAY}T23:01:00+02:00"
+    err(c.book(ada, k(), "r_min", "m_9", f"{FUT_DAY}T23:40", 1), 409, "table_unavailable")
+    assert c.book(ada, k(), "r_min", "m_9", f"{FUT_DAY}T23:20", 1).status == 201
+    snap = lambda cl: {"r": cl.get("/restaurants/r_min").json, "list": cl.get("/reservations", token=ada).json,
+                       "avail": [cl.availability("r_min", FUT_DAY, p).json for p in (1, 9, 10, 99)]}
+    before = snap(c)
+    exp = c.export()
+    assert exp.status == 200
+    assert c.post(f"/reservations/{o2['reference']}/cancel", token=ada).status == 200
+    assert c.import_(exp.json).status == 204
+    assert snap(c) == before
+    rp = c.book(ada, key, "r_min", "m_9", f"{FUT_DAY}T23:40", 9)
+    assert rp.status == 200 and rp.json == o.json
+    if second_base_url:
+        c2 = Client(second_base_url)
+        assert c2.reset(other_fixture()).status == 204
+        assert c2.import_(exp.json).status == 204
+        assert snap(c2) == before
+
+
+# ============================================================ O-7
+@pytest.mark.parametrize("name,mutate", [
+    ("closes equals opens", lambda fx: fx["restaurants"][0]["opening_hours"].__setitem__(0, {"weekday": "thu", "opens": "18:00", "closes": "18:00"})),
+    ("capacity 0", lambda fx: fx["restaurants"][0]["tables"][0].__setitem__("capacity", 0)),
+    ("slot_minutes 0", lambda fx: fx["restaurants"][0].__setitem__("slot_minutes", 0)),
+    ("reservation_duration_minutes 0", lambda fx: fx["restaurants"][0].__setitem__("reservation_duration_minutes", 0)),
+    ("capacity -1", lambda fx: fx["restaurants"][0]["tables"][0].__setitem__("capacity", -1)),
+    ("slot_minutes -30", lambda fx: fx["restaurants"][0].__setitem__("slot_minutes", -30)),
+])
+def test_C1_28_C1_12_reset_rejects_degenerate_values(c, ada, bob, name, mutate):
+    before = _snapshot(c, [ada, bob])
+    fx = base_fixture()
+    mutate(fx)
+    r = c.reset(fx)
+    assert r.status == 422 and r.code == "validation_failed", (name, r)
+    assert _snapshot(c, [ada, bob]) == before, name
+    assert c.get("/reservations", token=ada).status == 200
 
 
 # ============================================================ O-4
