@@ -202,7 +202,9 @@ def _tampers(exp: dict, second_ref: str, idem_key: str = None, token: str = None
         yield "duplicate table id inside one restaurant", e
     # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
-                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"),
+                         ("table_id", "zzz"), ("table_ids", ["zzz"]), ("table_ids", "t_1"), ("table_ids", []),
+                         ("table_ids", ["t_1", "t_1"]), ("table_ids", ["t_1", "t_2", "t_3"]),
+                         ("user_id", "u_nobody"), ("restaurant_id", "r_nope"),
                          ("reference", "bad ref"), ("reference", "abcdef"), ("reference", "X"), ("reference", "A" * 13),
                          ("reference", "SEED-01"), ("reference", ""), ("reference", "X" * 65),
                          ("reservation_id", ""), ("reservation_id", "X" * 65), ("id", ""), ("id", "X" * 65)):

@@ -1,4 +1,4 @@
-"""Shared fixtures and dates for the Oracle suites.
+"""Shared fixtures and dates for the Oracle suites (stage 2: restaurants carry `combinable` pairs).
 
 Dates: FUT_* are far enough ahead that no cutoff can pass during a run; PAST_* are past, so every
 cancel/amend hits 409 cutoff_passed. DST dates are the four transitions named in §9.
@@ -37,6 +37,19 @@ def anker() -> dict:
             {"weekday": "sun", "opens": "00:00", "closes": "06:00"},
         ],
         "tables": [{"id": "t_1", "label": "1", "capacity": 2}, {"id": "t_2", "label": "2", "capacity": 4}],
+        "combinable": [["t_1", "t_2"]],
+    }
+
+
+def trio() -> dict:
+    """Three tables, two declared pairs sharing q_2 (non-transitive); open every day 18:00-23:00."""
+    return {
+        "id": "r_trio", "name": "Trio", "timezone": "Europe/Berlin",
+        "slot_minutes": 30, "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120,
+        "opening_hours": [{"weekday": d, "opens": "18:00", "closes": "23:00"} for d in ALL_DAYS],
+        "tables": [{"id": "q_1", "label": "Window", "capacity": 2}, {"id": "q_2", "label": "Centre", "capacity": 4},
+                   {"id": "q_3", "label": "Garden", "capacity": 4}],
+        "combinable": [["q_1", "q_2"], ["q_2", "q_3"]],
     }
 
 
@@ -47,6 +60,7 @@ def r_all() -> dict:
         "opening_hours": [{"weekday": d, "opens": "10:00", "closes": "22:00"} for d in ALL_DAYS],
         "tables": [{"id": "a_1", "label": "A1", "capacity": 2}, {"id": "a_2", "label": "A2", "capacity": 4},
                    {"id": "a_3", "label": "A3", "capacity": 6}],
+        "combinable": [["a_1", "a_2"]],
     }
 
 
@@ -57,13 +71,14 @@ def ny() -> dict:
         "opening_hours": [{"weekday": "sun", "opens": "00:00", "closes": "06:00"}]
         + [{"weekday": d, "opens": "18:00", "closes": "23:00"} for d in ALL_DAYS if d != "sun"],
         "tables": [{"id": "n_1", "label": "N1", "capacity": 4}],
+        "combinable": [],
     }
 
 
 def base_fixture() -> dict:
     return {
         "users": [copy.deepcopy(ADA), copy.deepcopy(BOB)],
-        "restaurants": [anker(), r_all(), ny()],
+        "restaurants": [anker(), r_all(), ny(), trio()],
         "reservations": [
             {"id": "res_seed", "reference": "SEED01", "user_id": "u_bob", "restaurant_id": "r_anker",
              "table_id": "t_2", "starts_at_local": f"{FUT_THU}T18:00", "party_size": 4},
@@ -83,3 +98,11 @@ def other_fixture() -> dict:
         }],
         "reservations": [],
     }
+
+
+def stage1_fixture() -> dict:
+    """The stage-1 shape (no `combinable`, single `table_id` seeds): reset must still accept it."""
+    fx = base_fixture()
+    for r in fx["restaurants"]:
+        r.pop("combinable", None)
+    return fx

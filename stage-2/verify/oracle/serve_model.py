@@ -16,6 +16,8 @@ from model import Model
 
 LOCK = threading.Lock()
 MODEL = Model()
+UI_ROUTES = ("/", "/signup", "/login", "/lookup")
+UI_FILE = __import__("os").path.join(__import__("os").path.dirname(__import__("os").path.abspath(__file__)), "ui.html")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -29,6 +31,15 @@ class Handler(BaseHTTPRequestHandler):
         # read "//x" as a host. R-25 needs the path exactly as sent.
         target = self.requestline.split(" ")[1] if len(self.requestline.split(" ")) >= 2 else self.path
         path, _, query = target.partition("?")
+        if self.command == "GET" and path in UI_ROUTES:          # stage 2: screen routes return HTML (B4, B7)
+            with open(UI_FILE, "rb") as f:
+                data = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else None
         headers = {k: v for k, v in self.headers.items()}

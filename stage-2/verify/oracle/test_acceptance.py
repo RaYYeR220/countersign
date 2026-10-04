@@ -71,7 +71,7 @@ def test_C1_12_C1_13_reset_replaces_everything(base_url):
     zed = c.login("zed@example.com", "zed password")
     err(c.get(f"/reservations/{ref}", token=zed), 404, "not_found")
     assert c.reset(base_fixture()).status == 204
-    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny"]
+    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny", "r_trio"]
 
 
 def test_C1_14_content_type(c, ada):
@@ -119,7 +119,7 @@ def test_C1_18_fixture_id_too_long_rejected(c):
     fx = base_fixture()
     fx["restaurants"][0]["id"] = "r" * 65
     err(c.reset(fx), 422, "validation_failed")
-    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny"]
+    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny", "r_trio"]
 
 
 def test_C1_26_C1_70_fixture_shape_echoed(c):
@@ -175,7 +175,7 @@ def test_C1_12_C1_30_reset_referential_checks(c, mutate):                       
     fx = base_fixture()
     mutate(fx)
     err(c.reset(fx), 422, "validation_failed")
-    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny"]
+    assert [x["id"] for x in c.get("/restaurants").json["restaurants"]] == ["r_anker", "r_all", "r_ny", "r_trio"]
     assert c.login("bob@example.com", "bob secret 1")
 
 
@@ -510,7 +510,8 @@ def test_C1_69_list_restaurants(c):
     assert r.status == 200
     assert r.json["restaurants"] == [{"id": "r_anker", "name": "Zum Anker", "timezone": "Europe/Berlin"},
                                      {"id": "r_all", "name": "All Week", "timezone": "Europe/Berlin"},
-                                     {"id": "r_ny", "name": "Hudson", "timezone": "America/New_York"}]
+                                     {"id": "r_ny", "name": "Hudson", "timezone": "America/New_York"},
+                                     {"id": "r_trio", "name": "Trio", "timezone": "Europe/Berlin"}]
 
 
 def test_C1_71_availability_params(c):
