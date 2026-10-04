@@ -123,3 +123,8 @@ No product finding: every clause exercised by steps 1, 2, 4, 5 and 6 behaved as 
 
 ## Result
 result=REJECT — the product passed every executed step with no finding, but gate step 3 (differential runner) was not delivered and no ruling records the gap, so the holdout could not run.
+
+## Closure
+Superseded on 2026-10-04 by candidate 2 (4f5473646302fa52183643b30552bfb8b59f475e), at the Foreman's direction
+([CANDIDATE] stage=1 sha=4f54736…, option b). Verdict 1 had no product finding; its only finding (F-1, the missing
+differential runner) moves to verdict 2's step 3.

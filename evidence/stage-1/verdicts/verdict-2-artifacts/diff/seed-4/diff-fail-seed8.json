@@ -1,0 +1,24 @@
+{
+ "seed": 8,
+ "base_url": "http://auditor-s1-diff:8080",
+ "ops": [
+  {
+   "op": "reset",
+   "fixture": "base"
+  },
+  {
+   "op": "patch",
+   "token": {
+    "$sym": [
+     "token",
+     "s4"
+    ]
+   },
+   "reference": "",
+   "body": {
+    "starts_at_local": "2027-06-16T12:30",
+    "party_size": 1
+   }
+  }
+ ]
+}

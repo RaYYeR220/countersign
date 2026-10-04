@@ -1,0 +1,4748 @@
+{
+ "meta": {
+  "base": "http://auditor-s1-a:8080",
+  "dest": "http://auditor-s1-b:8080",
+  "now": "2026-10-04T14:16:24.837659+00:00",
+  "now_tz": "UTC",
+  "thu": "2026-10-29",
+  "near": "2026-10-04T14:45",
+  "far": "2026-10-04T18:30",
+  "past": "2026-10-03T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 583,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "core": {
+   "pass": 66,
+   "fail": 0,
+   "soft": 0
+  },
+  "auth": {
+   "pass": 59,
+   "fail": 0,
+   "soft": 0
+  },
+  "availability": {
+   "pass": 37,
+   "fail": 0,
+   "soft": 0
+  },
+  "create": {
+   "pass": 88,
+   "fail": 0,
+   "soft": 0
+  },
+  "reads": {
+   "pass": 7,
+   "fail": 0,
+   "soft": 0
+  },
+  "cancel": {
+   "pass": 15,
+   "fail": 0,
+   "soft": 0
+  },
+  "patch": {
+   "pass": 59,
+   "fail": 0,
+   "soft": 0
+  },
+  "dst": {
+   "pass": 37,
+   "fail": 0,
+   "soft": 0
+  },
+  "idem": {
+   "pass": 23,
+   "fail": 0,
+   "soft": 0
+  },
+  "moves": {
+   "pass": 55,
+   "fail": 0,
+   "soft": 0
+  },
+  "burst": {
+   "pass": 45,
+   "fail": 0,
+   "soft": 0
+  },
+  "export": {
+   "pass": 92,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "core",
+   "name": "health 200 {status: ok}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.2",
+   "clause": "C1.11"
+  },
+  {
+   "group": "core",
+   "name": "reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "reset 204 has empty body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "repeated reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, lists fixture restaurants",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/{id} fixture shape, public",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/unknown 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/<65 chars> 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.18"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation visible to owner with derived times",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.30"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation hidden from other user",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90"
+  },
+  {
+   "group": "core",
+   "name": "seeded user logs in with fixture password",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.29"
+  },
+  {
+   "group": "core",
+   "name": "unknown query parameter ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.17"
+  },
+  {
+   "group": "core",
+   "name": "unknown body field ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.16"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, in fixture order",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "seeded created_at kept from fixture",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.30 (R-16)"
+  },
+  {
+   "group": "core",
+   "name": "unknown path 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405 (PUT /reservations)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "GET /health ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/r_anker ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /availability ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "POST /auth/login ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /_test/export ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "JSON body with Content-Type text/plain accepted (R-17)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.14 (R-17)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive): state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset accepts closes 24:00 and an off-grid/overlapping seeded booking (seeds trusted)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "auth",
+   "name": "signup 201 {user_id, display_name, token}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.47"
+  },
+  {
+   "group": "auth",
+   "name": "new user's list is {reservations: []}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.89"
+  },
+  {
+   "group": "auth",
+   "name": "login 200 same user_id",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.48"
+  },
+  {
+   "group": "auth",
+   "name": "first token still valid after second login",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "second token valid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "duplicate email 409 email_taken",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.49 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "seeded email taken 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.49 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password 7 chars 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password 0 chars 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password 5 chars 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password exactly 8 chars 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'noat' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'a@' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email '@b' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email '' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'a b@' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'two@@x' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'a b@x.com' 422 (R-4: one @, no whitespace)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'two@@x.com' 422 (R-4: one @, no whitespace)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email 'a@b@c.com' 422 (R-4: one @, no whitespace)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email ' a@b.com' 422 (R-4: one @, no whitespace)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "email taken case-insensitively 409",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.49 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "login email case-insensitive 200 (R-4)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.49 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "display_name '' 422 (R-4)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.47 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "display_name '   ' 422 (R-4)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.47 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password 7 code points (multi-byte) 422 (R-4)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "password 8 code points (multi-byte) 201 (R-4)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "R-19: wrong type beats missing field (email missing, password number) 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "R-19: wrong type beats bad value (email 'bad', display_name number) 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "R-19: missing beats bad value (email 'bad', password missing) 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "R-4: 422 beats 409 (taken email, short password)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.49 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "signup email null is a wrong type 400 (R-2)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup email=5 wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup password=12345678 wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup display_name=7 wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup email=['a@b'] wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup password=True wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup missing email 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup missing password 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup missing display_name 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup unparseable body 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "signup body is a JSON array 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "login wrong password 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.50 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "login unknown email 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.51 (R-4)"
+  },
+  {
+   "group": "auth",
+   "name": "login email wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "login missing password 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "login unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-19)"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations no header 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.36,C1.53"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations unknown token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations Basic scheme 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.36,C1.53"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations empty bearer 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.36,C1.53"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations bare token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "POST /reservations without token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "POST /reservation-moves without token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "PATCH /reservations/SEED01 without token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "POST /reservations/SEED01/cancel without token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "GET /reservations/SEED01 without token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.54"
+  },
+  {
+   "group": "auth",
+   "name": "/restaurants public",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.68"
+  },
+  {
+   "group": "auth",
+   "name": "/restaurants/r_anker public",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.68"
+  },
+  {
+   "group": "availability",
+   "name": "availability envelope",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.72"
+  },
+  {
+   "group": "availability",
+   "name": "thu slots = every 30 min from opens with slot+90 <= closes",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.74"
+  },
+  {
+   "group": "availability",
+   "name": "slot starts_at = local time with IANA offset",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.79,C1.104"
+  },
+  {
+   "group": "availability",
+   "name": "party 4 -> tables with capacity>=4 in fixture order",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "party 1 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "party 2 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "party 5 -> ['t_3'] on every slot (empty list still listed)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "party 6 -> ['t_3'] on every slot (empty list still listed)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "party 7 -> [] on every slot (empty list still listed)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "availability",
+   "name": "fri closes 23:30 -> last slot 22:00",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.74"
+  },
+  {
+   "group": "availability",
+   "name": "closed day -> slots []",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.77"
+  },
+  {
+   "group": "availability",
+   "name": "booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71/\u00a78",
+   "clause": "C1.4,C1.75"
+  },
+  {
+   "group": "availability",
+   "name": "availability missing restaurant_id 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.71"
+  },
+  {
+   "group": "availability",
+   "name": "availability missing date 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.71"
+  },
+  {
+   "group": "availability",
+   "name": "availability missing party_size 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.71"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='2026-02-30' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='2026-13-01' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='20261001' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='tomorrow' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='2026-1-5' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability date='2026-10-01T00:00' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.41,C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='0' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='-1' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='1e9' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='4.0' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='+4' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='abc' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size=' 4' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='0x4' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability party_size='true' 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "availability huge party_size: no 5xx (200 with empty lists or 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.46,C1.71"
+  },
+  {
+   "group": "availability",
+   "name": "availability unknown restaurant 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "parameter error before 404: unknown restaurant + party_size=0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.43 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "parameter error before 404: unknown restaurant + bad date -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.71 (R-12)"
+  },
+  {
+   "group": "availability",
+   "name": "party 99 -> every slot listed with []",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.75,C1.76"
+  },
+  {
+   "group": "create",
+   "name": "create 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: reservation_id str<=64",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: reference A-Z0-9 6..12",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: restaurant_id/table_id/party_size echo",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: status confirmed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: starts_at_local echo",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: starts_at with offset",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: ends_at = starts_at + 90 min",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.80"
+  },
+  {
+   "group": "create",
+   "name": "create response: created_at RFC3339 with offset",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.15,C1.80 (R-21)"
+  },
+  {
+   "group": "create",
+   "name": "create response: created_at UTC '+00:00', whole seconds (R-21)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.15,C1.80 (R-21)"
+  },
+  {
+   "group": "create",
+   "name": "create response: starts_at/ends_at offset numeric, no Z (R-21)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a73.4",
+   "clause": "C1.15 (R-21)"
+  },
+  {
+   "group": "create",
+   "name": "created_at is the server's now",
+   "ok": true,
+   "soft": true,
+   "section": "\u00a78",
+   "clause": "C1.15,C1.80 (R-21)"
+  },
+  {
+   "group": "create",
+   "name": "GET /reservations/{ref} same shape and values as create",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90,C1.80"
+  },
+  {
+   "group": "create",
+   "name": "overlap (19:30 vs 19:00-20:30) 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.4,C1.82"
+  },
+  {
+   "group": "create",
+   "name": "overlap (18:00 ends 19:30 > 19:00) 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.4,C1.82"
+  },
+  {
+   "group": "create",
+   "name": "back-to-back 20:30 allowed (half-open)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.4,C1.82"
+  },
+  {
+   "group": "create",
+   "name": "17:30 before opens 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "19:10 off grid 422 not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.83"
+  },
+  {
+   "group": "create",
+   "name": "19:15 off grid 422 not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.83"
+  },
+  {
+   "group": "create",
+   "name": "18:01 off grid 422 not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.83"
+  },
+  {
+   "group": "create",
+   "name": "before opens 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "ends 23:30 after closes 23:00 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "at closes 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "closed day 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "ends after 23:30 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "ends exactly at closes (21:30+90=23:00) 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.84 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "party 3 > capacity 2 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.85"
+  },
+  {
+   "group": "create",
+   "name": "party_size=0 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size=-1 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size='2' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size=True 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size=2.5 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size=None 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size=[2] 422 validation_failed",
+   "ok": true,
+   "soft": true,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size={'n': 2} 422 validation_failed",
+   "ok": true,
+   "soft": true,
+   "section": "\u00a75/\u00a78",
+   "clause": "C1.42,C1.86 (R-2,R-3)"
+  },
+  {
+   "group": "create",
+   "name": "party_size missing 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T19:00:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T19:00Z' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T19:00+02:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30 19:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-02-30T19:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T24:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T19:0' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='19:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30t19:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local='2026-10-30T7:00' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.42"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local number 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local null is a wrong type 400 (R-2)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "starts_at_local missing 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id=5 wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id=True wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id=['x'] wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id={'id': 'x'} wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id=None wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "restaurant_id missing 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id=5 wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id=True wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id=['x'] wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id={'id': 'x'} wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id=None wrong type 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "table_id missing 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "create",
+   "name": "unknown restaurant 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.88"
+  },
+  {
+   "group": "create",
+   "name": "unknown table 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.88"
+  },
+  {
+   "group": "create",
+   "name": "table of another restaurant 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.88"
+  },
+  {
+   "group": "create",
+   "name": "no Idempotency-Key 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "empty Idempotency-Key 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "Idempotency-Key 256 chars 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "Idempotency-Key 255 chars 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "unparseable body 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "body is JSON array 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "body is JSON string 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "party_size 2.0 is integral -> 201 (R-3)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.86 (R-3)"
+  },
+  {
+   "group": "create",
+   "name": "R-1: no token and no key -> 401",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "R-1: unparseable body and no key -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "R-1: non-object body and no key -> 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "R-1: no key and wrong-type field -> 400 missing_idempotency_key",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.40 (R-19)"
+  },
+  {
+   "group": "create",
+   "name": "R-1: 256-char key and wrong-type field -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.35,C1.45,C1.59 (R-1)"
+  },
+  {
+   "group": "create",
+   "name": "R-19: wrong type beats missing field ({table_id: 5}, rest missing) -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "R-19: missing beats bad value (party_size 0, restaurant_id missing) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34 (R-2,R-19)"
+  },
+  {
+   "group": "create",
+   "name": "R-7: unknown restaurant before off-grid -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "R-7: invalid_local_time before outside_opening_hours (closed Sunday) -> invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "R-7: outside_opening_hours before not_on_slot_grid (17:10)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "R-7: not_on_slot_grid before party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "R-7: party_exceeds_capacity before table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"
+  },
+  {
+   "group": "create",
+   "name": "past start allowed (no cutoff on create)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.31"
+  },
+  {
+   "group": "create",
+   "name": "start inside cutoff allowed on create",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.31"
+  },
+  {
+   "group": "create",
+   "name": "references unique and well-formed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.81"
+  },
+  {
+   "group": "reads",
+   "name": "ties on starts_at ordered by created_at asc, then reference asc (R-11)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.89 (R-11)"
+  },
+  {
+   "group": "reads",
+   "name": "GET /reservations: own only, confirmed + cancelled",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.89"
+  },
+  {
+   "group": "reads",
+   "name": "GET /reservations ordered starts_at descending",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.89"
+  },
+  {
+   "group": "reads",
+   "name": "cancelled reservation listed as cancelled",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.89"
+  },
+  {
+   "group": "reads",
+   "name": "list entries have create-response shape",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.89"
+  },
+  {
+   "group": "reads",
+   "name": "GET other's reservation 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90"
+  },
+  {
+   "group": "reads",
+   "name": "GET unknown reference 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel 200 status cancelled, same reference",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.91"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel response keeps the rest of the reservation",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.91"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel twice 200 with current state",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.93"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel start within cutoff 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.94 (R-6)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel start within cutoff: still confirmed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.94 (R-6)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel start in the past 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.94 (R-6)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel start in the past: still confirmed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.94 (R-6)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel other's 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.95"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel with unparseable body 400 (R-13)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.91 (R-13)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel other's within cutoff: 404 first (R-13)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.94 (R-6)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel attempts with bad body left booking confirmed",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.91 (R-13)"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel unknown 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.95"
+  },
+  {
+   "group": "cancel",
+   "name": "anker table t_2 not offered at 19:00 before cancel",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.92"
+  },
+  {
+   "group": "cancel",
+   "name": "cancel frees the table immediately",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.92"
+  },
+  {
+   "group": "cancel",
+   "name": "rebook the freed slot 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.92"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH onto own overlapping interval 200 (old slot released together)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH keeps reference, reservation_id, created_at",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.99"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH recomputes ends_at",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.22"
+  },
+  {
+   "group": "patch",
+   "name": "old interval released (t_2 at 18:00 offered)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH table only 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.96"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party 7 > capacity 6 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party 7 > capacity 6: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party '3' 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party '3': booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party 0 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party 0: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party true 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party true: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH off grid 422 not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH off grid: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH outside hours 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH outside hours: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH closed day 422 outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH closed day: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH bad local format 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH bad local format: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH onto other's booking 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.82,C1.98"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH onto other's booking: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.82,C1.98"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH unknown table 404 not_found",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH unknown table: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH other restaurant's table 404 not_found",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH other restaurant's table: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH table_id number 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH table_id number: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH starts_at_local number 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH starts_at_local number: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH new table too small for party 422 party_exceeds_capacity",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH new table too small for party: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH nonexistent local time 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.87,C1.97 (R-7)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH nonexistent local time: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH table_id null 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH table_id null: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party_size null 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party_size null: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party_size 2.5 422 validation_failed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH party_size 2.5: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH body is a JSON array 400 malformed_request",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH body is a JSON array: booking unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "bob's booking untouched",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34 (R-2,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH other's 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.132,C1.38"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH unknown 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.132,C1.38"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH {} 200, booking unchanged (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH with current values 200 unchanged (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.98,C1.5"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH within cutoff 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH past booking 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH far booking to a start inside cutoff: allowed (cutoff measured on current start)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH {} within cutoff 409 cutoff_passed (R-14 no-op still checked)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH within cutoff + party_size 0: cutoff first (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH within cutoff + table_id number: 400 first (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH other's booking within cutoff: 404 first (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-6,R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH cancelled 409 reservation_cancelled",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH cancelled + party_size 0: cancelled first (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "patch",
+   "name": "PATCH {} on cancelled 409 (R-14)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.97 (R-14)"
+  },
+  {
+   "group": "dst",
+   "name": "Europe/Berlin 2026-03-29: slots once each, skipped hour absent",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.101,C1.102 (R-5)"
+  },
+  {
+   "group": "dst",
+   "name": "Europe/Berlin 2026-03-29: slot offsets follow IANA, repeated hour = first occurrence",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-03-08: slots once each, skipped hour absent",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.101,C1.102 (R-5)"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-03-08: slot offsets follow IANA, repeated hour = first occurrence",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "Europe/Berlin 2026-10-25: slots once each, skipped hour absent",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.101,C1.102 (R-5)"
+  },
+  {
+   "group": "dst",
+   "name": "Europe/Berlin 2026-10-25: slot offsets follow IANA, repeated hour = first occurrence",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-11-01: slots once each, skipped hour absent",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.101,C1.102 (R-5)"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-11-01: slot offsets follow IANA, repeated hour = first occurrence",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "book nonexistent 2026-03-29T02:00 (r_ber) 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.87,C1.101"
+  },
+  {
+   "group": "dst",
+   "name": "book nonexistent 2026-03-29T02:30 (r_ber) 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.87,C1.101"
+  },
+  {
+   "group": "dst",
+   "name": "book nonexistent 2026-03-08T02:00 (r_ny) 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.87,C1.101"
+  },
+  {
+   "group": "dst",
+   "name": "book nonexistent 2026-03-08T02:30 (r_ny) 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.87,C1.101"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-03-29T01:30 r_ber: starts 2026-03-29T01:30:00+01:00 ends 2026-03-29T04:00:00+02:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-03-29T03:00 r_ber: starts 2026-03-29T03:00:00+02:00 ends 2026-03-29T04:30:00+02:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-11-01T01:30 r_ny: starts 2026-11-01T01:30:00-04:00 ends 2026-11-01T02:00:00-05:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-11-01T01:00 r_ny: starts 2026-11-01T01:00:00-04:00 ends 2026-11-01T01:30:00-05:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-10-25T02:30 r_ber: starts 2026-10-25T02:30:00+02:00 ends 2026-10-25T03:00:00+01:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-10-25T01:30 r_ber: starts 2026-10-25T01:30:00+02:00 ends 2026-10-25T02:00:00+01:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "book 2026-03-08T01:30 r_ny: starts 2026-03-08T01:30:00-05:00 ends 2026-03-08T04:00:00-04:00 (absolute duration)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103"
+  },
+  {
+   "group": "dst",
+   "name": "BER spring: 03:30 overlaps 01:30+90min (ends 04:00 CEST) 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "BER spring: 04:00 after 01:30 booking 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "NY fall: 02:00 EST right after 01:30 EDT+90min 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "NY fall: 01:30 on y_2 overlaps 01:00 EDT booking 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "NY fall: 02:00 on y_2 after 01:00 EDT booking (ends 01:30 EST) 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "BER fall: 02:00 on d_1 overlaps 02:30 first occurrence 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "BER fall: 03:00 CET on d_1 after 02:30 CEST+90 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.4"
+  },
+  {
+   "group": "dst",
+   "name": "BER fall availability 02:00: d_1 and d_2 occupied",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.103,C1.75"
+  },
+  {
+   "group": "dst",
+   "name": "Europe/Berlin 2026-12-06 offset +01:00",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-07-05 offset -04:00",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "America/New_York 2026-12-06 offset -05:00",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.104"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 spring: slot offered iff instant(start)+90min <= instant(closes 03:30 CEST)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 spring: 01:30 CET + 90 min = 04:00 CEST > closes -> outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 spring: 01:00 CET + 90 min = 03:30 CEST = closes -> 201",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 fall: 02:30 CEST + 90 min = 03:00 CET <= closes 03:30 -> offered",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 fall: book 02:30 -> 201 ending 03:00+01:00",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "R-23 fall: 03:00 CET + 90 = 04:30 > closes -> outside_opening_hours",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.74,C1.84 (R-23)"
+  },
+  {
+   "group": "dst",
+   "name": "PATCH to nonexistent local time 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a79",
+   "clause": "C1.87,C1.101"
+  },
+  {
+   "group": "idem",
+   "name": "first use 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.61"
+  },
+  {
+   "group": "idem",
+   "name": "replay 200 identical JSON",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.62,C1.65"
+  },
+  {
+   "group": "idem",
+   "name": "replay with reordered keys/whitespace 200 identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.62,C1.65"
+  },
+  {
+   "group": "idem",
+   "name": "replays created nothing",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.5"
+  },
+  {
+   "group": "idem",
+   "name": "same key different body 409 idempotency_key_reuse",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.63,C1.59 (R-1)"
+  },
+  {
+   "group": "idem",
+   "name": "same key, different invalid body 409 (idempotency before validation)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.63,C1.59 (R-1)"
+  },
+  {
+   "group": "idem",
+   "name": "same key, body {} 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.63,C1.59 (R-1)"
+  },
+  {
+   "group": "idem",
+   "name": "same key, unparseable body 400 (parse precedes idempotency)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.59 (R-1)"
+  },
+  {
+   "group": "idem",
+   "name": "same key, no token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.59 (R-1)"
+  },
+  {
+   "group": "idem",
+   "name": "other user, same key, own body 201 (key scoped to user)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.57"
+  },
+  {
+   "group": "idem",
+   "name": "same key+body on /reservation-moves is not a replay (validated normally: 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.58 (R-18)"
+  },
+  {
+   "group": "idem",
+   "name": "replay after PATCH returns original response",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.67"
+  },
+  {
+   "group": "idem",
+   "name": "replay after cancel returns original (confirmed) response 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.67"
+  },
+  {
+   "group": "idem",
+   "name": "replay after cancel made no state change",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.67"
+  },
+  {
+   "group": "idem",
+   "name": "first attempt 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.64"
+  },
+  {
+   "group": "idem",
+   "name": "key reused after 4xx with different body -> first use 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.61"
+  },
+  {
+   "group": "idem",
+   "name": "409 table_unavailable attempt",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.64"
+  },
+  {
+   "group": "idem",
+   "name": "same key same body after the blocker is cancelled 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.64"
+  },
+  {
+   "group": "idem",
+   "name": "first attempt 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.64"
+  },
+  {
+   "group": "idem",
+   "name": "reuse after 404 -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.64"
+  },
+  {
+   "group": "idem",
+   "name": "255-char key first use 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.61"
+  },
+  {
+   "group": "idem",
+   "name": "replay with party_size 2.0 for 2 is the same body: 200 identical (R-3)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.65 (R-3)"
+  },
+  {
+   "group": "idem",
+   "name": "255-char key replay 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.62,C1.65"
+  },
+  {
+   "group": "moves",
+   "name": "swap two tables in one batch 201, input order",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.119"
+  },
+  {
+   "group": "moves",
+   "name": "swap keeps identity/created_at",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.116"
+  },
+  {
+   "group": "moves",
+   "name": "moves replay 200 identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a77",
+   "clause": "C1.122"
+  },
+  {
+   "group": "moves",
+   "name": "moves same key different body 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.63,C1.59"
+  },
+  {
+   "group": "moves",
+   "name": "moves same key, invalid body 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.63,C1.59"
+  },
+  {
+   "group": "moves",
+   "name": "chain move into a slot vacated by a later item 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.119"
+  },
+  {
+   "group": "moves",
+   "name": "move colliding with unlisted booking 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.119"
+  },
+  {
+   "group": "moves",
+   "name": "failed batch changed nothing",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120"
+  },
+  {
+   "group": "moves",
+   "name": "failed batch kept old occupancy (A still holds t_3 at 19:00)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120"
+  },
+  {
+   "group": "moves",
+   "name": "failed batch key is reusable: same key, same body after blocker cancelled 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a77",
+   "clause": "C1.63,C1.59"
+  },
+  {
+   "group": "moves",
+   "name": "overlap among resulting bookings 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.119"
+  },
+  {
+   "group": "moves",
+   "name": "unchanged after internal overlap",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120"
+  },
+  {
+   "group": "moves",
+   "name": "no-op moves 201 returning unchanged bookings in input order",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.123"
+  },
+  {
+   "group": "moves",
+   "name": "moves moves empty 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves moves missing 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves 9 moves 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves duplicate references 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves item without reference 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves moves not array 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves moves object 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves item not object 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves reference number 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves null 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "reference null 422 structure (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "8 moves allowed 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves unknown reference 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.115 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves other owner's reference 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.115 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves across restaurants 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.115 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves within cutoff 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117,C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "far booking untouched after cutoff failure",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117,C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "cutoff precedes that booking's off-grid error",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117,C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "cutoff precedes that booking's unknown-table error",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117,C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "cutoff precedes that booking's party_size=0 error",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117,C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "no-op item within cutoff 409 cutoff_passed (R-22)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.117 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "input order: first item's 422 wins over later 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "input order: first item's 404 wins over later not_on_slot_grid",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "input order: first item's 404 wins over later party_size=0",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "input order: first item's party_size=0 wins over later unknown reference (R-22c)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "structure 422 beats item wrong type (duplicate refs + table_id number) (R-22a)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.114 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "item wrong type 400 beats earlier item's unknown reference (R-22b)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34,C1.116 (R-22b)"
+  },
+  {
+   "group": "moves",
+   "name": "item starts_at_local number 400 (R-22b)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34,C1.116 (R-22b)"
+  },
+  {
+   "group": "moves",
+   "name": "item table_id null 400 (R-22b, R-2)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34,C1.116 (R-22b)"
+  },
+  {
+   "group": "moves",
+   "name": "item party_size '2' 422 not 400 (R-22)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.34,C1.116 (R-22b)"
+  },
+  {
+   "group": "moves",
+   "name": "input order: off-grid first beats capacity second",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.118 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves party exceeds capacity 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.116,C1.118"
+  },
+  {
+   "group": "moves",
+   "name": "moves outside hours 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.116,C1.118"
+  },
+  {
+   "group": "moves",
+   "name": "moves wrong-type table_id 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a75",
+   "clause": "C1.34,C1.116 (R-22)"
+  },
+  {
+   "group": "moves",
+   "name": "moves cancelled 409 reservation_cancelled",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.117"
+  },
+  {
+   "group": "moves",
+   "name": "moves no token 401",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.115,C1.36"
+  },
+  {
+   "group": "moves",
+   "name": "moves no key 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.35,C1.45"
+  },
+  {
+   "group": "moves",
+   "name": "moves key 256 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.35,C1.45"
+  },
+  {
+   "group": "moves",
+   "name": "moves unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.34"
+  },
+  {
+   "group": "moves",
+   "name": "moves replay after cancellation returns original 201 body with 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.122"
+  },
+  {
+   "group": "moves",
+   "name": "setup: keyed booking for path-scope check",
+   "ok": true,
+   "soft": false,
+   "section": "harness",
+   "clause": "harness"
+  },
+  {
+   "group": "moves",
+   "name": "key already used on /reservations is independent on /reservation-moves",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.58"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B1 50 conflicting creates: exactly one 201, rest 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B2 overlapping creates: only 201/409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B3 operation took effect once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B4 exactly one booking created",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B5 20 concurrent identical moves: one 201, 19x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a77",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B5 swap applied once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B6 8 concurrent PATCHes to one slot: one 200, rest 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71/\u00a78",
+   "clause": "C1.3,C1.98"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B7 10 competing batches: one 201, rest 409, every batch all-or-nothing",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120,C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B8 20 concurrent signups same email: one 201, 19 email_taken",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.49"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B9 mixed load: no 5xx/timeouts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.46"
+  },
+  {
+   "group": "burst",
+   "name": "r0 after bursts: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.81"
+  },
+  {
+   "group": "burst",
+   "name": "r0 after bursts: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r0 B10 50 concurrent reads: all 200, max < 5 s",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a72",
+   "clause": "C1.8"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B1 50 conflicting creates: exactly one 201, rest 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B2 overlapping creates: only 201/409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B3 operation took effect once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B4 exactly one booking created",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B5 20 concurrent identical moves: one 201, 19x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a77",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B5 swap applied once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B6 8 concurrent PATCHes to one slot: one 200, rest 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71/\u00a78",
+   "clause": "C1.3,C1.98"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B7 10 competing batches: one 201, rest 409, every batch all-or-nothing",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120,C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B8 20 concurrent signups same email: one 201, 19 email_taken",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.49"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B9 mixed load: no 5xx/timeouts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.46"
+  },
+  {
+   "group": "burst",
+   "name": "r1 after bursts: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.81"
+  },
+  {
+   "group": "burst",
+   "name": "r1 after bursts: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r1 B10 50 concurrent reads: all 200, max < 5 s",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a72",
+   "clause": "C1.8"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B1 50 conflicting creates: exactly one 201, rest 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B2 overlapping creates: only 201/409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B3 operation took effect once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B4 exactly one booking created",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a77",
+   "clause": "C1.66,C1.63"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B5 20 concurrent identical moves: one 201, 19x200, one body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711/\u00a77",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B5 swap applied once",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.66,C1.122"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B6 8 concurrent PATCHes to one slot: one 200, rest 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71/\u00a78",
+   "clause": "C1.3,C1.98"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B7 10 competing batches: one 201, rest 409, every batch all-or-nothing",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a711",
+   "clause": "C1.120,C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B8 20 concurrent signups same email: one 201, 19 email_taken",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.49"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B9 mixed load: no 5xx/timeouts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a75",
+   "clause": "C1.46"
+  },
+  {
+   "group": "burst",
+   "name": "r2 after bursts: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.81"
+  },
+  {
+   "group": "burst",
+   "name": "r2 after bursts: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.3"
+  },
+  {
+   "group": "burst",
+   "name": "r2 B10 50 concurrent reads: all 200, max < 5 s",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a72",
+   "clause": "C1.8"
+  },
+  {
+   "group": "export",
+   "name": "export setup ok",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "harness"
+  },
+  {
+   "group": "export",
+   "name": "export 200 {track: tablekeeper, format_version: 1, state: object}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.106"
+  },
+  {
+   "group": "export",
+   "name": "export does not contain plaintext passwords",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a76",
+   "clause": "C1.55"
+  },
+  {
+   "group": "export",
+   "name": "export reflects later writes (new snapshot differs)",
+   "ok": true,
+   "soft": true,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import {} (missing fields) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import {} (missing fields): destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import wrong track -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import wrong track: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version 2 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version 2: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version '1' -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import format_version '1': destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state missing -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state missing: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state not object -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state not object: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state {} -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state {}: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state garbage -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import state garbage: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[same server] import export 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[same server] previous destination token rejected",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] previous destination account gone",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] signup of an account that only existed at destination is free",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] existing bearer token works; reservations identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] seeded user's token and reservations preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] hashed-password login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] seeded user login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] restaurant config preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] create replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] create key with different body still 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] batch replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.124"
+  },
+  {
+   "group": "export",
+   "name": "[same server] failed key reusable after import 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] new reference does not collide with imported ones",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[same server] repeated import 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[same server] repeated import restores exported state without duplicates",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[same server] reset after import clears imported tokens",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[same server] reset after import clears imported accounts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import {} (missing fields) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import {} (missing fields): destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import wrong track -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import wrong track: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version 2 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version 2: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version '1' -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import format_version '1': destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state missing -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state missing: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state not object -> (400, 422)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state not object: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state {} -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state {}: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state garbage -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import state garbage: destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109 (R-24)"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import unparseable 400",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.109"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] import export 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] previous destination token rejected",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] previous destination account gone",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] signup of an account that only existed at destination is free",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] existing bearer token works; reservations identical",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] seeded user's token and reservations preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] hashed-password login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] seeded user login works after import",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] restaurant config preserved",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] create replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] create key with different body still 409",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] batch replay after import 200 original body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.124"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] failed key reusable after import 201",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] new reference does not collide with imported ones",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78/\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] imported occupancy enforced (t_1 19:00 held by moved booking)",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.107"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] repeated import 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] repeated import restores exported state without duplicates",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.108"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] reset after import clears imported tokens",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.111"
+  },
+  {
+   "group": "export",
+   "name": "[fresh container] reset after import clears imported accounts",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.112"
+  },
+  {
+   "group": "export",
+   "name": "concurrent exports during writes all 200",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #0 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #1 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #2 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #3 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 taken under load imports cleanly",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a710",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 under load: references unique",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.110"
+  },
+  {
+   "group": "export",
+   "name": "export #4 under load: no overlapping confirmed bookings",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a71",
+   "clause": "C1.110"
+  }
+ ]
+}
