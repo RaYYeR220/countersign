@@ -1764,6 +1764,14 @@ def g_combo(s: S, dest: Client | None = None):
                        ("both fields, table_ids an object", {"reference": pe["reference"], "table_id": "c_4", "table_ids": {"x": 1}})):
         chk.expect(f"R-43 move {name} -> 422 validation_failed", c.req("POST", "/reservation-moves", {"moves": [item]}, token=s.ada, key=uuid.uuid4().hex),
                    422, "validation_failed", "C2.58 (R-43)")
+    # R-44: both fields -> 422 where the type pass runs: before the 404 ownership check (PATCH) / per-item 404 (moves)
+    for name, path, tok, b_ in (("PATCH another user's booking", "/reservations/COMBO1", s.bob, {"table_id": "c_3", "table_ids": ["c_3", "c_4"]}),
+                                ("PATCH unknown reference", "/reservations/ZZZZZZ", s.ada, {"table_id": "c_3", "table_ids": ["c_3"]})):
+        chk.expect(f"R-44 {name} with both fields -> 422 before 404", c.req("PATCH", path, b_, token=tok), 422, "validation_failed", "C2.54 (R-44)")
+    for name, moves in (("move item on another user's booking", [{"reference": "COMBO1", "table_id": "c_3", "table_ids": ["c_3"]}]),
+                        ("unknown reference first, both fields in item 2", [{"reference": "ZZZZZZ"}, {"reference": pe["reference"], "table_id": "c_4", "table_ids": ["c_4"]}])):
+        chk.expect(f"R-44 {name} -> 422 (step b before per-item 404)", c.req("POST", "/reservation-moves", {"moves": moves}, token=s.bob if "another" in name else s.ada,
+                   key=uuid.uuid4().hex), 422, "validation_failed", "C2.58 (R-44)")
     for name, item in (("move table_id ''", {"reference": pe["reference"], "table_id": ""}),
                        ("move table_ids ['']", {"reference": pe["reference"], "table_ids": [""]}),
                        ("move reference ''", {"reference": ""})):
