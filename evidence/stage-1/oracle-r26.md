@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-r26 sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-r26 sha=92c1bec
 
 # Evidence — R-26 applied: seeded and imported references are opaque ids
 
