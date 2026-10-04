@@ -30,4 +30,9 @@ criteria are carried in each `[HANDOFF]` message (generated from `ledger-A.md` r
 | 2 | 4f54736 | superseded by 3 (step 3 red: Oracle model/runner faults A and B; R-25; no product finding) | superseded |
 | 3 | (this commit) | + Oracle diff fix and hardening O-1..O-4 (seat/oracle 3e387ec), auditor verdict-1; product identical to 4f54736 | pending |
 | 3 | 4f983ac | + oracle 3e387ec; product = 4f54736 | superseded by 4 (step 2 test defect in tamper generator; no product finding) |
-| 4 | (this commit) | + oracle O-5..O-7 and tamper fix (seat/oracle dc4fd3a); product = 4f54736 | pending |
+| 4 | 1bfe6e2 | + oracle O-5..O-7 and tamper fix (seat/oracle dc4fd3a); product = 4f54736 | REJECT (verdict 4: 2 test defects R-26/R-27; verdict 5: holdout 117/120, escape C1.81 seeded references) |
+
+## Rework
+| WI | owner | from | clauses | status |
+|----|-------|------|---------|--------|
+| WI-7 | Builder | verdict 5 (1bfe6e2) F-1, holdout escape; R-28 | C1.81, C1.30, C1.12, C1.109 | handed off (rework round 1 of 2 for the fixture/import validation of WI-2/WI-5) |
