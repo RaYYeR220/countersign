@@ -154,9 +154,22 @@ def test_C2_47_table_id_and_table_ids(c, ada):
     assert r.status == 201 and r.json["table_ids"] == ["q_2"] and r.json["table_id"] == "q_2"
     body = {"restaurant_id": "r_trio", "table_id": "q_3", "table_ids": ["q_3"], "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
     err(c.post("/reservations", body, token=ada, key=k()), 422, "validation_failed")
+    # R-43: both fields present -> 422 whatever their JSON types (POST, PATCH, move items)
+    for one, many in (("n_1", {"id": "q_1"}), (5, ["q_1"]), (None, None), ("q_1", "q_1"), ([], 7)):
+        err(c.post("/reservations", {**body, "restaurant_id": "r_ny", "table_id": one, "table_ids": many}, token=ada, key=k()), 422, "validation_failed")
+    ref = c.book(ada, k(), "r_trio", "q_1", f"{FUT_FRI}T21:30", 2).json["reference"]
+    err(c.patch(f"/reservations/{ref}", {"table_id": 5, "table_ids": {"id": "q_1"}}, token=ada), 422, "validation_failed")
+    err(c.post("/reservation-moves", {"moves": [{"reference": ref, "table_id": None, "table_ids": 3}]}, token=ada, key=k()), 422, "validation_failed")
+    # with a single field, a wrong type stays 400
+    b2 = {k_: v for k_, v in body.items() if k_ != "table_id"}
+    err(c.post("/reservations", {**b2, "table_ids": {"id": "q_1"}}, token=ada, key=k()), 400, "malformed_request")
+    b1 = {k_: v for k_, v in body.items() if k_ != "table_ids"}
+    err(c.post("/reservations", {**b1, "table_id": 5}, token=ada, key=k()), 400, "malformed_request")
+    err(c.patch(f"/reservations/{ref}", {"table_ids": {"id": "q_1"}}, token=ada), 400, "malformed_request")
+    err(c.post("/reservation-moves", {"moves": [{"reference": ref, "table_ids": 3}]}, token=ada, key=k()), 400, "malformed_request")
     body = {"restaurant_id": "r_trio", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
     err(c.post("/reservations", body, token=ada, key=k()), 422, "validation_failed")
-    assert len(c.get("/reservations", token=ada).json["reservations"]) == 2
+    assert len(c.get("/reservations", token=ada).json["reservations"]) == 3      # two singles + the R-43 helper booking
 
 
 def test_C2_41_C2_49_C2_50_combination_not_allowed(c, ada):

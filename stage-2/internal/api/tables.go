@@ -17,19 +17,22 @@ func combinationNotAllowed(msg string) error {
 	return apperr.New(http.StatusUnprocessableEntity, "combination_not_allowed", msg)
 }
 
-// tableFieldTypes is the wrong-type pass: table_id must be a string and table_ids an array of
-// strings (400). When table_id is present, table_ids is not type-checked: sending both is
-// reported as 422 by requestedTables, which R-35 puts ahead of the table_ids type.
+// tableFieldTypes takes the place of the type pass for the table fields (R-43, R-44): both
+// present → 422 validation_failed whatever their types; alone, table_id must be a string and
+// table_ids an array of strings (400).
 func tableFieldTypes(o jsonin.Object) error {
-	if o.Has("table_id") {
-		if o.Kind("table_id") != jsonin.String {
-			return apperr.Malformed("table_id must be a string")
-		}
-		return nil
+	switch {
+	case bothTableFields(o):
+		return apperr.Validation("send table_id or table_ids, not both")
+	case o.Has("table_id") && o.Kind("table_id") != jsonin.String:
+		return apperr.Malformed("table_id must be a string")
 	}
 	_, _, err := o.Strings("table_ids")
 	return err
 }
+
+// bothTableFields reports whether table_id and table_ids are both present, null included.
+func bothTableFields(o jsonin.Object) bool { return o.Has("table_id") && o.Has("table_ids") }
 
 // hasTables reports whether either table field is present.
 func hasTables(o jsonin.Object) bool { return o.Has("table_id") || o.Has("table_ids") }
@@ -43,17 +46,13 @@ func invalidID(field string) error {
 	return apperr.Validation(field + " must be 1 to 64 characters")
 }
 
-// requestedTables is the value pass over the table fields in R-35/R-42 order: both present, an
-// empty set, an empty or over-long id, or a duplicate id → 422 validation_failed; more than two
-// tables → 422 combination_not_allowed.
+// requestedTables is the value pass over the table fields in R-35/R-42 order, after
+// tableFieldTypes has refused both fields together: an empty set, an empty or over-long id, or a
+// duplicate id → 422 validation_failed; more than two tables → 422 combination_not_allowed.
 // ok is false when neither field is present.
 func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
 	single, hasSingle, _ := o.String("table_id")
-	hasSet := o.Has("table_ids")
-	if hasSingle && hasSet {
-		return nil, false, apperr.Validation("send table_id or table_ids, not both")
-	}
-	ids, _, _ = o.Strings("table_ids")
+	ids, hasSet, _ := o.Strings("table_ids")
 	switch {
 	case hasSingle && !validBodyID(single):
 		return nil, false, invalidID("table_id")

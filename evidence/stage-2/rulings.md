@@ -137,3 +137,16 @@ stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted)
   `table_id`, a non-string is 400.
 - Rationale: R-35 is the endpoint-specific order and lists "both" before the `table_ids` type check; C2.47 says
   "Sending both is 422" without exception. Rejected: applying R-19's general type pass first (model default).
+
+## R-44 — Where the both-table-fields check sits in PATCH and moves (composes R-43 with R-14/R-22)
+- Clauses: C2.47, C2.54, C2.58
+- Decision: R-43's both-fields check takes the place of the type pass for `table_id`/`table_ids`, so it runs where
+  the type pass runs. PATCH: 401 → 400 body parse / other fields' types → 422 both fields present → 404 not the
+  caller's → 409 cancelled → 409 cutoff → values … Moves: after (a) structure 422, step (b) is per item in input
+  order: both fields present → 422, otherwise wrong types → 400; then (c) per-item 404 and the rest. POST is
+  unchanged (it already runs the both-fields check before any 404).
+- Rationale: literal composition of R-43 ("precedes R-19's type pass") with R-14/R-22 (type pass before 404). A 422
+  computed from the request body alone leaks nothing about other users' bookings. Rejected: keeping it among the
+  value checks after the 404, which put a type error (400) before ownership but a stricter body rule after it.
+- Budget decision (Foreman): this arises from ruling composition, not an implementation error; the work is a new
+  item (WI-16) and does not consume the WI-8 validation rework budget.

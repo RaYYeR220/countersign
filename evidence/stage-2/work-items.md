@@ -30,4 +30,9 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 | WI | owner | from | clauses | status |
 |----|-------|------|---------|--------|
 | WI-13 | Builder | stage-2 verdict-1 escalation Q2; R-42 | C1.18, C1.41, C2.46–C2.53 | evidence 04196be, merged (rework round 1 of 2 on WI-8 validation) |
-| 2 | 090df19 | + WI-13 (04196be), oracle 363c365 (R-41/R-42/R-35 model) | pending |
+| 2 | 090df19 | + WI-13 (04196be), oracle 363c365 (R-41/R-42/R-35 model) | superseded by 3 (differential seed 371951: model defect, R-43) |
+| 3 | a6497b4 | + oracle R-43 (f1ec500), Builder WI-14 RUN.md (3f62a89); product otherwise = 090df19 | superseded by 4 (contains candidate-2 F-1, R-43 table_id type) |
+| WI-15 | Builder | stage-2 candidate 2 F-1 (R-43: wrongly typed table_id with both fields) | C2.47, C2.54, C2.58 | evidence 7d6bc49, merged (rework round 2 of 2 on WI-8 validation) |
+| 4 | 3550522 | + WI-15 (7d6bc49) | superseded by 5 (R-44 ordering finding → WI-16) |
+| WI-16 | Builder | stage-2 candidate 4 escalation; R-44 (both-fields check before the ownership 404 in PATCH/moves) | C2.47, C2.54, C2.58 | evidence ccaccbc, merged (new item per R-44 budget decision) |
+| 5 | (this commit) | + WI-16 (ccaccbc) | pending |
