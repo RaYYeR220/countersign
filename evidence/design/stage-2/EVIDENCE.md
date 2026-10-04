@@ -62,3 +62,54 @@ Exit code: 0
   needs no change for it.
 - Open ESCALATION Q1 (combination cell presence; built to option (a): every declared pair in every slot) and
   Q2 (start-time text; built as "Tue, 3 Nov 2026 · 19:00").
+
+---
+
+# Addendum — WI-10, WI-11, WI-12 conformed to R-29 … R-40, plus the real core
+
+- Revision: 78e1acc9af3578ab8d1211b374f07021528de216 (code and check script). It merges seat/builder 15035d7
+  (WI-8 combined tables, WI-9 schema-2 migration) and main bcc4ef7 (R-39, R-40). Screenshots were re-captured
+  against the Docker images and committed on top of it.
+- Changes:
+  - R-39: a combination cell exists for every declared pair whose summed capacity ≥ the searched party, with
+    `data-available` true exactly when the pair is in `available_options`. Pairs too small for the party have no
+    cell.
+  - R-32: `booking-summary`, `confirmation-details` and the lookup "When" read e.g.
+    "Tue, 3 Nov 2026 · 19:00 (2026-11-03)". Fixture labels appear verbatim ("Table 2", "Window", "Tables 1 + 2").
+  - R-40: a signed-out lookup goes to /login, then returns to /lookup and runs the lookup. A signed-out cell
+    click goes to /login, then returns to / with the form open (as before).
+  - R-30: an API 401 clears localStorage and shows `auth-error` (with a Sign in link) inside the
+    `booking-error` or `reservation-error` panel. Signing in again returns to the same form or lookup.
+- The mocked combination step was replaced by the real core.
+
+## Command
+### `PYTHONUTF8=1 C:/countersign/.venv/Scripts/python.exe evidence/design/stage-2/ui_check.py --base http://127.0.0.1:18211 --stage1 http://127.0.0.1:18212`
+- Stage-2 image: stylist-tk2:ui2, built from stage-2 at 78e1acc.
+- Stage-1 image: stylist-tk1:accepted, built from the accepted stage-1/.
+- Both were started with bg.py (`--cpus 2 --memory 2g`) and stopped afterwards; `docker ps -a --filter name=stylist`
+  is empty.
+
+Exit code: 0
+```
+240/240 checks passed
+```
+New checks, at each of 375, 768 and 1280 px:
+- `grid == API`: every `slot-*` cell compared with GET /availability and GET /restaurants/{id} for parties 2, 6
+  and 7, so exactly the cells R-39 requires exist, and each has the right `data-available`.
+- At party 7 the t_1+t_2 pair (6 seats) has no cell.
+- Pair booking through the UI: the summary names both tables, HH:MM and the ISO date. `confirmation-tables` and
+  lookup `reservation-tables` list both labels, and the server holds `table_ids` ["t_1","t_2"].
+- 401 after a server reset: `booking-error` + `auth-error` are shown, `current-user` is gone and the
+  localStorage session is cleared (screenshot 24).
+- Lookup while signed out goes to /login, and after sign-in back to /lookup with the detail shown (21).
+- Stage-1 → stage-2 upgrade (C2.35–C2.37), with no page reload:
+  - The browser's API calls go to the real stage-1 container; sign-in and booking A succeed there.
+  - Booking B commits on stage 1, but its response is dropped, so the UI shows `booking-uncertain` (25).
+  - The stage-1 export is imported into stage-2 (200 / 204), and the browser is switched to stage-2.
+  - Pressing Try again shows a reference equal to the one stage 1 committed. Uncertainty is gone and the user
+    is still signed in (26).
+  - Looking up booking A's reference on stage-2 shows "confirmed".
+Screenshots now number 26 states × 3 widths: evidence/design/stage-2/<width>-<nn>-<state>.png.
+
+## Known gaps
+- none
