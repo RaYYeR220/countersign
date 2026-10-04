@@ -51,11 +51,48 @@ class Handler(BaseHTTPRequestHandler):
     do_DELETE = _dispatch
 
 
+def apply_mutant(n: int) -> None:
+    import model as M
+    if n == 1:
+        orig = M.resolve_local
+
+        def second_occurrence(naive, zone):
+            utc = orig(naive, zone)
+            if utc is None:
+                return None
+            alt = naive.replace(tzinfo=zone, fold=1).astimezone(M.UTC)
+            return alt if alt.astimezone(zone).replace(tzinfo=None) == naive else utc
+        M.resolve_local = second_occurrence
+    elif n == 2:
+        orig_lookup = M.Model._idem_lookup
+
+        def lookup(self, user_id, path, key, obj):
+            hit = orig_lookup(self, user_id, path, key, obj)
+            return (201, hit[1]) if hit else None
+        M.Model._idem_lookup = lookup
+    elif n == 3:
+        orig_list = M.Model.list_reservations
+
+        def ascending(self, user_id):
+            st, out = orig_list(self, user_id)
+            out["reservations"].reverse()
+            return st, out
+        M.Model.list_reservations = ascending
+    elif n == 4:
+        M.Model._cutoff_passed = lambda self, rec: False
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=18400)
+    ap.add_argument("--mutant", type=int, default=0,
+                    help="deliberately deviate from the spec (self-test of the differential runner): "
+                         "1 = fall-back resolves to the second occurrence, 2 = replays answer 201, "
+                         "3 = GET /reservations ascending, 4 = cancel ignores the cutoff")
     a = ap.parse_args()
+    if a.mutant:
+        apply_mutant(a.mutant)
     ThreadingHTTPServer.request_queue_size = 256  # bursts of 50 must not be refused by the backlog
     srv = ThreadingHTTPServer((a.host, a.port), Handler)
     srv.daemon_threads = True
