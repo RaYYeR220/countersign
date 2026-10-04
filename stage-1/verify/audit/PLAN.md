@@ -6,7 +6,7 @@ master ledger (`[RECONCILE] stage=1`) assigns `C1.<n>`; the mapping is added to 
 ## Files
 | file | purpose |
 |---|---|
-| `audit.py` | the battery: stdlib Python, ~450 checks in 12 groups, JSON report, exit 0 = no hard failures |
+| `audit.py` | the battery: stdlib Python, ~550 checks in 12 groups, each mapped to C1.n, JSON report, exit 0 = no hard failures |
 | `run_attacks.sh` | orchestration: two candidate containers (A target, B fresh import destination) on an `--internal` network, `--cpus 2 --memory 2g -e PORT=8080`, and a runner container on the same network |
 | `Dockerfile.runner` | runner image `auditor-runner-img` (python:3.12-alpine + tzdata) |
 
@@ -54,13 +54,24 @@ stage 1; from stage 2 on, `run_attacks.sh` gains an upgrade step that exports fr
 - Step 7: no user-facing surface in stage 1 (skip with reason).
 - Step 8: holdout `harness_win.py run --track tablekeeper --stage 1 --mode isolated` only when 1–7 are green.
 
-## Ambiguities raised for rulings (currently soft checks)
-1. `moves` item field errors: is `party_size: 0` an "invalid shape" (422 up front for the whole
-   batch) or an ordinary amendment error subject to cutoff-first and input-order precedence?
-2. `moves` item with a wrong-type `table_id` (number): 400 `malformed_request` (§5) or 422 (§11 "invalid shape")?
-3. `moves` with `moves` not an array / items not objects: 400 or 422 (both accepted for now).
-4. `PATCH {}` (empty subset): 200 unchanged expected.
-5. `PATCH` moving a far booking to a start inside the cutoff: allowed (cutoff measured on the current start).
-6. Body that is valid JSON but not an object (`[]`): 400 `malformed_request` expected.
-7. `signup` without `display_name`, `login` without `password`: 422 expected.
-8. Import of `state: {}` or an unrecognised state object: 422 expected.
+## Clause mapping and rulings
+Every check carries a master-ledger clause id (`evidence/stage-1/ledger.md` @ 564f21e), derived in
+`audit.py` (`CLAUSE_RULES`) from its group and name; ruling-driven checks also name the ruling.
+The eight questions raised at kickoff were answered at reconciliation (R-1, R-14, R-19, R-22, R-24, C1.97);
+their checks are hard now. Ruling-driven attacks added: R-1 keyed-path precedence, R-2 null = wrong
+type, R-3 integral `2.0` (create and replay), R-4 case-insensitive email / one `@` / blank display_name /
+code-point password length, R-7 domain-check order, R-8 + R-20 refused fixtures (20 variants, each
+leaving state unchanged; `24:00` and trusted seeds accepted), R-9 404/405, R-10 public endpoints ignore a
+bad bearer, R-11 restaurant order and reservation tie order, R-12 parameter errors before 404, R-13 cancel
+body, R-14 PATCH order and no-op rules, R-16 seeded `created_at`, R-17 Content-Type not enforced, R-19
+three-pass field order, R-21 `+00:00` whole-second `created_at`, R-22 move order (structure 422 → item
+type 400 → per-item checks in input order, no-op cutoff), R-23 absolute end-of-day on DST nights
+(`r_close`, discriminates wall-clock arithmetic), R-24 `state: {}` → 422.
+
+Remaining soft checks (2): `created_at` within 5 minutes of the runner's clock; a later export differs from
+an earlier one.
+
+Self-test of the battery (not a verdict): against an old image from an earlier run (`auditor-tk-s1c1`),
+553 checks, 18 hard failures. All 18 are this run's rulings (R-3, R-4, R-8, R-9, R-11, R-13, R-20, R-22)
+that the old image does not implement. No other check fails, so ruling-independent checks don't fail a
+working implementation.

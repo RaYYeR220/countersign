@@ -46,13 +46,14 @@ class Checker:
         self.group = "?"
 
     def check(self, name, ok, expected=None, actual=None, req=None, section=None, soft=False):
-        r = {"group": self.group, "name": name, "ok": bool(ok), "soft": soft, "section": section}
+        clause = clause_for(self.group, name, section)
+        r = {"group": self.group, "name": name, "ok": bool(ok), "soft": soft, "section": section, "clause": clause}
         if not ok:
             r.update(expected=expected, actual=actual, request=req)
         self.results.append(r)
         if not ok:
             tag = "SOFT" if soft else "FAIL"
-            print(f"  [{tag}] {self.group}/{name} ({section}) expected={_short(expected)} "
+            print(f"  [{tag}] {self.group}/{name} ({clause}) expected={_short(expected)} "
                   f"actual={_short(actual)} req={_short(req, 300)}", flush=True)
         return bool(ok)
 
@@ -61,6 +62,80 @@ class Checker:
         ok = resp.status in statuses and (code is None or resp.code() == code)
         return self.check(name, ok, {"status": list(statuses), "code": code},
                           {"status": resp.status, "body": resp.text(300)}, resp.req, section, soft)
+
+
+# Master-ledger clause ids (evidence/stage-1/ledger.md @ 564f21e) and rulings, by group and check name.
+# First matching pattern wins; a check whose section is already a "C1." id keeps it.
+CROSS_RULES = [(r"^no-5xx", "C1.46"), (r"^per-request-timeout", "C1.8"), (r"^error-envelope", "C1.32"),
+               (r"^content-type-json", "C1.14"), (r"group ran to completion", "harness"), (r"^setup", "harness")]
+CLAUSE_RULES = {
+    "core": [(r"^health", "C1.11"), (r"R-8|R-20|reset rejects|reset accepts", "C1.12,C1.18,C1.26 (R-8,R-20)"),
+             (r"reset", "C1.12,C1.13"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
+             (r"Content-Type", "C1.14 (R-17)"), (r"ignores Authorization", "C1.53,C1.68 (R-10)"),
+             (r"GET /restaurants public", "C1.68,C1.69 (R-11)"), (r"restaurants/\{id\}|restaurants/unknown", "C1.70"),
+             (r"65 chars", "C1.18"), (r"seeded .*created_at|trusted", "C1.30 (R-16)"), (r"seeded reservation visible", "C1.30"),
+             (r"hidden", "C1.90"), (r"seeded user", "C1.29"), (r"unknown query", "C1.17"), (r"unknown body", "C1.16")],
+    "auth": [(r"wrong type|unparseable|JSON array|R-19", "C1.34 (R-19)"), (r"missing", "C1.40 (R-19)"),
+             (r"signup 201", "C1.47"), (r"list is", "C1.89"), (r"login 200", "C1.48"), (r"token", "C1.54"),
+             (r"taken|case-insensitive", "C1.49 (R-4)"), (r"password", "C1.50 (R-4)"), (r"display_name", "C1.47 (R-4)"),
+             (r"email", "C1.51 (R-4)"), (r"login wrong|login unknown", "C1.52"), (r"401", "C1.36,C1.53"), (r"public", "C1.68")],
+    "availability": [(r"envelope", "C1.72"), (r"slots = every|fri closes", "C1.74"), (r"offset", "C1.79,C1.104"),
+                     (r"half-open", "C1.4,C1.75"), (r"party \d+ ->", "C1.75,C1.76"), (r"closed day", "C1.77"),
+                     (r"missing", "C1.71"), (r"date=", "C1.41,C1.71 (R-12)"), (r"party_size=", "C1.43 (R-12)"),
+                     (r"huge", "C1.46,C1.71"), (r"before 404|unknown restaurant", "C1.71 (R-12)")],
+    "create": [(r"^R-7", "C1.83,C1.84,C1.85,C1.87,C1.88 (R-7)"), (r"JSON string", "C1.34 (R-1)"), (r"created_at", "C1.15,C1.80 (R-21)"), (r"starts_at/ends_at offset", "C1.15 (R-21)"),
+               (r"create 201|create response", "C1.80"), (r"GET /reservations/\{ref\}", "C1.90,C1.80"),
+               (r"integral", "C1.86 (R-3)"), (r"overlap|back-to-back 20:30", "C1.4,C1.82"), (r"off grid", "C1.83"),
+               (r"outside_opening_hours|ends exactly", "C1.84 (R-7)"), (r"party_exceeds", "C1.85"),
+               (r"party_size=", "C1.42,C1.86 (R-2,R-3)"), (r"starts_at_local=.*422", "C1.42"),
+               (r"R-19|number 400|null|wrong type", "C1.34 (R-2,R-19)"), (r"missing", "C1.40 (R-19)"),
+               (r"unknown restaurant|unknown table|another restaurant", "C1.88"),
+               (r"Idempotency-Key|R-1", "C1.35,C1.45,C1.59 (R-1)"), (r"unparseable|array", "C1.34 (R-1)"),
+               (r"past start|inside cutoff", "C1.31"), (r"references unique", "C1.81")],
+    "reads": [(r"404", "C1.90"), (r"tie", "C1.89 (R-11)"), (r".", "C1.89")],
+    "cancel": [(r"body", "C1.91 (R-13)"), (r"twice", "C1.93"), (r"cutoff|past|still confirmed", "C1.94 (R-6)"),
+               (r"other's|unknown", "C1.95"), (r"frees|rebook|not offered", "C1.92"), (r".", "C1.91")],
+    "patch": [(r"own overlapping|released", "C1.98 (R-14)"), (r"keeps reference", "C1.99"), (r"ends_at", "C1.22"),
+              (r"table only", "C1.96"), (r"onto other's booking", "C1.82,C1.98"),
+              (r"within cutoff|past booking|far booking", "C1.97 (R-6,R-14)"), (r"cancelled", "C1.97 (R-14)"),
+              (r"unchanged|untouched", "C1.98,C1.5"), (r"\{\}", "C1.96 (R-14)"), (r"unparseable|null|number|JSON array", "C1.34 (R-2,R-14)"),
+              (r"other's 404|unknown 404", "C1.132,C1.38"), (r"nonexistent", "C1.87,C1.97 (R-7)"), (r".", "C1.97 (R-14)")],
+    "dst": [(r"R-23|end-of-day", "C1.74,C1.84 (R-23)"), (r"slots once", "C1.101,C1.102 (R-5)"),
+            (r"offset", "C1.104"), (r"nonexistent", "C1.87,C1.101"), (r"absolute duration", "C1.103"),
+            (r"availability 02:00", "C1.103,C1.75"), (r".", "C1.103,C1.4")],
+    "idem": [(r"first use 201", "C1.61"), (r"integral|2\.0", "C1.65 (R-3)"), (r"replay 200|reordered", "C1.62,C1.65"),
+             (r"created nothing", "C1.5"), (r"different body|different invalid|body \{\}", "C1.63,C1.59 (R-1)"),
+             (r"unparseable|no token|R-1", "C1.59 (R-1)"), (r"other user", "C1.57"), (r"not a replay", "C1.58 (R-18)"),
+             (r"after PATCH|after cancel", "C1.67"), (r"255", "C1.45"), (r".", "C1.64")],
+    "moves": [(r"swap two|chain", "C1.119"), (r"keeps identity", "C1.116"), (r"replay", "C1.122"),
+              (r"same key", "C1.63,C1.59"), (r"colliding|overlap among", "C1.119"),
+              (r"changed nothing|kept old|unchanged after", "C1.120"), (r"reusable", "C1.120,C1.64"),
+              (r"no-op item", "C1.117 (R-22)"), (r"no-op", "C1.123"), (r"input order", "C1.118 (R-22)"),
+              (r"^item ", "C1.34,C1.116 (R-22b)"), (r"8 moves|structure|moves (empty|missing|9|duplicate|item|not array|object|reference number)", "C1.114 (R-22)"),
+              (r"unknown reference|other owner", "C1.115 (R-22)"), (r"across restaurants", "C1.115 (R-22)"),
+              (r"cutoff", "C1.117,C1.118 (R-22)"), (r"input order", "C1.118 (R-22)"),
+              (r"wrong-type|null", "C1.34,C1.116 (R-22)"), (r"capacity|outside hours", "C1.116,C1.118"),
+              (r"cancelled", "C1.117"), (r"no token", "C1.115,C1.36"), (r"no key|key 256", "C1.35,C1.45"),
+              (r"unparseable", "C1.34"), (r"independent", "C1.58")],
+    "burst": [(r"B1 ", "C1.3"), (r"B2 ", "C1.3"), (r"B3 ", "C1.66"), (r"B4 ", "C1.66,C1.63"), (r"B5 ", "C1.66,C1.122"),
+              (r"B6 ", "C1.3,C1.98"), (r"B7 ", "C1.120,C1.3"), (r"B8 ", "C1.49"), (r"B9 ", "C1.46"), (r"B10 ", "C1.8"),
+              (r"references unique", "C1.81"), (r".", "C1.3")],
+    "export": [(r"setup", "harness"), (r"export 200", "C1.106"), (r"plaintext", "C1.55"), (r"reflects", "C1.110"),
+               (r"state \{\}|state garbage", "C1.109 (R-24)"), (r"import .* -> |destination unchanged|import unparseable", "C1.109"),
+               (r"import export 204", "C1.107"), (r"previous destination|only existed", "C1.112"),
+               (r"batch replay", "C1.124"), (r"token|login works|config|create replay|still 409|failed key", "C1.111"),
+               (r"collide", "C1.112"), (r"occupancy", "C1.107"), (r"repeated import", "C1.108"),
+               (r"reset after import", "C1.112"), (r"under load|concurrent exports", "C1.110")],
+}
+
+
+def clause_for(group, name, section):
+    if isinstance(section, str) and section.startswith("C1."):
+        return section
+    for pat, ids in CROSS_RULES + CLAUSE_RULES.get(group, []):
+        if re.search(pat, name):
+            return ids
+    return section or "unmapped"
 
 
 def _short(v, n=200):
@@ -224,6 +299,7 @@ class Ctx:
         return f"{d.isoformat()}T{hhmm}"
 
 
+SEED_CREATED_AT = "2026-01-02T03:04:05+00:00"
 ADA = {"id": "u_ada", "email": "ada@example.com", "password": "correct horse", "display_name": "Ada"}
 BOB = {"id": "u_bob", "email": "bob@example.com", "password": "battery staple", "display_name": "Bob"}
 
@@ -244,6 +320,7 @@ def fixture(ctx: Ctx, extra_users=()) -> dict:
             n += 1
             seeded.append({"id": f"s_{n}", "reference": f"SEED0{n}", "user_id": "u_ada", "restaurant_id": "r_anker",
                            "table_id": t, "starts_at_local": ctx.D(ctx.thu2, hhmm), "party_size": 2})
+    seeded[0]["created_at"] = SEED_CREATED_AT
     seeded.append({"id": "s_b1", "reference": "SEEDB1", "user_id": "u_bob", "restaurant_id": "r_anker",
                    "table_id": "t_3", "starts_at_local": ctx.D(ctx.fri, "22:00"), "party_size": 5})
     return {
@@ -267,6 +344,10 @@ def fixture(ctx: Ctx, extra_users=()) -> dict:
             {"id": "r_other", "name": "Other Place", "timezone": "Europe/Berlin", "slot_minutes": 30,
              "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120,
              "opening_hours": ANKER_HOURS, "tables": [{"id": "o_1", "label": "O1", "capacity": 8}]},
+            {"id": "r_close", "name": "Early Close", "timezone": "Europe/Berlin", "slot_minutes": 30,
+             "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120,
+             "opening_hours": [{"weekday": "sun", "opens": "00:00", "closes": "03:30"}],
+             "tables": [{"id": "c_1", "label": "C1", "capacity": 4}]},
         ],
         "reservations": seeded,
     }
@@ -364,7 +445,7 @@ def g_core(s: S):
               {"status": 200, "body": {"status": "ok"}}, {"status": r.status, "body": r.text(200)}, r.req, "§3.2")
     r = c.req("POST", "/_test/reset", fixture(ctx), timeout=12)
     chk.expect("reset 204", r, 204, section="§3.3")
-    chk.check("reset 204 has empty body", r.raw == b"", b"", r.text(100), r.req, "§3.3", soft=True)
+    chk.check("reset 204 has empty body", r.raw == b"", b"", r.text(100), r.req, "§3.3")
     s.reset()
     r = c.req("POST", "/_test/reset", fixture(ctx), timeout=12)
     chk.expect("repeated reset 204", r, 204, section="§3.3")
@@ -404,6 +485,71 @@ def g_core(s: S):
                                          "starts_at_local": ctx.D(ctx.thu, "18:00"), "zzz": {"a": [1]}},
               token=s.ada, key=uuid.uuid4().hex)
     chk.expect("unknown body field ignored", r, 201, section="§3.4")
+    r = c.req("GET", "/restaurants")
+    got = [g.get("id") for g in (r.json or {}).get("restaurants", [])] if r.status == 200 else None
+    chk.check("GET /restaurants public, in fixture order", got == [x["id"] for x in exp], [x["id"] for x in exp], got, r.req)
+    r = s.get(s.ada, "SEED01")
+    chk.check("seeded created_at kept from fixture", (r.json or {}).get("created_at") == SEED_CREATED_AT, SEED_CREATED_AT,
+              (r.json or {}).get("created_at"), r.req)
+
+    # R-9 routing, R-10 public endpoints ignore Authorization, R-17 Content-Type not enforced
+    chk.expect("unknown path 404", c.req("GET", "/nope/zzz"), 404, "not_found")
+    chk.expect("known path, wrong method 405", c.req("DELETE", "/restaurants"), 405, "method_not_allowed")
+    chk.expect("known path, wrong method 405 (PUT /reservations)", c.req("PUT", "/reservations", {}, token=s.ada), 405, "method_not_allowed")
+    junk = {"Authorization": "Bearer junk-token"}
+    for m, p, b, st in (("GET", "/health", NO_BODY, 200), ("GET", "/restaurants", NO_BODY, 200), ("GET", "/restaurants/r_anker", NO_BODY, 200),
+                        ("GET", "/availability?" + urlencode({"restaurant_id": "r_anker", "date": str(ctx.thu), "party_size": 2}), NO_BODY, 200),
+                        ("POST", "/auth/login", {"email": ADA["email"], "password": ADA["password"]}, 200),
+                        ("GET", "/_test/export", NO_BODY, 200)):
+        chk.expect(f"{m} {p.split('?')[0]} ignores Authorization: Bearer junk", c.req(m, p, b, headers=junk), st)
+    r = c.req("POST", "/reservations", headers={"Content-Type": "text/plain"}, token=s.ada, key=uuid.uuid4().hex,
+              raw=json.dumps(booking_body("r_anker", "t_3", ctx.D(ctx.thu, "18:00"), 2)))
+    chk.expect("JSON body with Content-Type text/plain accepted (R-17)", r, 201)
+
+    # R-8 / R-20: refused fixtures change nothing
+    base_fx = fixture(ctx)
+
+    def variant(fn):
+        fx = json.loads(json.dumps(base_fx))
+        fn(fx)
+        return fx
+
+    R0 = lambda fx: fx["restaurants"][0]  # noqa: E731
+    bad_fixtures = [
+        ("unparseable", None, 400),
+        ("restaurant id 65 chars", variant(lambda fx: R0(fx).update(id="r" * 65)), 422),
+        ("user id 65 chars", variant(lambda fx: fx["users"][0].update(id="u" * 65)), 422),
+        ("unknown timezone", variant(lambda fx: R0(fx).update(timezone="Mars/Olympus")), 422),
+        ("opens not HH:MM", variant(lambda fx: R0(fx)["opening_hours"][0].update(opens="6pm")), 422),
+        ("weekday not mon..sun", variant(lambda fx: R0(fx)["opening_hours"][0].update(weekday="thursday")), 422),
+        ("closes not later than opens", variant(lambda fx: R0(fx)["opening_hours"][0].update(closes="17:00")), 422),
+        ("duplicate weekday", variant(lambda fx: R0(fx)["opening_hours"].append({"weekday": "thu", "opens": "11:00", "closes": "14:00"})), 422),
+        ("duplicate user id", variant(lambda fx: fx["users"].append({**fx["users"][0], "email": "x@example.com"})), 422),
+        ("duplicate email (case-insensitive)", variant(lambda fx: fx["users"].append({**fx["users"][0], "id": "u_x", "email": "ADA@example.com"})), 422),
+        ("duplicate restaurant id", variant(lambda fx: fx["restaurants"].append({**fx["restaurants"][1], "id": "r_anker"})), 422),
+        ("duplicate table id in a restaurant", variant(lambda fx: R0(fx)["tables"].append({"id": "t_1", "label": "x", "capacity": 2})), 422),
+        ("duplicate reservation id", variant(lambda fx: fx["reservations"].append({**fx["reservations"][0], "reference": "SEEDXX"})), 422),
+        ("duplicate reference", variant(lambda fx: fx["reservations"].append({**fx["reservations"][0], "id": "s_x"})), 422),
+        ("reservation of unknown user", variant(lambda fx: fx["reservations"][0].update(user_id="u_ghost")), 422),
+        ("reservation of unknown restaurant", variant(lambda fx: fx["reservations"][0].update(restaurant_id="r_ghost")), 422),
+        ("reservation on another restaurant's table", variant(lambda fx: fx["reservations"][0].update(table_id="o_1")), 422),
+        ("capacity wrong type", variant(lambda fx: R0(fx)["tables"][0].update(capacity="2")), 400),
+        ("restaurants not a list", variant(lambda fx: fx.update(restaurants={"r": 1})), 400),
+        ("restaurant missing timezone", variant(lambda fx: R0(fx).pop("timezone")), 422),
+    ]
+    for name, fx, st in bad_fixtures:
+        s.reset()
+        before = c.req("GET", "/_test/export").json
+        r =c.req("POST", "/_test/reset", fx, timeout=12) if fx is not None else c.req("POST", "/_test/reset", raw='{"users": [', timeout=12)
+        chk.expect(f"reset rejects fixture: {name} -> {st}", r, st, "malformed_request" if st == 400 else "validation_failed")
+        after = c.req("GET", "/_test/export").json
+        chk.check(f"reset rejects fixture: {name}: state unchanged", after == before, "unchanged", "changed", r.req)
+    ok_fx = variant(lambda fx: (R0(fx)["opening_hours"][0].update(closes="24:00"),
+                                fx["reservations"].append({"id": "s_t", "reference": "SEEDT1", "user_id": "u_bob", "restaurant_id": "r_anker",
+                                                           "table_id": "t_1", "starts_at_local": ctx.D(ctx.thu2, "18:10"), "party_size": 2})))
+    r = c.req("POST", "/_test/reset", ok_fx, timeout=12)
+    chk.expect("reset accepts closes 24:00 and an off-grid/overlapping seeded booking (seeds trusted)", r, 204)
+    s.reset()
 
 
 def g_auth(s: S):
@@ -442,7 +588,34 @@ def g_auth(s: S):
     for em in ("noat", "a@", "@b", "", "a b@", "two@@x"):
         chk.expect(f"email {em!r} 422",
                    c.req("POST", "/auth/signup", {"email": em, "password": "correct horse", "display_name": "E"}),
-                   422, "validation_failed", "§6", soft=em in ("a b@", "two@@x"))
+                   422, "validation_failed", "§6")
+    for em in ("a b@x.com", "two@@x.com", "a@b@c.com", " a@b.com"):
+        chk.expect(f"email {em!r} 422 (R-4: one @, no whitespace)",
+                   c.req("POST", "/auth/signup", {"email": em, "password": "correct horse", "display_name": "E"}),
+                   422, "validation_failed")
+    chk.expect("email taken case-insensitively 409",
+               c.req("POST", "/auth/signup", {"email": "ADA@Example.COM", "password": "correct horse", "display_name": "A2"}), 409, "email_taken")
+    r = c.req("POST", "/auth/login", {"email": "Ada@EXAMPLE.com", "password": ADA["password"]})
+    chk.check("login email case-insensitive 200 (R-4)", r.status == 200 and (r.json or {}).get("user_id") == "u_ada", 200, r.text(200), r.req)
+    for dn in ("", "   "):
+        chk.expect(f"display_name {dn!r} 422 (R-4)",
+                   c.req("POST", "/auth/signup", {"email": f"d{uuid.uuid4().hex[:8]}@ex.com", "password": "correct horse", "display_name": dn}),
+                   422, "validation_failed")
+    chk.expect("password 7 code points (multi-byte) 422 (R-4)",
+               c.req("POST", "/auth/signup", {"email": f"m{uuid.uuid4().hex[:8]}@ex.com", "password": "ééééééé", "display_name": "M"}),
+               422, "validation_failed")
+    chk.expect("password 8 code points (multi-byte) 201 (R-4)",
+               c.req("POST", "/auth/signup", {"email": f"m{uuid.uuid4().hex[:8]}@ex.com", "password": "éééééééé", "display_name": "M"}), 201)
+    chk.expect("R-19: wrong type beats missing field (email missing, password number) 400",
+               c.req("POST", "/auth/signup", {"password": 12345678, "display_name": "X"}), 400, "malformed_request")
+    chk.expect("R-19: wrong type beats bad value (email 'bad', display_name number) 400",
+               c.req("POST", "/auth/signup", {"email": "bad", "password": "correct horse", "display_name": 3}), 400, "malformed_request")
+    chk.expect("R-19: missing beats bad value (email 'bad', password missing) 422",
+               c.req("POST", "/auth/signup", {"email": "bad", "display_name": "X"}), 422, "validation_failed")
+    chk.expect("R-4: 422 beats 409 (taken email, short password)",
+               c.req("POST", "/auth/signup", {"email": ADA["email"], "password": "short", "display_name": "X"}), 422, "validation_failed")
+    chk.expect("signup email null is a wrong type 400 (R-2)", c.req("POST", "/auth/signup", {"email": None, "password": "correct horse", "display_name": "X"}),
+               400, "malformed_request")
     base = {"email": "t@example.com", "password": "correct horse", "display_name": "T"}
     for f, bad in (("email", 5), ("password", 12345678), ("display_name", 7), ("email", ["a@b"]), ("password", True)):
         chk.expect(f"signup {f}={bad!r} wrong type 400", c.req("POST", "/auth/signup", {**base, f: bad}),
@@ -451,11 +624,10 @@ def g_auth(s: S):
         b = dict(base); b.pop(f)
         chk.expect(f"signup missing {f} 422", c.req("POST", "/auth/signup", b), 422, "validation_failed", "§5")
     b = dict(base); b.pop("display_name")
-    chk.expect("signup missing display_name 422", c.req("POST", "/auth/signup", b), 422, "validation_failed", "§5", soft=True)
+    chk.expect("signup missing display_name 422", c.req("POST", "/auth/signup", b), 422, "validation_failed", "§5")
     chk.expect("signup unparseable body 400", c.req("POST", "/auth/signup", raw='{"email": "x@y.z",'),
                400, "malformed_request", "§5")
-    chk.expect("signup body is a JSON array 400", c.req("POST", "/auth/signup", raw='[1,2]'), (400,), "malformed_request",
-               "§5", soft=True)
+    chk.expect("signup body is a JSON array 400", c.req("POST", "/auth/signup", raw='[1,2]'), 400, "malformed_request", "§5")
     chk.expect("login wrong password 401", c.req("POST", "/auth/login", {"email": ADA["email"], "password": "wrong pass"}),
                401, "unauthenticated", "§6")
     chk.expect("login unknown email 401", c.req("POST", "/auth/login", {"email": "ghost@example.com", "password": "whatever1"}),
@@ -463,7 +635,7 @@ def g_auth(s: S):
     chk.expect("login email wrong type 400", c.req("POST", "/auth/login", {"email": 1, "password": "x"}),
                400, "malformed_request", "§5")
     chk.expect("login missing password 422", c.req("POST", "/auth/login", {"email": ADA["email"]}),
-               422, "validation_failed", "§5", soft=True)
+               422, "validation_failed", "§5")
     chk.expect("login unparseable 400", c.req("POST", "/auth/login", raw="{nope"), 400, "malformed_request", "§5")
     for label, hdr in (("no header", None), ("unknown token", "Bearer deadbeefdeadbeef"), ("Basic scheme", "Basic YTpi"),
                        ("empty bearer", "Bearer "), ("bare token", t1 or "x")):
@@ -536,6 +708,14 @@ def g_availability(s: S):
     chk.expect("availability unknown restaurant 404",
                c.req("GET", "/availability", query={"restaurant_id": "nope", "date": str(ctx.thu), "party_size": "2"}),
                404, "not_found", "§5")
+    chk.expect("parameter error before 404: unknown restaurant + party_size=0 -> 422",
+               c.req("GET", "/availability", query={"restaurant_id": "nope", "date": str(ctx.thu), "party_size": "0"}), 422, "validation_failed")
+    chk.expect("parameter error before 404: unknown restaurant + bad date -> 422",
+               c.req("GET", "/availability", query={"restaurant_id": "nope", "date": "2026-02-30", "party_size": "2"}), 422, "validation_failed")
+    r = s.avail("r_anker", ctx.fri, 99)
+    sl = (r.json or {}).get("slots", []) if r.status == 200 else []
+    chk.check("party 99 -> every slot listed with []", len(sl) == 9 and all(x.get("available_table_ids") == [] for x in sl), "9 x []",
+              r.text(200), r.req)
 
 
 def booking_body(rid, tid, start, party):
@@ -561,6 +741,9 @@ def g_create(s: S):
         "starts_at with offset": same_instant_and_text(j.get("starts_at"), st),
         "ends_at = starts_at + 90 min": same_instant_and_text(j.get("ends_at"), (st + timedelta(minutes=90)).astimezone(ZoneInfo("Europe/Berlin"))),
         "created_at RFC3339 with offset": isinstance(j.get("created_at"), str) and bool(RFC3339_OFFSET_RE.match(j["created_at"])),
+        "created_at UTC '+00:00', whole seconds (R-21)": isinstance(j.get("created_at"), str) and
+            bool(re.match(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00$", j["created_at"])),
+        "starts_at/ends_at offset numeric, no Z (R-21)": all(isinstance(j.get(k), str) and bool(RFC3339_OFFSET_RE.match(j[k])) for k in ("starts_at", "ends_at")),
     }
     for n, ok in checks.items():
         chk.check(f"create response: {n}", ok, n, r.text(600), r.req, "§8/§3.4")
@@ -581,7 +764,7 @@ def g_create(s: S):
                409, "table_unavailable", "§8")
     chk.expect("back-to-back 20:30 allowed (half-open)", post(booking_body("r_anker", "t_2", ctx.D(ctx.thu, "20:30"), 2), tok=s.bob),
                201, section="§1")
-    chk.expect("back-to-back 17:30? outside hours", post(booking_body("r_anker", "t_1", ctx.D(ctx.thu, "17:30"), 2)),
+    chk.expect("17:30 before opens 422 outside_opening_hours", post(booking_body("r_anker", "t_1", ctx.D(ctx.thu, "17:30"), 2)),
                422, "outside_opening_hours", "§8")
     for hhmm in ("19:10", "19:15", "18:01"):
         chk.expect(f"{hhmm} off grid 422 not_on_slot_grid", post(booking_body("r_anker", "t_1", ctx.D(ctx.thu, hhmm), 2)),
@@ -606,12 +789,12 @@ def g_create(s: S):
                    422, "validation_failed", "§5")
     chk.expect("starts_at_local number 400 malformed_request", post(booking_body("r_anker", "t_1", 1900, 2)),
                400, "malformed_request", "§5")
-    chk.expect("starts_at_local null -> 400 or 422", post(booking_body("r_anker", "t_1", None, 2)),
-               (400, 422), None, "§5")
+    chk.expect("starts_at_local null is a wrong type 400 (R-2)", post(booking_body("r_anker", "t_1", None, 2)),
+               400, "malformed_request", "§5")
     b = booking_body("r_anker", "t_1", ctx.D(ctx.fri, "18:00"), 2); b.pop("starts_at_local")
     chk.expect("starts_at_local missing 422", post(b), 422, "validation_failed", "§5")
     for f in ("restaurant_id", "table_id"):
-        for bad in (5, True, ["x"], {"id": "x"}):
+        for bad in (5, True, ["x"], {"id": "x"}, None):
             chk.expect(f"{f}={bad!r} wrong type 400", post({**booking_body("r_anker", "t_1", ctx.D(ctx.fri, "18:00"), 2), f: bad}),
                        400, "malformed_request", "§5")
         b = booking_body("r_anker", "t_1", ctx.D(ctx.fri, "18:00"), 2); b.pop(f)
@@ -626,7 +809,30 @@ def g_create(s: S):
                422, "validation_failed", "§5")
     chk.expect("Idempotency-Key 255 chars 201", c.req("POST", "/reservations", good, token=s.ada, key="k" * 255), 201, section="§5")
     chk.expect("unparseable body 400", post(None, raw='{"restaurant_id": '), 400, "malformed_request", "§5")
-    chk.expect("body is JSON array 400", post(None, raw='[]'), 400, "malformed_request", "§5", soft=True)
+    chk.expect("body is JSON array 400", post(None, raw='[]'), 400, "malformed_request", "§5")
+    chk.expect("body is JSON string 400", post(None, raw='"x"'), 400, "malformed_request")
+    chk.expect("party_size 2.0 is integral -> 201 (R-3)", post(booking_body("r_anker", "t_2", ctx.D(ctx.fri, "21:00"), 2.0)), 201)
+    # R-1 precedence on the keyed path
+    chk.expect("R-1: no token and no key -> 401", c.req("POST", "/reservations", good), 401, "unauthenticated")
+    chk.expect("R-1: unparseable body and no key -> 400 malformed_request", c.req("POST", "/reservations", token=s.ada, raw="{"), 400, "malformed_request")
+    chk.expect("R-1: non-object body and no key -> 400 malformed_request", c.req("POST", "/reservations", token=s.ada, raw="[1]"), 400, "malformed_request")
+    chk.expect("R-1: no key and wrong-type field -> 400 missing_idempotency_key",
+               c.req("POST", "/reservations", {**good, "table_id": 5}, token=s.ada), 400, "missing_idempotency_key")
+    chk.expect("R-1: 256-char key and wrong-type field -> 422", c.req("POST", "/reservations", {**good, "table_id": 5}, token=s.ada, key="z" * 256),
+               422, "validation_failed")
+    chk.expect("R-19: wrong type beats missing field ({table_id: 5}, rest missing) -> 400", post({"table_id": 5}), 400, "malformed_request")
+    chk.expect("R-19: missing beats bad value (party_size 0, restaurant_id missing) -> 422", post({"table_id": "t_1", "starts_at_local": "x", "party_size": 0}),
+               422, "validation_failed")
+    # R-7 order of domain checks
+    chk.expect("R-7: unknown restaurant before off-grid -> 404", post(booking_body("nope", "t_1", ctx.D(ctx.thu, "19:10"), 2)), 404, "not_found")
+    chk.expect("R-7: invalid_local_time before outside_opening_hours (closed Sunday) -> invalid_local_time",
+               post(booking_body("r_anker", "t_1", "2026-03-29T02:30", 2)), 422, "invalid_local_time")
+    chk.expect("R-7: outside_opening_hours before not_on_slot_grid (17:10)", post(booking_body("r_anker", "t_1", ctx.D(ctx.thu, "17:10"), 2)),
+               422, "outside_opening_hours")
+    chk.expect("R-7: not_on_slot_grid before party_exceeds_capacity", post(booking_body("r_anker", "t_1", ctx.D(ctx.thu, "19:10"), 5)),
+               422, "not_on_slot_grid")
+    chk.expect("R-7: party_exceeds_capacity before table_unavailable", post(booking_body("r_anker", "t_2", ctx.D(ctx.thu, "19:00"), 5)),
+               422, "party_exceeds_capacity")
     chk.expect("past start allowed (no cutoff on create)", post(booking_body("r_now", "n_1", ctx.past, 2)), 201, section="§4")
     chk.expect("start inside cutoff allowed on create", post(booking_body("r_now", "n_1", ctx.near, 2)), 201, section="§4")
     # references unique across many bookings
@@ -646,11 +852,18 @@ def g_reads(s: S):
     a2 = s.book(s.ada, "r_anker", "t_1", ctx.D(ctx.fri, "21:00"))
     a3 = s.book(s.ada, "r_now", "n_1", ctx.far)
     s.book(s.bob, "r_anker", "t_2", ctx.D(ctx.thu, "18:00"))
+    tie = [s.book(s.ada, "r_anker", t, ctx.D(ctx.fri, "18:00")) for t in ("t_3", "t_2")]
     c.req("POST", f"/reservations/{a3['reference']}/cancel", token=s.ada)
     rows = s.mine(s.ada)
+    want = sorted(rows, key=lambda r: (-(parse_rfc(r.get("starts_at") or "") or datetime.min.replace(tzinfo=timezone.utc)).timestamp(),
+                                       (parse_rfc(r.get("created_at") or "") or datetime.min.replace(tzinfo=timezone.utc)).timestamp(),
+                                       r.get("reference") or ""))
+    chk.check("ties on starts_at ordered by created_at asc, then reference asc (R-11)",
+              [r.get("reference") for r in rows] == [r.get("reference") for r in want] and len(tie) == 2,
+              [r.get("reference") for r in want], [r.get("reference") for r in rows], None)
     refs = [r.get("reference") for r in rows]
     starts = [parse_rfc(r.get("starts_at") or "") for r in rows]
-    chk.check("GET /reservations: own only, confirmed + cancelled", set(refs) == {a1["reference"], a2["reference"], a3["reference"]} | {f"SEED0{i}" for i in range(1, 10)},
+    chk.check("GET /reservations: own only, confirmed + cancelled", set(refs) == {a1["reference"], a2["reference"], a3["reference"]} | {f"SEED0{i}" for i in range(1, 10)} | {t["reference"] for t in tie},
               "ada's 3 + 9 seeded", refs, None, "§8")
     chk.check("GET /reservations ordered starts_at descending", None not in starts and starts == sorted(starts, reverse=True),
               "descending", [r.get("starts_at") for r in rows], None, "§8")
@@ -675,7 +888,7 @@ def g_cancel(s: S):
     chk.check("cancel 200 status cancelled, same reference", r.status == 200 and j.get("status") == "cancelled" and j.get("reference") == far["reference"],
               "200 cancelled", r.text(300), r.req, "§8")
     chk.check("cancel response keeps the rest of the reservation", all(j.get(k) == far.get(k) for k in ("reservation_id", "starts_at", "table_id", "created_at")),
-              far, j, r.req, "§8", soft=True)
+              far, j, r.req, "§8")
     r = c.req("POST", f"/reservations/{far['reference']}/cancel", token=s.ada)
     chk.check("cancel twice 200 with current state", r.status == 200 and (r.json or {}).get("status") == "cancelled", "200 cancelled", r.text(300), r.req, "§8")
     for name, b in (("start within cutoff", near), ("start in the past", past)):
@@ -684,6 +897,12 @@ def g_cancel(s: S):
         chk.check(f"cancel {name}: still confirmed", (s.get(s.ada, b["reference"]).json or {}).get("status") == "confirmed",
                   "confirmed", None, None, "§8")
     chk.expect("cancel other's 404", c.req("POST", f"/reservations/{anker['reference']}/cancel", token=s.bob), 404, "not_found", "§8")
+    victim = s.book(s.ada, "r_anker", "t_1", ctx.D(ctx.fri, "18:00"))
+    chk.expect("cancel with unparseable body 400 (R-13)", c.req("POST", f"/reservations/{victim['reference']}/cancel", token=s.ada, raw="{"),
+               400, "malformed_request")
+    chk.expect("cancel other's within cutoff: 404 first (R-13)", c.req("POST", f"/reservations/{near['reference']}/cancel", token=s.bob), 404, "not_found")
+    chk.check("cancel attempts with bad body left booking confirmed", (s.get(s.ada, victim["reference"]).json or {}).get("status") == "confirmed",
+              "confirmed", None, None)
     chk.expect("cancel unknown 404", c.req("POST", "/reservations/ZZZZZZ/cancel", token=s.ada), 404, "not_found", "§8")
     chk.check("anker table t_2 not offered at 19:00 before cancel", "t_2" not in (s.avail_tables("r_anker", ctx.thu, 2, "19:00") or []),
               "absent", None, None, "§8")
@@ -733,10 +952,14 @@ def g_patch(s: S):
         ("table_id number", {"table_id": 5}, 400, "malformed_request"),
         ("starts_at_local number", {"starts_at_local": 5}, 400, "malformed_request"),
         ("new table too small for party", {"table_id": "t_1", "starts_at_local": ctx.D(ctx.thu, "21:30")}, 422, "party_exceeds_capacity"),
-        ("nonexistent local time", {"starts_at_local": "2026-03-29T02:30"}, 422, None),
+        ("nonexistent local time", {"starts_at_local": "2026-03-29T02:30"}, 422, "invalid_local_time"),
+        ("table_id null", {"table_id": None}, 400, "malformed_request"),
+        ("party_size null", {"party_size": None}, 422, "validation_failed"),
+        ("party_size 2.5", {"party_size": 2.5}, 422, "validation_failed"),
+        ("body is a JSON array", None, 400, "malformed_request"),
     ]
     for name, b, st, code in fails:
-        r = patch(b)
+        r = patch(b) if b is not None else patch(None, raw="[1]")
         chk.expect(f"PATCH {name} {st} {code}", r, st, code, "§8")
         chk.check(f"PATCH {name}: booking unchanged", s.get(s.ada, ref).json == snap, snap, s.get(s.ada, ref).text(300), r.req, "§8")
     chk.check("bob's booking untouched", s.get(s.bob, B["reference"]).json == B, B, None, None, "§8")
@@ -744,8 +967,11 @@ def g_patch(s: S):
     chk.expect("PATCH other's 404", patch({"party_size": 1}, tok=s.bob), 404, "not_found", "§8")
     chk.expect("PATCH unknown 404", patch({"party_size": 1}, rf="ZZZZZZ"), 404, "not_found", "§8")
     r = patch({})
-    chk.check("PATCH {} leaves booking unchanged (200 expected)", r.status == 200 and s.get(s.ada, ref).json == snap, "200 unchanged",
-              r.text(300), r.req, "§8", soft=True)
+    chk.check("PATCH {} 200, booking unchanged (R-14)", r.status == 200 and r.json == snap and s.get(s.ada, ref).json == snap, "200 unchanged",
+              r.text(300), r.req, "§8")
+    r = patch({"party_size": snap.get("party_size"), "table_id": snap.get("table_id")})
+    chk.check("PATCH with current values 200 unchanged (R-14)", r.status == 200 and s.get(s.ada, ref).json == snap, "200 unchanged",
+              r.text(300), r.req)
     # cutoff & cancelled
     near = s.book(s.ada, "r_now", "n_1", ctx.near)
     past = s.book(s.ada, "r_now", "n_2", ctx.past)
@@ -754,9 +980,15 @@ def g_patch(s: S):
     chk.expect("PATCH past booking 409 cutoff_passed", patch({"party_size": 1}, rf=past["reference"]), 409, "cutoff_passed", "§8")
     r = patch({"starts_at_local": ctx.near2}, rf=far["reference"])
     chk.check("PATCH far booking to a start inside cutoff: allowed (cutoff measured on current start)", r.status == 200,
-              200, {"status": r.status, "body": r.text(200)}, r.req, "§8", soft=True)
+              200, {"status": r.status, "body": r.text(200)}, r.req, "§8")
+    chk.expect("PATCH {} within cutoff 409 cutoff_passed (R-14 no-op still checked)", patch({}, rf=near["reference"]), 409, "cutoff_passed")
+    chk.expect("PATCH within cutoff + party_size 0: cutoff first (R-14)", patch({"party_size": 0}, rf=near["reference"]), 409, "cutoff_passed")
+    chk.expect("PATCH within cutoff + table_id number: 400 first (R-14)", patch({"table_id": 5}, rf=near["reference"]), 400, "malformed_request")
+    chk.expect("PATCH other's booking within cutoff: 404 first (R-14)", patch({"party_size": 1}, tok=s.bob, rf=near["reference"]), 404, "not_found")
     c.req("POST", f"/reservations/{ref}/cancel", token=s.ada)
     chk.expect("PATCH cancelled 409 reservation_cancelled", patch({"party_size": 1}), 409, "reservation_cancelled", "§8")
+    chk.expect("PATCH cancelled + party_size 0: cancelled first (R-14)", patch({"party_size": 0}), 409, "reservation_cancelled")
+    chk.expect("PATCH {} on cancelled 409 (R-14)", patch({}), 409, "reservation_cancelled")
 
 
 def g_dst(s: S):
@@ -825,6 +1057,23 @@ def g_dst(s: S):
         r, sl = slots(rid, d)
         chk.check(f"{tz} {d} offset {off}", bool(sl) and all((x.get("starts_at") or "").endswith(off) for x in sl), off,
                   [x.get("starts_at") for x in sl][:2], r.req, "§9")
+    # R-23: end-of-day compares absolute instants (r_close: Berlin, sun 00:00-03:30, slot 30, duration 90)
+    r, sl = slots("r_close", "2026-03-29")
+    got = [x.get("starts_at_local") for x in sl]
+    exp = wall("2026-03-29", ["00:00", "00:30", "01:00"])
+    chk.check("R-23 spring: slot offered iff instant(start)+90min <= instant(closes 03:30 CEST)", got == exp, exp, got, r.req)
+    chk.expect("R-23 spring: 01:30 CET + 90 min = 04:00 CEST > closes -> outside_opening_hours", post("r_close", "c_1", "2026-03-29T01:30"),
+               422, "outside_opening_hours")
+    chk.expect("R-23 spring: 01:00 CET + 90 min = 03:30 CEST = closes -> 201", post("r_close", "c_1", "2026-03-29T01:00"), 201)
+    r, sl = slots("r_close", "2026-10-25")
+    got = [x.get("starts_at_local") for x in sl]
+    exp = wall("2026-10-25", ["00:00", "00:30", "01:00", "01:30", "02:00", "02:30"])
+    chk.check("R-23 fall: 02:30 CEST + 90 min = 03:00 CET <= closes 03:30 -> offered", got == exp, exp, got, r.req)
+    r = post("r_close", "c_1", "2026-10-25T02:30")
+    ok, j = times(r, "2026-10-25T02:30:00+02:00", "2026-10-25T03:00:00+01:00")
+    chk.check("R-23 fall: book 02:30 -> 201 ending 03:00+01:00", ok, "201", r.text(300), r.req)
+    chk.expect("R-23 fall: 03:00 CET + 90 = 04:30 > closes -> outside_opening_hours", post("r_close", "c_1", "2026-10-25T03:00"),
+               422, "outside_opening_hours")
     # PATCH into a nonexistent local time
     future = made.get(("r_ber", "d_1", "2026-10-25T02:30"))
     if future and future.get("reference") and datetime.now(timezone.utc) < datetime(2026, 10, 24, tzinfo=timezone.utc):
@@ -883,7 +1132,12 @@ def g_idem(s: S):
     chk.expect("reuse after 404 -> 201", c.req("POST", "/reservations", booking_body("r_anker", "t_3", ctx.D(ctx.fri, "18:00"), 2), token=s.ada, key=k4), 201, section="§7")
     k5 = "long-" + "x" * 250
     chk.expect("255-char key first use 201", c.req("POST", "/reservations", booking_body("r_anker", "t_1", ctx.D(ctx.fri, "20:00"), 2), token=s.ada, key=k5), 201, section="§7")
-    chk.expect("255-char key replay 200", c.req("POST", "/reservations", booking_body("r_anker", "t_1", ctx.D(ctx.fri, "20:00"), 2), token=s.ada, key=k5), 200, section="§7")
+    k6 = "num-" + uuid.uuid4().hex
+    r6 = c.req("POST", "/reservations", booking_body("r_anker", "t_2", ctx.D(ctx.fri, "21:00"), 2), token=s.ada, key=k6)
+    r7 = c.req("POST", "/reservations", booking_body("r_anker", "t_2", ctx.D(ctx.fri, "21:00"), 2.0), token=s.ada, key=k6)
+    chk.check("replay with party_size 2.0 for 2 is the same body: 200 identical (R-3)", r6.status == 201 and r7.status == 200 and r7.json == r6.json,
+              200, r7.text(300), r7.req)
+    chk.expect("255-char key replay 200",c.req("POST", "/reservations", booking_body("r_anker", "t_1", ctx.D(ctx.fri, "20:00"), 2), token=s.ada, key=k5), 200, section="§7")
 
 
 def g_moves(s: S):
@@ -954,7 +1208,9 @@ def g_moves(s: S):
         chk.expect(f"moves {name} 422", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed", "§11")
     for name, b in (("moves not array", {"moves": "x"}), ("moves object", {"moves": {"reference": "x"}}),
                     ("item not object", {"moves": ["SEED01"]}), ("reference number", {"moves": [{"reference": 7}]})):
-        chk.expect(f"moves {name} 400|422", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), (400, 422), None, "§11/§5")
+        chk.expect(f"moves {name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
+    for name, b in (("moves null", {"moves": None}), ("reference null", {"moves": [{"reference": None}]})):
+        chk.expect(f"{name} 422 structure (R-22a)", c.req("POST", "/reservation-moves", b, token=s.ada, key=uuid.uuid4().hex), 422, "validation_failed")
     r = c.req("POST", "/reservation-moves", {"moves": [{"reference": f"SEED0{i}"} for i in range(1, 9)]}, token=s.ada, key=uuid.uuid4().hex)
     chk.expect("8 moves allowed 201", r, 201, section="§11")
     chk.expect("moves unknown reference 404", mv([{"reference": A["reference"]}, {"reference": "ZZZZZZ"}]), 404, "not_found", "§11")
@@ -967,19 +1223,29 @@ def g_moves(s: S):
     chk.check("far booking untouched after cutoff failure", s.get(s.ada, far["reference"]).json == far, far, None, None, "§11")
     chk.expect("cutoff precedes that booking's off-grid error", mv([{"reference": near["reference"], "starts_at_local": ctx.near[:-2] + "07"}]), 409, "cutoff_passed", "§11")
     chk.expect("cutoff precedes that booking's unknown-table error", mv([{"reference": near["reference"], "table_id": "nope"}]), 409, "cutoff_passed", "§11")
-    chk.expect("cutoff precedes that booking's party_size=0 error", mv([{"reference": near["reference"], "party_size": 0}]), 409, "cutoff_passed", "§11", soft=True)
+    chk.expect("cutoff precedes that booking's party_size=0 error", mv([{"reference": near["reference"], "party_size": 0}]), 409, "cutoff_passed", "§11")
+    chk.expect("no-op item within cutoff 409 cutoff_passed (R-22)", mv([{"reference": near["reference"]}]), 409, "cutoff_passed")
     chk.expect("input order: first item's 422 wins over later 404",
                mv([{"reference": D[0]["reference"], "party_size": 0}, {"reference": D[1]["reference"], "table_id": "nope"}]), 422, "validation_failed", "§11")
     chk.expect("input order: first item's 404 wins over later not_on_slot_grid",
                mv([{"reference": D[0]["reference"], "table_id": "nope"}, {"reference": D[1]["reference"], "starts_at_local": ctx.D(ctx.fri, "18:10")}]), 404, "not_found", "§11")
     chk.expect("input order: first item's 404 wins over later party_size=0",
-               mv([{"reference": D[0]["reference"], "table_id": "nope"}, {"reference": D[1]["reference"], "party_size": 0}]), 404, "not_found", "§11", soft=True)
+               mv([{"reference": D[0]["reference"], "table_id": "nope"}, {"reference": D[1]["reference"], "party_size": 0}]), 404, "not_found", "§11")
+    chk.expect("input order: first item's party_size=0 wins over later unknown reference (R-22c)",
+               mv([{"reference": D[0]["reference"], "party_size": 0}, {"reference": "ZZZZZZ"}]), 422, "validation_failed")
+    chk.expect("structure 422 beats item wrong type (duplicate refs + table_id number) (R-22a)",
+               mv([{"reference": D[0]["reference"], "table_id": 5}, {"reference": D[0]["reference"]}]), 422, "validation_failed")
+    chk.expect("item wrong type 400 beats earlier item's unknown reference (R-22b)",
+               mv([{"reference": "ZZZZZZ"}, {"reference": D[0]["reference"], "table_id": 5}]), 400, "malformed_request")
+    chk.expect("item starts_at_local number 400 (R-22b)", mv([{"reference": D[0]["reference"], "starts_at_local": 1900}]), 400, "malformed_request")
+    chk.expect("item table_id null 400 (R-22b, R-2)", mv([{"reference": D[0]["reference"], "table_id": None}]), 400, "malformed_request")
+    chk.expect("item party_size '2' 422 not 400 (R-22)", mv([{"reference": D[0]["reference"], "party_size": "2"}]), 422, "validation_failed")
     chk.expect("input order: off-grid first beats capacity second",
                mv([{"reference": D[2]["reference"], "starts_at_local": ctx.D(ctx.fri, "18:10")}, {"reference": D[0]["reference"], "party_size": 5}]),
                422, "not_on_slot_grid", "§11")
     chk.expect("moves party exceeds capacity 422", mv([{"reference": D[0]["reference"], "party_size": 5}]), 422, "party_exceeds_capacity", "§11")
     chk.expect("moves outside hours 422", mv([{"reference": D[0]["reference"], "starts_at_local": ctx.D(ctx.fri, "22:30")}]), 422, "outside_opening_hours", "§11")
-    chk.expect("moves wrong-type table_id 400", mv([{"reference": D[0]["reference"], "table_id": 3}]), 400, "malformed_request", "§11/§5", soft=True)
+    chk.expect("moves wrong-type table_id 400", mv([{"reference": D[0]["reference"], "table_id": 3}]), 400, "malformed_request", "§11/§5")
     c.req("POST", f"/reservations/{D[5]['reference']}/cancel", token=s.ada)
     chk.expect("moves cancelled 409 reservation_cancelled", mv([{"reference": D[5]["reference"], "party_size": 1}]), 409, "reservation_cancelled", "§11")
     chk.expect("moves no token 401", c.req("POST", "/reservation-moves", {"moves": [{"reference": A["reference"]}]}, key="x"), 401, "unauthenticated", "§11")
@@ -1174,7 +1440,7 @@ def g_export(s: S, dest: Client | None):
                                ("state not object", {**E, "state": "x"}, (400, 422)), ("state {}", {**E, "state": {}}, 422),
                                ("state garbage", {**E, "state": {"zzz": [1, 2, 3]}}, 422)):
             rr = d.req("POST", "/_test/import", body, timeout=12)
-            chk.expect(f"[{label}] import {name} -> {st}", rr, st, None, "§10", soft=name in ("state {}", "state garbage"))
+            chk.expect(f"[{label}] import {name} -> {st}", rr, st, None, "§10")
             chk.check(f"[{label}] import {name}: destination unchanged", d.req("GET", "/_test/export").json == snapshot_before, "unchanged", None, rr.req, "§10")
         rr = d.req("POST", "/_test/import", raw='{"track": "tablekeeper", ', timeout=12)
         chk.expect(f"[{label}] import unparseable 400", rr, 400, "malformed_request", "§10")
