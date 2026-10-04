@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"tablekeeper/internal/state"
 )
 
 func (e *env) move(token, key, body string) *httptest.ResponseRecorder {
@@ -135,4 +138,42 @@ func TestMoveCutoffMeasuredOnCurrentStart(t *testing.T) {
 	e.clock.set(time.Date(2026, 9, 24, 15, 0, 0, 0, time.UTC)) // 17:00 Berlin
 	// Moving to a start inside the cutoff is allowed: only the current start counts.
 	expect(t, e.move(e.ada, "m", fmt.Sprintf(`{"moves":[{"reference":%q,"starts_at_local":"2026-09-24T18:00"}]}`, a.Reference)), 201, "")
+}
+
+// Receipts of both keyed paths survive export → import into a fresh server (C1.124, C1.67).
+func TestReceiptsSurviveExportImport(t *testing.T) {
+	e := newEnv(t)
+	created := e.book(e.ada, "k-book", booking("t_2", "2026-09-24T19:00", 2))
+	expect(t, created, 201, "")
+	v := decodeView(t, created)
+	moveBody := fmt.Sprintf(`{"moves":[{"reference":%q,"table_id":"t_1"}]}`, v.Reference)
+	moved := e.move(e.ada, "k-move", moveBody)
+	expect(t, moved, 201, "")
+	exported := do(e.h, "GET", "/_test/export", "")
+	expect(t, exported, 200, "")
+
+	fresh := &env{t: t, h: New(state.NewStore(state.Empty()), e.clock.now), clock: e.clock}
+	if rec := do(fresh.h, "POST", "/_test/import", exported.Body.String()); rec.Code != 204 {
+		t.Fatalf("import = %d %s", rec.Code, rec.Body)
+	}
+	for _, c := range []struct{ got, want *httptest.ResponseRecorder }{
+		{fresh.book(e.ada, "k-book", booking("t_2", "2026-09-24T19:00", 2)), created},
+		{fresh.move(e.ada, "k-move", moveBody), moved},
+	} {
+		if c.got.Code != 200 || !jsonEqual(c.got.Body.Bytes(), c.want.Body.Bytes()) {
+			t.Errorf("replay after import = %d %s, want 200 %s", c.got.Code, c.got.Body, c.want.Body)
+		}
+	}
+	expect(t, fresh.move(e.ada, "k-move", `{"moves":[{"reference":"X"}]}`), 409, "idempotency_key_reuse")
+	if got := decodeView(t, fresh.req("GET", "/reservations/"+v.Reference, e.ada, "", "")); got.TableID != "t_1" || got.CreatedAt != v.CreatedAt {
+		t.Errorf("imported booking = %+v", got)
+	}
+}
+
+func jsonEqual(a, b []byte) bool {
+	var x, y any
+	if json.Unmarshal(a, &x) != nil || json.Unmarshal(b, &y) != nil {
+		return false
+	}
+	return reflect.DeepEqual(x, y)
 }

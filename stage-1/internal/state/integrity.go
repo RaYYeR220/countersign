@@ -1,6 +1,7 @@
 package state
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"unicode/utf8"
@@ -29,7 +30,7 @@ func invalid(format string, args ...any) error {
 func validID(id string) bool { return id != "" && utf8.RuneCountInString(id) <= MaxIDLength }
 
 func checkIntegrity(st *State) error {
-	if st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil {
+	if st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {
 		return invalid("missing collection")
 	}
 	users := map[string]bool{}
@@ -72,6 +73,12 @@ func checkIntegrity(st *State) error {
 	for token, userID := range st.Tokens {
 		if token == "" || !users[userID] {
 			return invalid("token for an unknown user")
+		}
+	}
+	for k, rc := range st.Receipts {
+		userID := receiptUser(k)
+		if !users[userID] || rc == nil || rc.Status < 200 || rc.Status > 299 || !json.Valid(rc.Response) {
+			return invalid("idempotency receipt incomplete or for an unknown user")
 		}
 	}
 	return nil

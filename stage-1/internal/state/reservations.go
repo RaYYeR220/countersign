@@ -3,6 +3,7 @@ package state
 import (
 	"crypto/rand"
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -51,9 +52,18 @@ type Receipt struct {
 	Response json.RawMessage `json:"response"`
 }
 
+// receiptSep separates the parts of a ReceiptKey.
+const receiptSep = "\x00"
+
 // ReceiptKey scopes an Idempotency-Key to its user, method and path.
 func ReceiptKey(userID, method, path, key string) string {
-	return userID + "\x00" + method + " " + path + "\x00" + key
+	return userID + receiptSep + method + " " + path + receiptSep + key
+}
+
+// receiptUser is the user id a ReceiptKey belongs to.
+func receiptUser(k string) string {
+	userID, _, _ := strings.Cut(k, receiptSep)
+	return userID
 }
 
 // Receipt returns the stored receipt for k, or nil.
