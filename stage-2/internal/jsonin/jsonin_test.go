@@ -105,3 +105,27 @@ func TestObjects(t *testing.T) {
 		t.Errorf("Objects(missing) = %v %v", ok, err)
 	}
 }
+
+func TestStrings(t *testing.T) {
+	obj := mustDecode(t, `{"ok":["a","b"],"empty":[],"mixed":["a",1],"nulls":[null],"str":"a"}`)
+	if l, ok, err := obj.Strings("ok"); err != nil || !ok || len(l) != 2 || l[1] != "b" {
+		t.Errorf("Strings(ok) = %v %v %v", l, ok, err)
+	}
+	if l, ok, err := obj.Strings("empty"); err != nil || !ok || len(l) != 0 {
+		t.Errorf("Strings(empty) = %v %v %v", l, ok, err)
+	}
+	for _, f := range []string{"mixed", "nulls", "str"} {
+		if _, _, err := obj.Strings(f); code(err) != "malformed_request" {
+			t.Errorf("Strings(%s) err = %v", f, err)
+		}
+	}
+	if _, ok, err := obj.Strings("missing"); ok || err != nil {
+		t.Errorf("Strings(missing) = %v %v", ok, err)
+	}
+	if items, ok, err := obj.Arrays("ok"); err != nil || !ok || len(items) != 2 {
+		t.Errorf("Arrays(ok) = %v %v %v", items, ok, err)
+	}
+	if _, _, err := obj.Arrays("str"); code(err) != "malformed_request" {
+		t.Errorf("Arrays(str) err = %v", err)
+	}
+}

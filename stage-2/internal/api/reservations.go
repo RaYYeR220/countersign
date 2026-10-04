@@ -15,26 +15,32 @@ import (
 
 // reservationView is the reservation shape of every reservation response (§8, R-21).
 type reservationView struct {
-	ReservationID string `json:"reservation_id"`
-	Reference     string `json:"reference"`
-	RestaurantID  string `json:"restaurant_id"`
-	TableID       string `json:"table_id"`
-	PartySize     int    `json:"party_size"`
-	Status        string `json:"status"`
-	StartsAtLocal string `json:"starts_at_local"`
-	StartsAt      string `json:"starts_at"`
-	EndsAt        string `json:"ends_at"`
-	CreatedAt     string `json:"created_at"`
+	ReservationID string   `json:"reservation_id"`
+	Reference     string   `json:"reference"`
+	RestaurantID  string   `json:"restaurant_id"`
+	TableID       string   `json:"table_id,omitempty"` // only when the set has exactly one table
+	TableIDs      []string `json:"table_ids"`
+	PartySize     int      `json:"party_size"`
+	Status        string   `json:"status"`
+	StartsAtLocal string   `json:"starts_at_local"`
+	StartsAt      string   `json:"starts_at"`
+	EndsAt        string   `json:"ends_at"`
+	CreatedAt     string   `json:"created_at"`
 }
 
 // view renders res; starts_at and ends_at carry the restaurant's offset, created_at is UTC +00:00.
 func view(st *state.State, res *state.Reservation) reservationView {
 	loc, _ := localtime.Location(st.Restaurant(res.RestaurantID).Timezone) // validated at reset
+	single := ""
+	if len(res.TableIDs) == 1 {
+		single = res.TableIDs[0]
+	}
 	return reservationView{
 		ReservationID: res.ID,
 		Reference:     res.Reference,
 		RestaurantID:  res.RestaurantID,
-		TableID:       res.TableID,
+		TableID:       single,
+		TableIDs:      res.TableIDs,
 		PartySize:     res.PartySize,
 		Status:        res.Status,
 		StartsAtLocal: res.StartsAtLocal,
@@ -55,21 +61,33 @@ func ownReservation(st *state.State, user *state.User, ref string) (*state.Reser
 }
 
 // createReservation is POST /reservations: keyedWrite supplies R-1; the body follows R-19
-// (types 400 → missing 422 → values 422) and then R-7.
+// (types 400 → missing 422 → values 422) and then R-7, with the table set resolved where R-7
+// resolves the table (404 / 422 combination_not_allowed) and capacity summed over the set.
 func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user *state.User) {
 	s.keyedWrite(w, r, user, func(st *state.State, body jsonin.Object) (any, error) {
-		for _, name := range []string{"restaurant_id", "table_id", "starts_at_local"} {
+		for _, name := range []string{"restaurant_id", "starts_at_local"} {
 			if body.Has(name) && body.Kind(name) != jsonin.String {
 				return nil, apperr.Malformed(name + " must be a string")
 			}
 		}
-		for _, name := range []string{"restaurant_id", "table_id", "starts_at_local", "party_size"} {
-			if !body.Has(name) {
-				return nil, apperr.Validation(name + " is required")
-			}
+		if err := tableFieldTypes(body); err != nil {
+			return nil, err
+		}
+		switch {
+		case !body.Has("restaurant_id"):
+			return nil, apperr.Validation("restaurant_id is required")
+		case !hasTables(body):
+			return nil, apperr.Validation("table_ids is required")
+		case !body.Has("starts_at_local"):
+			return nil, apperr.Validation("starts_at_local is required")
+		case !body.Has("party_size"):
+			return nil, apperr.Validation("party_size is required")
 		}
 		restaurantID, _, _ := body.String("restaurant_id")
-		tableID, _, _ := body.String("table_id")
+		requested, _, err := requestedTables(body)
+		if err != nil {
+			return nil, err
+		}
 		local, _, _ := body.String("starts_at_local")
 		if !localtime.ValidLocal(local) {
 			return nil, apperr.Validation("starts_at_local must be a local YYYY-MM-DDTHH:MM")
@@ -83,9 +101,9 @@ func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user 
 		if rest == nil {
 			return nil, apperr.NotFound("no such restaurant")
 		}
-		table := rest.Table(tableID)
-		if table == nil {
-			return nil, apperr.NotFound("no such table in this restaurant")
+		tableIDs, err := resolveTables(rest, requested)
+		if err != nil {
+			return nil, err
 		}
 		loc, err := localtime.Location(rest.Timezone)
 		if err != nil {
@@ -95,17 +113,17 @@ func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user 
 		if err != nil {
 			return nil, err
 		}
-		if party > table.Capacity {
+		if party > rest.Capacity(tableIDs) {
 			return nil, partyExceedsCapacity()
 		}
 		end := localtime.End(start, rest.ReservationDurationMinutes)
-		if st.TableBusy(rest.ID, table.ID, start, end, nil) {
+		if st.TableBusy(rest.ID, tableIDs, start, end, nil) {
 			return nil, tableUnavailable()
 		}
 		res := &state.Reservation{
 			UserID:        user.ID,
 			RestaurantID:  rest.ID,
-			TableID:       table.ID,
+			TableIDs:      tableIDs,
 			PartySize:     party,
 			StartsAtLocal: local,
 			StartsAt:      start,

@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +66,24 @@ func TestFromFixtureReferenceBounds(t *testing.T) {
 	}
 }
 
+func TestFromFixtureSeedTablesAndStatus(t *testing.T) {
+	body := strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_2", "t_1"]`, 1)
+	body = strings.Replace(body, `"tables": [`, `"combinable": [["t_1", "t_2"]], "tables": [`, 1)
+	body = strings.Replace(body, `"party_size": 4}`, `"party_size": 4, "status": "cancelled"}`, 1)
+	st, err := load(t, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := st.ReservationByRef("SEED01")
+	if fmt.Sprint(res.TableIDs) != "[t_1 t_2]" || res.Status != Cancelled {
+		t.Errorf("seed = %+v", res)
+	}
+	st, _ = load(t, sampleFixture)
+	if r := st.Restaurant("r_anker"); r.Combinable == nil || len(r.Combinable) != 0 {
+		t.Errorf("absent combinable = %#v, want empty", r.Combinable)
+	}
+}
+
 func TestFromFixtureEmptyObject(t *testing.T) {
 	st, err := load(t, `{}`)
 	if err != nil || len(st.Users)+len(st.Restaurants)+len(st.Reservations) != 0 {
@@ -75,24 +94,40 @@ func TestFromFixtureEmptyObject(t *testing.T) {
 func TestFromFixtureErrors(t *testing.T) {
 	long := strings.Repeat("x", 65)
 	cases := map[string]struct{ body, code string }{
-		"users not array":     {`{"users": {}}`, "malformed_request"},
-		"capacity as string":  {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"t","capacity":"2"}]}]}`, "malformed_request"},
-		"missing timezone":    {`{"restaurants":[{"id":"r","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
-		"unknown timezone":    {`{"restaurants":[{"id":"r","timezone":"Mars/Base","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
-		"zero slot":           {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":0,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
-		"bad weekday":         {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thursday","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
-		"duplicate weekday":   {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"12:00","closes":"14:00"},{"weekday":"thu","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
-		"closes before opens": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"23:00","closes":"18:00"}]}]}`, "validation_failed"},
-		"id too long":         {`{"users":[{"id":"` + long + `","email":"a@b.c","password":"pw"}]}`, "validation_failed"},
-		"duplicate email":     {`{"users":[{"id":"u1","email":"a@b.c","password":"pw"},{"id":"u2","email":"A@b.c","password":"pw"}]}`, "validation_failed"},
-		"dangling user":       {strings.Replace(sampleFixture, `"user_id": "u_ada"`, `"user_id": "u_bob"`, 1), "validation_failed"},
-		"reference lowercase": {strings.Replace(sampleFixture, `"SEED01"`, `"seed01"`, 1), "validation_failed"},
-		"reference too short": {strings.Replace(sampleFixture, `"SEED01"`, `"X"`, 1), "validation_failed"},
-		"reference 13 chars":  {strings.Replace(sampleFixture, `"SEED01"`, `"ABCDEFGHJKLMN"`, 1), "validation_failed"},
-		"reference hyphen":    {strings.Replace(sampleFixture, `"SEED01"`, `"SEED-01"`, 1), "validation_failed"},
-		"reference empty":     {strings.Replace(sampleFixture, `"SEED01"`, `""`, 1), "validation_failed"},
-		"reference 65 chars":  {strings.Replace(sampleFixture, `"SEED01"`, `"`+strings.Repeat("A", 65)+`"`, 1), "validation_failed"},
-		"bad local start":     {strings.Replace(sampleFixture, `2026-09-24T19:00`, `2026-09-24T19:00+02:00`, 1), "validation_failed"},
+		"users not array":        {`{"users": {}}`, "malformed_request"},
+		"capacity as string":     {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"t","capacity":"2"}]}]}`, "malformed_request"},
+		"missing timezone":       {`{"restaurants":[{"id":"r","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
+		"unknown timezone":       {`{"restaurants":[{"id":"r","timezone":"Mars/Base","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
+		"zero slot":              {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":0,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0}]}`, "validation_failed"},
+		"bad weekday":            {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thursday","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
+		"duplicate weekday":      {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"12:00","closes":"14:00"},{"weekday":"thu","opens":"18:00","closes":"23:00"}]}]}`, "validation_failed"},
+		"closes before opens":    {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"opening_hours":[{"weekday":"thu","opens":"23:00","closes":"18:00"}]}]}`, "validation_failed"},
+		"id too long":            {`{"users":[{"id":"` + long + `","email":"a@b.c","password":"pw"}]}`, "validation_failed"},
+		"duplicate email":        {`{"users":[{"id":"u1","email":"a@b.c","password":"pw"},{"id":"u2","email":"A@b.c","password":"pw"}]}`, "validation_failed"},
+		"dangling user":          {strings.Replace(sampleFixture, `"user_id": "u_ada"`, `"user_id": "u_bob"`, 1), "validation_failed"},
+		"reference lowercase":    {strings.Replace(sampleFixture, `"SEED01"`, `"seed01"`, 1), "validation_failed"},
+		"reference too short":    {strings.Replace(sampleFixture, `"SEED01"`, `"X"`, 1), "validation_failed"},
+		"reference 13 chars":     {strings.Replace(sampleFixture, `"SEED01"`, `"ABCDEFGHJKLMN"`, 1), "validation_failed"},
+		"reference hyphen":       {strings.Replace(sampleFixture, `"SEED01"`, `"SEED-01"`, 1), "validation_failed"},
+		"reference empty":        {strings.Replace(sampleFixture, `"SEED01"`, `""`, 1), "validation_failed"},
+		"reference 65 chars":     {strings.Replace(sampleFixture, `"SEED01"`, `"`+strings.Repeat("A", 65)+`"`, 1), "validation_failed"},
+		"combinable not array":   {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":"a"}]}`, "malformed_request"},
+		"combinable item number": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a",2]]}]}`, "validation_failed"},
+		"combinable single":      {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a"]]}]}`, "validation_failed"},
+		"combinable triple":      {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","b","a"]]}]}`, "validation_failed"},
+		"combinable self":        {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","a"]]}]}`, "validation_failed"},
+		"combinable unknown":     {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","z"]]}]}`, "validation_failed"},
+		"combinable twice":       {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","b"],["b","a"]]}]}`, "validation_failed"},
+		"seed both table fields": {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_id": "t_2", "table_ids": ["t_2"]`, 1), "validation_failed"},
+		"seed no table":          {strings.Replace(sampleFixture, `"table_id": "t_2",`, ``, 1), "validation_failed"},
+		"seed table_ids string":  {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": "t_2"`, 1), "malformed_request"},
+		"seed three tables":      {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_2", "t_1"]`, 1), "validation_failed"},
+		"seed unknown in set":    {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_9"]`, 1), "validation_failed"},
+		"seed undeclared pair":   {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_2"]`, 1), "validation_failed"},
+		"combinable item object": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[{"a":"b"}]}]}`, "validation_failed"},
+		"seed bad status":        {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": "pending"}`, 1), "validation_failed"},
+		"seed status number":     {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": 1}`, 1), "malformed_request"},
+		"bad local start":        {strings.Replace(sampleFixture, `2026-09-24T19:00`, `2026-09-24T19:00+02:00`, 1), "validation_failed"},
 	}
 	for name, c := range cases {
 		_, err := load(t, c.body)

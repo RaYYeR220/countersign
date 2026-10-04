@@ -35,11 +35,11 @@ func (st *State) AddReservation(res *Reservation) {
 	st.reservationsByRef[res.Reference] = res
 }
 
-// TableBusy reports whether a confirmed reservation other than those skip accepts occupies
-// the table over any part of [start, end). skip may be nil.
-func (st *State) TableBusy(restaurantID, tableID string, start, end time.Time, skip func(*Reservation) bool) bool {
+// TableBusy reports whether a confirmed reservation other than those skip accepts occupies any
+// of the tables over any part of [start, end). skip may be nil.
+func (st *State) TableBusy(restaurantID string, tableIDs []string, start, end time.Time, skip func(*Reservation) bool) bool {
 	for _, res := range st.Reservations {
-		if res.Status != Confirmed || res.RestaurantID != restaurantID || res.TableID != tableID {
+		if res.Status != Confirmed || res.RestaurantID != restaurantID || !SharesTable(res.TableIDs, tableIDs) {
 			continue
 		}
 		if skip != nil && skip(res) {

@@ -173,6 +173,7 @@ func TestRestaurants(t *testing.T) {
 	var fx struct{ Restaurants []map[string]any }
 	json.Unmarshal([]byte(authFixture), &fx)
 	exp = fx.Restaurants[0]
+	exp["combinable"] = []any{} // stage 2: an absent combinable list is served as empty
 	gotJSON, _ := json.Marshal(got)
 	expJSON, _ := json.Marshal(exp)
 	if rec.Code != 200 || string(gotJSON) != string(expJSON) {

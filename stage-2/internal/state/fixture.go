@@ -3,6 +3,7 @@ package state
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"time"
 	_ "time/tzdata" // embed the IANA database: no zone files exist at runtime
 	"unicode/utf8"
@@ -131,7 +132,7 @@ func loadRestaurants(st *State, fx jsonin.Object) error {
 }
 
 func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
-	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}}
+	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}, Combinable: [][]string{}}
 	var err error
 	if r.ID, err = requiredID(o, "id", "restaurants[]"); err != nil {
 		return nil, err
@@ -193,6 +194,20 @@ func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
 		}
 		r.Tables = append(r.Tables, tb)
 	}
+	pairs, _, err := o.Arrays("combinable")
+	if err != nil {
+		return nil, err
+	}
+	for _, raw := range pairs {
+		p, ok := jsonin.StringList(raw)
+		if !ok {
+			return nil, apperr.Validation("combinable entries must be arrays of two table ids") // R-34
+		}
+		r.Combinable = append(r.Combinable, p)
+	}
+	if err := checkCombinable(r); err != nil {
+		return nil, err
+	}
 	return r, nil
 }
 
@@ -218,6 +233,46 @@ func loadOpeningHours(o jsonin.Object) (OpeningHours, error) {
 	return oh, nil
 }
 
+// seededTables reads a seeded booking's table_id or table_ids (exactly one of them).
+func seededTables(o jsonin.Object) ([]string, error) {
+	single, hasSingle, err := o.String("table_id")
+	if err != nil {
+		return nil, err
+	}
+	ids, hasSet, err := o.Strings("table_ids")
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case hasSingle && hasSet:
+		return nil, apperr.Validation("reservations[] takes table_id or table_ids, not both")
+	case hasSingle:
+		ids = []string{single}
+	case !hasSet:
+		return nil, apperr.Validation("reservations[].table_ids is required")
+	}
+	for _, id := range ids {
+		if id == "" || utf8.RuneCountInString(id) > MaxIDLength {
+			return nil, apperr.Validation(fmt.Sprintf("reservations[] table ids must be 1 to %d characters", MaxIDLength))
+		}
+	}
+	return ids, nil
+}
+
+// seededStatus reads a seeded booking's optional status: confirmed unless it says cancelled.
+func seededStatus(o jsonin.Object) (string, error) {
+	status, ok, err := o.String("status")
+	switch {
+	case err != nil:
+		return "", err
+	case !ok:
+		return Confirmed, nil
+	case status != Confirmed && status != Cancelled:
+		return "", apperr.Validation("reservations[].status must be confirmed or cancelled")
+	}
+	return status, nil
+}
+
 func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 	items, _, err := fx.Objects("reservations")
 	if err != nil {
@@ -241,7 +296,10 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		if res.RestaurantID, err = requiredID(o, "restaurant_id", "reservations[]"); err != nil {
 			return err
 		}
-		if res.TableID, err = requiredID(o, "table_id", "reservations[]"); err != nil {
+		if res.TableIDs, err = seededTables(o); err != nil {
+			return err
+		}
+		if res.Status, err = seededStatus(o); err != nil {
 			return err
 		}
 		if res.StartsAtLocal, err = o.RequiredString("starts_at_local"); err != nil {
@@ -259,8 +317,15 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 			}
 		}
 		r := st.Restaurant(res.RestaurantID)
-		if st.User(res.UserID) == nil || r == nil || r.Table(res.TableID) == nil {
+		if st.User(res.UserID) == nil || r == nil || !checkTableSet(r, res.TableIDs) {
 			return apperr.Validation("reservation " + res.ID + " refers to an unknown user, restaurant or table")
+		}
+		if len(res.TableIDs) == 2 { // R-34: a seeded pair must be declared; stored in combinable order
+			p := r.Pair(res.TableIDs[0], res.TableIDs[1])
+			if p == nil {
+				return apperr.Validation("reservation " + res.ID + " combines tables that are not declared combinable")
+			}
+			res.TableIDs = slices.Clone(p)
 		}
 		if ids[res.ID] || st.ReservationByRef(res.Reference) != nil {
 			return apperr.Validation("duplicate reservation id or reference: " + res.ID)

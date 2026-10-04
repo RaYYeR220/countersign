@@ -31,14 +31,13 @@ func withinCutoff(res *state.Reservation, rest *state.Restaurant, now time.Time)
 }
 
 // changeFieldTypes is the wrong-type pass for amendment fields: table_id and starts_at_local
-// must be strings when present (null included, R-2); party_size never gives 400 (C1.42).
+// must be strings and table_ids an array of strings when present (null included, R-2);
+// party_size never gives 400 (C1.42).
 func changeFieldTypes(o jsonin.Object) error {
-	for _, name := range []string{"table_id", "starts_at_local"} {
-		if o.Has(name) && o.Kind(name) != jsonin.String {
-			return apperr.Malformed(name + " must be a string")
-		}
+	if o.Has("starts_at_local") && o.Kind("starts_at_local") != jsonin.String {
+		return apperr.Malformed("starts_at_local must be a string")
 	}
-	return nil
+	return tableFieldTypes(o)
 }
 
 // partySize reads a present party_size: anything but an integer of at least 1 is 422 (C1.86).
@@ -56,18 +55,18 @@ func partySize(o jsonin.Object) (int, error) {
 
 // change is the proposed new state of one confirmed reservation.
 type change struct {
-	res     *state.Reservation
-	tableID string
-	local   string
-	party   int
-	start   time.Time
-	end     time.Time
-	moved   bool // table or start differ, so occupancy must be re-checked
+	res      *state.Reservation
+	tableIDs []string
+	local    string
+	party    int
+	start    time.Time
+	end      time.Time
+	moved    bool // tables or start differ, so occupancy must be re-checked
 }
 
 // planChange applies the ordinary amendment checks to res in order: 409 reservation_cancelled →
-// 409 cutoff_passed → 422 field values → 404 table → invalid_local_time → outside_opening_hours →
-// not_on_slot_grid → party_exceeds_capacity. Field types were checked by changeFieldTypes.
+// 409 cutoff_passed → 422 field values → 404 table / 422 combination_not_allowed →
+// invalid_local_time → outside_opening_hours → not_on_slot_grid → party_exceeds_capacity. Field types were checked by changeFieldTypes.
 // Values equal to the current ones are not re-validated against the time rules: they are a no-op.
 func planChange(st *state.State, res *state.Reservation, o jsonin.Object, now time.Time) (*change, error) {
 	if res.Status == state.Cancelled {
@@ -77,7 +76,7 @@ func planChange(st *state.State, res *state.Reservation, o jsonin.Object, now ti
 	if withinCutoff(res, rest, now) {
 		return nil, cutoffPassed()
 	}
-	c := &change{res: res, tableID: res.TableID, local: res.StartsAtLocal, party: res.PartySize, start: res.StartsAt, end: res.EndsAt}
+	c := &change{res: res, tableIDs: res.TableIDs, local: res.StartsAtLocal, party: res.PartySize, start: res.StartsAt, end: res.EndsAt}
 
 	local, hasLocal, _ := o.String("starts_at_local")
 	if hasLocal && !localtime.ValidLocal(local) {
@@ -90,12 +89,16 @@ func planChange(st *state.State, res *state.Reservation, o jsonin.Object, now ti
 		}
 		c.party = n
 	}
+	ids, hasTables, err := requestedTables(o)
+	if err != nil {
+		return nil, err
+	}
 
-	if tableID, ok, _ := o.String("table_id"); ok && tableID != res.TableID {
-		if rest.Table(tableID) == nil {
-			return nil, apperr.NotFound("no such table in this restaurant")
+	if hasTables && !sameTables(ids, res.TableIDs) {
+		if c.tableIDs, err = resolveTables(rest, ids); err != nil {
+			return nil, err
 		}
-		c.tableID, c.moved = tableID, true
+		c.moved = true
 	}
 	if hasLocal && local != res.StartsAtLocal {
 		loc, err := localtime.Location(rest.Timezone)
@@ -108,14 +111,14 @@ func planChange(st *state.State, res *state.Reservation, o jsonin.Object, now ti
 		}
 		c.local, c.start, c.end, c.moved = local, start, localtime.End(start, rest.ReservationDurationMinutes), true
 	}
-	if (c.party != res.PartySize || c.tableID != res.TableID) && c.party > rest.Table(c.tableID).Capacity {
+	if (c.party != res.PartySize || !sameTables(c.tableIDs, res.TableIDs)) && c.party > rest.Capacity(c.tableIDs) {
 		return nil, partyExceedsCapacity()
 	}
 	return c, nil
 }
 
 func partyExceedsCapacity() error {
-	return apperr.New(http.StatusUnprocessableEntity, "party_exceeds_capacity", "party_size exceeds the table's capacity")
+	return apperr.New(http.StatusUnprocessableEntity, "party_exceeds_capacity", "party_size exceeds the capacity of the chosen tables")
 }
 
 // conflicts reports whether any moved change overlaps another change's resulting occupancy or a
@@ -131,11 +134,11 @@ func conflicts(st *state.State, changes []*change) bool {
 		if !c.moved {
 			continue
 		}
-		if st.TableBusy(c.res.RestaurantID, c.tableID, c.start, c.end, skipListed) {
+		if st.TableBusy(c.res.RestaurantID, c.tableIDs, c.start, c.end, skipListed) {
 			return true
 		}
 		for _, other := range changes {
-			if other != c && other.tableID == c.tableID && localtime.Overlaps(other.start, other.end, c.start, c.end) {
+			if other != c && state.SharesTable(other.tableIDs, c.tableIDs) && localtime.Overlaps(other.start, other.end, c.start, c.end) {
 				return true
 			}
 		}
@@ -146,7 +149,7 @@ func conflicts(st *state.State, changes []*change) bool {
 // apply writes every change; callers have checked all of them first.
 func apply(changes []*change) {
 	for _, c := range changes {
-		c.res.TableID, c.res.StartsAtLocal, c.res.PartySize = c.tableID, c.local, c.party
+		c.res.TableIDs, c.res.StartsAtLocal, c.res.PartySize = c.tableIDs, c.local, c.party
 		c.res.StartsAt, c.res.EndsAt = c.start, c.end
 	}
 }
