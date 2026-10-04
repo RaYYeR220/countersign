@@ -29,7 +29,7 @@ func TestDecodeAcceptsObjectWithWhitespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !obj.Has("a") || obj.Has("b") || obj.Has("c") {
+	if !obj.Has("a") || !obj.Has("b") || obj.Has("c") || obj.Kind("b") != Null {
 		t.Errorf("Has: a=%v b=%v c=%v", obj.Has("a"), obj.Has("b"), obj.Has("c"))
 	}
 }
@@ -51,8 +51,11 @@ func TestString(t *testing.T) {
 	if _, _, err := obj.String("n"); code(err) != "malformed_request" {
 		t.Errorf("String(n) err = %v", err)
 	}
-	if _, ok, err := obj.String("z"); ok || err != nil {
-		t.Errorf("String(z) = %v %v, want absent", ok, err)
+	if _, _, err := obj.String("z"); code(err) != "malformed_request" {
+		t.Errorf("String(null) err = %v, want malformed_request (R-2)", err)
+	}
+	if _, ok, err := obj.String("missing"); ok || err != nil {
+		t.Errorf("String(missing) = %v %v, want absent", ok, err)
 	}
 	if _, err := obj.RequiredString("missing"); code(err) != "validation_failed" {
 		t.Errorf("RequiredString(missing) err = %v", err)
@@ -60,7 +63,7 @@ func TestString(t *testing.T) {
 }
 
 func TestInt(t *testing.T) {
-	obj := mustDecode(t, `{"a":4,"b":4.0,"c":4.5,"d":"4","e":true,"f":1e300,"g":-3,"h":9007199254740993}`)
+	obj := mustDecode(t, `{"a":4,"b":4.0,"c":4.5,"d":"4","e":true,"f":1e300,"g":-3,"h":9007199254740993,"i":null}`)
 	cases := []struct {
 		field string
 		want  int64
@@ -74,6 +77,7 @@ func TestInt(t *testing.T) {
 		{"f", 0, "validation_failed"},
 		{"g", -3, ""},
 		{"h", 0, "validation_failed"},
+		{"i", 0, "malformed_request"},
 	}
 	for _, c := range cases {
 		n, _, err := obj.Int(c.field)

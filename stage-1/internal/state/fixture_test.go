@@ -87,3 +87,18 @@ func TestFromFixtureErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestFromFixtureSeedCreatedAt(t *testing.T) {
+	body := strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "created_at": "2026-09-01T08:00:00+02:00"}`, 1)
+	st, err := load(t, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := st.ReservationByRef("SEED01").CreatedAt; got.Format(time.RFC3339) != "2026-09-01T08:00:00+02:00" {
+		t.Errorf("created_at = %v, want the fixture value (R-16)", got)
+	}
+	st, _ = load(t, strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "created_at": "yesterday"}`, 1))
+	if got := st.ReservationByRef("SEED01").CreatedAt; !got.Equal(seedTime) {
+		t.Errorf("invalid created_at = %v, want reset time", got)
+	}
+}
