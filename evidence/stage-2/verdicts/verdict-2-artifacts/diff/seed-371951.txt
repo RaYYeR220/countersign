@@ -1,0 +1,9 @@
+sequence:
+  0: {"op": "reset", "fixture": "base"}
+  1: {"op": "login", "label": "l1", "email": "bob@example.com", "password": "bob secret 1"}
+  2: {"op": "create", "label": "b35", "token": {"$sym": ["token", "l1"]}, "key": "k35", "body": {"restaurant_id": "r_ny", "table_ids": {"id": "t_1"}, "starts_at_local": "2027-09-23T19:15", "party_size": 5, "table_id": "n_1"}, "raw": false}
+mismatch at op 2
+expected (model): {"status": 400, "error": {"code": "malformed_request"}}
+actual (service): {"status": 422, "error": {"code": "validation_failed"}}
+reproduce: python ../repo/stage-2/verify/oracle/diff_runner.py --base-url http://auditor-s2-diff:8080 --replay /out/diff-fail-seed371967.json
+[bg run] exit 1 after 29.7s; full output: C:\countersign\tmp\aud-bg\run-1791137219572.log

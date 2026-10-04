@@ -1744,11 +1744,26 @@ def g_combo(s: S, dest: Client | None = None):
                        ("table_ids member 65 chars", body2("r_combo", ["c_1", L65], T, 2)),
                        ("order: empty member beats duplicate", body2("r_combo", ["", ""], T, 2))):
         chk.expect(f"R-42 POST {name} -> 422 validation_failed", post(body), 422, "validation_failed", "C2.46,C1.41 (R-42)")
+    for name, body, st_, code in (("both fields, table_ids an object", {**body2("r_combo", {"id": "c_1"}, T, 2), "table_id": "c_1"}, 422, "validation_failed"),
+                                  ("both fields, table_id a number", {**body2("r_combo", ["c_1"], T, 2), "table_id": 5}, 422, "validation_failed"),
+                                  ("both fields, table_id null", {**body2("r_combo", ["c_1"], T, 2), "table_id": None}, 422, "validation_failed"),
+                                  ("both fields, table_ids null", {**body2("r_combo", None, T, 2), "table_id": "c_1"}, 422, "validation_failed"),
+                                  ("only table_ids, an object", body2("r_combo", {"id": "c_1"}, T, 2), 400, "malformed_request"),
+                                  ("only table_id, a number", booking_body("r_combo", 5, T, 2), 400, "malformed_request")):
+        chk.expect(f"R-43 POST {name} -> {st_} {code}", post(body), st_, code, "C2.47 (R-43)")
     chk.expect("R-42 order: empty set beats empty member", post({**body2("r_combo", [], T, 2)}), 422, "validation_failed", "C2.46 (R-42)")
     pe = s.book(s.ada, "r_combo", "c_4", f"{D3}T21:30", 2)
     for name, b_ in (("table_id ''", {"table_id": ""}), ("table_ids ['c_2', '']", {"table_ids": ["c_2", ""]}), ("table_id 65 chars", {"table_id": L65})):
         chk.expect(f"R-42 PATCH {name} -> 422 validation_failed", c.req("PATCH", f"/reservations/{pe['reference']}", b_, token=s.ada), 422,
                    "validation_failed", "C2.54 (R-42)")
+    for name, b_ in (("both fields, table_id a number", {"table_id": 5, "table_ids": ["c_4"]}), ("both fields, table_id null", {"table_id": None, "table_ids": ["c_4"]}),
+                     ("both fields, table_ids an object", {"table_id": "c_4", "table_ids": {"x": 1}})):
+        chk.expect(f"R-43 PATCH {name} -> 422 validation_failed", c.req("PATCH", f"/reservations/{pe['reference']}", b_, token=s.ada), 422,
+                   "validation_failed", "C2.54 (R-43)")
+    for name, item in (("both fields, table_id a number", {"reference": pe["reference"], "table_id": 5, "table_ids": ["c_4"]}),
+                       ("both fields, table_ids an object", {"reference": pe["reference"], "table_id": "c_4", "table_ids": {"x": 1}})):
+        chk.expect(f"R-43 move {name} -> 422 validation_failed", c.req("POST", "/reservation-moves", {"moves": [item]}, token=s.ada, key=uuid.uuid4().hex),
+                   422, "validation_failed", "C2.58 (R-43)")
     for name, item in (("move table_id ''", {"reference": pe["reference"], "table_id": ""}),
                        ("move table_ids ['']", {"reference": pe["reference"], "table_ids": [""]}),
                        ("move reference ''", {"reference": ""})):
