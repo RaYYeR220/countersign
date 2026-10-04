@@ -7,7 +7,7 @@ stage-3 entry-A row `A<n>` where both readers agree. R-46 … R-58 were issued f
 - Clauses: C3.3, C3.4
 - Decision: `explain` is checked after R-12's parameter checks (restaurant_id, date, party_size) and before the 404
   for an unknown restaurant; any value other than the exact string `true` (including `false`, `1`, `""`, `TRUE`) →
-  422 `validation_failed`. Without `explain`, slots carry exactly the stage-2 fields (`starts_at_local`,
+  422 `validation_failed`. A repeated `explain` is accepted only if every occurrence is exactly `true`. Without `explain`, slots carry exactly the stage-2 fields (`starts_at_local`,
   `starts_at`, `available_table_ids`, `available_options`) and no explanation fields.
 
 ## R-47 — Policy publication: order and field errors
@@ -110,3 +110,20 @@ stage-3 entry-A row `A<n>` where both readers agree. R-46 … R-58 were issued f
 - Clauses: C3.14, C3.32, C3.46, C3.50
 - Decision: an amendment (PATCH or move item) is a no-op exactly when the resulting table set (as a set), local
   start and party size equal the current ones. Supplying only `expected_revision` (matching) is a no-op.
+
+## Answers to the Auditor's stage-3 attack-plan questions (P1–P11)
+P1 → R-47 stands (not the proposed order): §7 resolves idempotency "before endpoint-specific field validation or
+current-resource checks", so 401 → 400 body → key checks → idempotency → 404 restaurant → 403 → policy validation.
+P2 → R-47: every policy field problem is 422, including a non-object `capacities`, missing/extra table ids,
+non-integer or 0/101 capacities, closes ≤ opens and duplicate weekdays. P3 → R-46: after party_size, before the
+404; repeated `explain` accepted only if every value is `true`. P4 → R-49 (not the proposed order): 404 → 422
+invalid `expected_revision` (any non-positive-integer incl. strings, booleans, null, 0, −1, 1.5) → 409
+stale_revision → 409 reservation_cancelled → 409 cutoff_passed → values; per move item R-57. P5 → yes: a stale
+`expected_revision` gives 409 even when the PATCH would be a no-op. P6 → R-50: cancel ignores `expected_revision`;
+cancelling twice → 200, revision unchanged. P7 → R-52 (`anchor_reference` not a string → 400; count/interval any
+invalid incl. type → 422). P8 → R-52: yes, R-7 order inside an occurrence, occupancy includes earlier generated
+occurrences, and the anchor's accepted cutoff is checked against now (409 cutoff_passed). P9 → R-54: internal in
+stage 3, not observable; do not assert on export field names (the state is opaque). P10 → R-51/R-55: yes — one
+`created` entry, at = created_at, revision 1 whatever the status, policy-0 terms from the (imported) fixture
+config. P11 → yes: the resulting date's policy supplies terms and capacities, including a pair's summed capacity
+(C3.49).
