@@ -93,13 +93,12 @@ func (s *Server) availability(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.Validation("party_size must be at least 1"))
 		return
 	}
-	// explain is optional; its only accepted value is "true", for every occurrence of it (R-46).
-	values, explain := q["explain"]
-	for _, v := range values {
-		if v != "true" {
-			writeError(w, apperr.Validation(`explain must be "true" when given`))
-			return
-		}
+	// explain is optional; its only accepted value is "true". Like every parameter, only the first
+	// value of a repeated explain counts (R-46).
+	_, explain := q["explain"]
+	if explain && q.Get("explain") != "true" {
+		writeError(w, apperr.Validation(`explain must be "true" when given`))
+		return
 	}
 
 	var resp *availabilityResponse
