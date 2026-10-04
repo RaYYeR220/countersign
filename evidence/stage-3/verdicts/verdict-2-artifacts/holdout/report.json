@@ -1,0 +1,107 @@
+{
+  "revision": "c4a828e341d997f00b8c078c423135fbccf6fdac",
+  "track": "tablekeeper",
+  "stages": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass"
+  },
+  "highest_contiguous": 3,
+  "started_at": "2026-10-04T22:15:53.741108+00:00",
+  "finished_at": "2026-10-04T22:17:41.539950+00:00",
+  "schema_version": 2,
+  "run_id": "e3cbee793d5f4c56a148df56ea37049a",
+  "mode": "isolated",
+  "provenance": "working-tree",
+  "state": "completed",
+  "pytest_args": [],
+  "suite_digest": "b302bbb7bae6b8ee9e76d24ad7a6131a6a55c8cf01becee3a8cbe849c6c6a8f3",
+  "checks": {
+    "1": {
+      "collected": 120,
+      "passed": 120,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_1/test_health_reset_auth.py": {
+          "passed": 12,
+          "total": 12
+        },
+        "stage_1/test_reservations.py": {
+          "passed": 37,
+          "total": 37
+        },
+        "stage_1/test_restaurants_availability.py": {
+          "passed": 18,
+          "total": 18
+        },
+        "stage_1/test_retries_time_input.py": {
+          "passed": 20,
+          "total": 20
+        },
+        "stage_1/test_sample.py": {
+          "passed": 20,
+          "total": 20
+        },
+        "stage_1/test_seeded_state.py": {
+          "passed": 13,
+          "total": 13
+        }
+      }
+    },
+    "2": {
+      "collected": 25,
+      "passed": 25,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_2/test_sample.py": {
+          "passed": 8,
+          "total": 8
+        },
+        "stage_2/test_ui.py": {
+          "passed": 17,
+          "total": 17
+        }
+      }
+    },
+    "3": {
+      "collected": 7,
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_3/test_sample.py": {
+          "passed": 7,
+          "total": 7
+        }
+      }
+    }
+  },
+  "overshoot": null,
+  "claimed_stage": "3",
+  "share": 1.0,
+  "upgrade_sources": {
+    "2": {
+      "folder": "C:\\countersign\\tmp\\aud-s3-v2\\stage-1",
+      "revision": "c4a828e341d997f00b8c078c423135fbccf6fdac"
+    },
+    "3": {
+      "folder": "C:\\countersign\\tmp\\aud-s3-v2\\stage-2",
+      "revision": "c4a828e341d997f00b8c078c423135fbccf6fdac"
+    },
+    "4": {
+      "folder": "C:\\countersign\\tmp\\aud-s3-v2\\stage-3",
+      "revision": "c4a828e341d997f00b8c078c423135fbccf6fdac"
+    }
+  }
+}
