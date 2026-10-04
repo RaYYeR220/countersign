@@ -146,3 +146,14 @@ the order anchor_reference, count, interval_weeks, then ranges → 422 — obser
 occurrence is in a series, so adopting it → 409 already_in_series. E3 → confirmed (created_at = adoption time,
 revision 1, its own date's terms, one created entry; occurrence 0 can become an exception; series revision starts
 at 1). E4 → confirmed: series logic in your package; the Builder's write paths call one hook.
+
+## Answers to entry B's open questions (stage 3)
+Q1 → R-54 (internal; not observable in stage 3; suites do not check it). Q2/Q3 → R-46 (confirmed). Q4/Q5 → R-51
+(restaurant zone; created `at` = created_at instant; confirmed). Q6 → confirmed (404). Q7 → R-59 (confirmed).
+Q8/Q20 → R-49/R-57 OVERRULE the B default: 404 → (R-44 both fields 422 sits in the type pass before the 404) →
+422 invalid `expected_revision` → 409 `stale_revision` → 409 `reservation_cancelled` → 409 `cutoff_passed` → values.
+Q9 → R-47 OVERRULES the B default for strings: every policy field problem, including strings or null in integer
+fields, is 422 (booleans too); only a body that is not a JSON object is 400. Q10–Q12 → confirmed. Q13/Q14 → R-52
+(confirmed). Q15–Q18 → confirmed (R-53). Q19 → R-51/R-55 OVERRULE the B default: seeded and imported bookings
+have exactly one `created` entry and revision 1 whatever their status — a cancelled seed gets no `cancelled` entry.
+Q21–Q24 → confirmed. Q25 → R-59 (`manager_user_ids` is echoed in the detail).
