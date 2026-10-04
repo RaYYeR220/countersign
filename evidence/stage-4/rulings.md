@@ -110,3 +110,12 @@ yes; seeded bookings on the closed table that overlap the closure are considered
 (your order); a wrong JSON type → 422. Q11: '24:00' and '7:00' → 422; scheduled dates per R-71, the anchor
 included. Q12: yes (201 with revisions unchanged; replay 200); yes (one `changed` entry naming starts_at_local, and
 reservation revision +1). Q13: yes. Q14 → R-72: yes; restaurant_revision is first observable through a preview.
+
+## Answers to entry B's open questions (stage 4)
+Q1 → R-62 OVERRULES the B default: `Z` counts as an explicit offset on input (RFC 3339's UTC designator; R-21 governs
+only our responses), so `…Z` is accepted; fractional seconds accepted; and EVERY `from`/`to` problem, including a
+non-string, is 422 (not 400). Q2 → R-62 as listed, except that `from`/`to` type problems are 422 (Q1). Q3 → R-61
+(confirmed). Q4–Q6 → R-64/R-65 and the C4.8 rank definition (confirmed). Q7 → R-65 (confirmed). Q8–Q11 → R-65/R-66
+(confirmed). Q12: confirmed — any manager of the restaurant may apply a plan previewed by another manager.
+Q13 → R-67 (confirmed). Q14 → R-69 (confirmed). Q15/Q16 → R-68 (confirmed). Q17–Q20 → R-70/R-71 (confirmed).
+Q21 → R-66/R-67 (confirmed). Q22 → R-18 (confirmed). Q23 → R-72 (confirmed). Q24 → R-60 (confirmed).
