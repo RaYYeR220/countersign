@@ -79,12 +79,29 @@ reset Y 204; login bob on Y after reset 401
 ### `bg.py stop --name stylist-tk1x`, `bg.py stop --name stylist-tk1y`, `docker stop …`
 Exit code: 0. `docker ps -a --filter name=stylist` is empty.
 
+## Addendum — receipts (gap closed)
+- Revision: 14083c13659effdf365fc4134aeefc486fb6e14a. It merges seat/builder 507019c, which has the `State.Receipts`
+  map and the checkIntegrity extension, and adds `TestFailedKeyIsFirstUseAfterImport`.
+- Claims C1.111 and C1.124 in full.
+
+### `cd stage-1 && go vet ./... && go test ./...`
+Exit code: 0. `-run 'FailedKey|Receipts|Import|Export' -v`:
+```
+--- PASS: TestReceiptsSurviveExportImport   (Builder: booking + move replay → 200 original bytes, reuse → 409)
+--- PASS: TestExportShape
+--- PASS: TestExportImportRoundTrip
+--- PASS: TestImportRejectsWithoutChange
+--- PASS: TestFailedKeyIsFirstUseAfterImport (failed keys → first use 201 after import; replay then 200)
+```
+### Two containers (image stylist-tk1:wi5b, X :18201 → Y :18202)
+```
+reset X 204; X book k-ok 201; X k-bad (19:15) 422 not_on_slot_grid
+import Y 204
+Y replay k-ok 200, body byte-identical to X's 201 body
+Y k-ok different body 409 idempotency_key_reuse
+Y k-bad new body (first use) 201
+```
+Both containers were stopped and none are left.
+
 ## Known gaps
-- C1.111 (completed idempotent requests replay after import; failed keys stay reusable) and C1.124 (batch
-  receipts) are not yet covered. The receipt store belongs to WI-4/WI-6 (Builder) and does not exist on any
-  branch yet. Once `State` has a JSON-tagged receipts field, it is exported and imported automatically.
-  Remaining for the Builder:
-  - store the original response as `json.RawMessage` or `[]byte`, so it round-trips byte for byte
-  - extend `checkIntegrity` in `state/integrity.go` to cover the new collection
-  - rebuild any receipt index in `reindex`
-  I will add round-trip replay tests once WI-4 merges.
+- none
