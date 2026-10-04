@@ -70,3 +70,22 @@ func mustJSON(v any) json.RawMessage {
 	}
 	return b
 }
+
+// schema3to4 (stage 3 → stage 4): restaurants gain no closures and the state gains no plans.
+// Series, histories, revisions (restaurant revisions included) and receipts are unchanged.
+func schema3to4(raw map[string]json.RawMessage) (map[string]json.RawMessage, error) {
+	var restaurants []map[string]json.RawMessage
+	if err := json.Unmarshal(raw["restaurants"], &restaurants); err != nil {
+		return nil, err
+	}
+	for _, r := range restaurants {
+		if r == nil {
+			return nil, errors.New("a schema-3 restaurant is null")
+		}
+		r["closures"] = json.RawMessage("[]")
+	}
+	raw["restaurants"] = mustJSON(restaurants)
+	raw["plans"] = json.RawMessage("{}")
+	raw["schema"] = json.RawMessage("4")
+	return raw, nil
+}
