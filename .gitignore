@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.claude/
+opencode.json
+AGENTS.md
+/tmp/
+.pytest_cache/
+.bg/

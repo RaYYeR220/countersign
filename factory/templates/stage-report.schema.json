@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["stage", "outcome", "clauses", "work_items", "candidates", "mutation", "race_proofs", "holdout"],
+  "properties": {
+    "stage": {"type": "integer"},
+    "outcome": {"enum": ["accepted", "blocked"]},
+    "accepted_sha": {"type": ["string", "null"]},
+    "clauses": {"type": "object", "required": ["total", "both", "a_only", "b_only", "rulings"],
+                "properties": {"total": {"type": "integer"}, "both": {"type": "integer"}, "a_only": {"type": "integer"},
+                               "b_only": {"type": "integer"}, "rulings": {"type": "integer"}}},
+    "work_items": {"type": "integer"},
+    "candidates": {"type": "integer"},
+    "rejections": {"type": "array", "items": {"type": "object", "required": ["sha", "findings", "changed_work"],
+                   "properties": {"sha": {"type": "string"}, "findings": {"type": "integer"}, "changed_work": {"type": "boolean"}}}},
+    "mutation": {"type": "object", "required": ["tool", "killed", "total"],
+                 "properties": {"tool": {"type": "string"}, "killed": {"type": "integer"}, "total": {"type": "integer"}}},
+    "race_proofs": {"type": "array", "items": {"type": "object", "required": ["guard", "test", "red_without", "green_with"],
+                    "properties": {"guard": {"type": "string"}, "test": {"type": "string"},
+                                   "red_without": {"type": "boolean"}, "green_with": {"type": "boolean"}}}},
+    "holdout": {"type": "object", "required": ["ran", "passed", "failed", "escapes"],
+                "properties": {"ran": {"type": "boolean"}, "passed": {"type": "integer"}, "failed": {"type": "integer"},
+                               "escapes": {"type": "array", "items": {"type": "string"}}}},
+    "blockers": {"type": "array", "items": {"type": "string"}}
+  }
+}

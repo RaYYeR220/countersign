@@ -1,0 +1,121 @@
+{
+  "workspace": "C:/countersign",
+  "log": "C:/countersign/logs/guard.jsonl",
+  "holdout": [],
+  "common": {
+    "deny_tools": [
+      "AskUserQuestion",
+      "mcp__jam__AskUserQuestion",
+      "EnterPlanMode",
+      "ExitPlanMode"
+    ],
+    "deny_read": [
+      "**/.ssh/**",
+      "**/.aws/**",
+      "**/.gnupg/**",
+      "**/.git-credentials",
+      "**/.config/gh/**",
+      "**/.claude/**",
+      "**/.claude-countersign/**",
+      "**/.config/opencode/**",
+      "**/*.key"
+    ],
+    "deny_write": [
+      "mandates/**",
+      "factory/**"
+    ],
+    "write_inside_workspace_only": true,
+    "deny_command": [
+      "\\bgit\\s+push\\b",
+      "\\bgit\\s+rebase\\b",
+      "--amend\\b",
+      "\\bgit\\s+filter-(branch|repo)\\b",
+      "\\bgit\\s+reset\\s+--hard\\s+origin",
+      "\\b(band|jam)(\\.exe)?\\s+(rm|reset|logout|ask)\\b",
+      "\\bdocker\\s+(system|volume|image|builder|container)\\s+prune\\b",
+      "\\.ssh\\b",
+      "\\.git-credentials",
+      "\\.claude-countersign",
+      "\\.config[/\\\\]opencode",
+      "venice\\.key",
+      "(^|[\\s/'\"=])\\.claude/",
+      "CLAUDE_CONFIG_DIR|\\.credentials|XDG_CONFIG_HOME|opencode-countersign"
+    ]
+  },
+  "roles": {
+    "foreman": {
+      "deny_write": [
+        "stage-*/**"
+      ],
+      "deny_read": [],
+      "deny_command": []
+    },
+    "builder": {
+      "deny_write": [
+        "stage-*/verify/**",
+        "evidence/verdicts/**",
+        "evidence/**/ledger*.md"
+      ],
+      "deny_read": [
+        "stage-*/verify/**",
+        "@holdout"
+      ],
+      "deny_command": [
+        "(^|[\\s/\\\\:])verify[/\\\\]",
+        "@holdout",
+        "harness_win\\.py",
+        "-m\\s+harness\\b",
+        "\\bgit\\s+archive\\b",
+        "\\bgit\\s+(log|show|whatchanged)\\b[^|;&]*\\s(-p|--patch|-u)\\b",
+        "\\bgit\\s+diff\\s+(main|master)\\b"
+      ]
+    },
+    "stylist": {
+      "deny_write": [
+        "stage-*/verify/**",
+        "evidence/verdicts/**",
+        "evidence/**/ledger*.md"
+      ],
+      "deny_read": [
+        "stage-*/verify/**",
+        "@holdout"
+      ],
+      "deny_command": [
+        "(^|[\\s/\\\\:])verify[/\\\\]",
+        "@holdout",
+        "harness_win\\.py",
+        "-m\\s+harness\\b",
+        "\\bgit\\s+archive\\b",
+        "\\bgit\\s+(log|show|whatchanged)\\b[^|;&]*\\s(-p|--patch|-u)\\b",
+        "\\bgit\\s+diff\\s+(main|master)\\b"
+      ]
+    },
+    "auditor": {
+      "allow_write_only": [
+        "stage-*/verify/**",
+        "evidence/**"
+      ],
+      "deny_read": [],
+      "deny_command": []
+    },
+    "oracle": {
+      "allow_write_only": [
+        "stage-*/verify/**",
+        "evidence/**"
+      ],
+      "deny_read": [
+        "stage-*/**",
+        "@holdout"
+      ],
+      "allow_read": [
+        "stage-*/verify/**"
+      ],
+      "deny_command": [
+        "@holdout",
+        "\\bgit\\s+(show|cat-file|archive)\\b",
+        "\\bgit\\s+(log|whatchanged)\\b[^|;&]*\\s(-p|--patch|-u)\\b",
+        "\\bgit\\s+diff\\s+(main|master|seat/)"
+      ]
+    }
+  }
+}
