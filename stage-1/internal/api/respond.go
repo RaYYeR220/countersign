@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 
@@ -16,19 +17,30 @@ const (
 	maxControlBodyBytes = 64 << 20 // reset fixtures and imports
 )
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
+// encodeJSON renders v as a response body (HTML characters left unescaped, trailing newline).
+func encodeJSON(v any) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
-	if err := enc.Encode(v); err != nil {
+	err := enc.Encode(v)
+	return buf.Bytes(), err
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	body, err := encodeJSON(v)
+	if err != nil {
 		log.Printf("encode response: %v", err)
 		status = http.StatusInternalServerError
-		buf.Reset()
-		buf.WriteString(`{"error":{"code":"internal_error","message":"response encoding failed"}}`)
+		body = []byte(`{"error":{"code":"internal_error","message":"response encoding failed"}}`)
 	}
+	writeRaw(w, status, body)
+}
+
+// writeRaw sends an already encoded JSON body.
+func writeRaw(w http.ResponseWriter, status int, body []byte) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	w.Write(buf.Bytes())
+	w.Write(body)
 }
 
 type errorBody struct {
@@ -55,5 +67,16 @@ func writeNoContent(w http.ResponseWriter) { w.WriteHeader(http.StatusNoContent)
 
 // readObject parses the request body as one JSON object of at most limit bytes.
 func readObject(w http.ResponseWriter, r *http.Request, limit int64) (jsonin.Object, error) {
-	return jsonin.Decode(http.MaxBytesReader(w, r.Body, limit))
+	_, obj, err := readBody(w, r, limit)
+	return obj, err
+}
+
+// readBody returns the raw request body and its parse as one JSON object of at most limit bytes.
+func readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, jsonin.Object, error) {
+	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, limit))
+	if err != nil {
+		return nil, nil, apperr.Malformed("request body could not be read")
+	}
+	obj, err := jsonin.Decode(bytes.NewReader(raw))
+	return raw, obj, err
 }

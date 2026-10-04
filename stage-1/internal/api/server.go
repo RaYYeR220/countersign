@@ -4,6 +4,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"tablekeeper/internal/apperr"
@@ -29,10 +30,32 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux.Handle("/restaurants", methods{http.MethodGet: s.listRestaurants})
 	mux.Handle("/restaurants/{id}", methods{http.MethodGet: s.getRestaurant})
 	mux.Handle("/availability", methods{http.MethodGet: s.availability})
+	mux.Handle("/reservations", methods{
+		http.MethodGet:  s.authed(s.listReservations),
+		http.MethodPost: s.authed(s.createReservation),
+	})
+	mux.Handle("/reservations/{reference}", methods{
+		http.MethodGet:   s.authed(s.getReservation),
+		http.MethodPatch: s.authed(s.amendReservation),
+	})
+	mux.Handle("/reservations/{reference}/cancel", methods{http.MethodPost: s.authed(s.cancelReservation)})
+	mux.Handle("/reservation-moves", methods{http.MethodPost: s.authed(s.moveReservations)})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))
 	})
-	return recoverer(mux)
+	return recoverer(cleanPaths(mux))
+}
+
+// cleanPaths answers non-canonical paths (empty segments, dot segments) with a 404 envelope
+// instead of ServeMux's redirect, so every unknown path is a plain 404 (R-9).
+func cleanPaths(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if p := r.URL.Path; p != "/" && path.Clean(p) != p {
+			writeError(w, apperr.NotFound("no such endpoint"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // methods dispatches a route by HTTP method; other methods get a 405 envelope.
