@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -45,6 +46,7 @@ func TestUpgradeFromStage3Export(t *testing.T) {
 		t.Fatalf("import = %d %s", rec.Code, rec.Body)
 	}
 	ada := tokens["u_ada"]
+	e.ada = ada
 	anchorBody := `{"restaurant_id":"r_anker","table_id":"t_2","starts_at_local":"2027-01-07T19:00","party_size":3}`
 	if rec := e.book(ada, "anchor-1", anchorBody); rec.Code != 200 || rec.Body.String() != original["anchor-1"] {
 		t.Errorf("anchor replay = %d %s", rec.Code, rec.Body)
@@ -81,4 +83,47 @@ func TestUpgradeFromStage3Export(t *testing.T) {
 	if got := decodeView(t, e.req("GET", "/reservations/"+series.Occurrences[3].Reference, ada, "", "")); got.TableID != "t_3" || got.StartsAtLocal != "2027-01-28T19:00" || got.Revision != 2 {
 		t.Errorf("moved occurrence = %+v", got)
 	}
+
+	// Amending the imported series from index 0 skips the exception (1) and the cancelled
+	// occurrence (2) and moves the anchor and the repaired occurrence (R-71).
+	revisions := map[int]int{}
+	for i, o := range series.Occurrences {
+		revisions[i] = decodeView(t, e.req("GET", "/reservations/"+o.Reference, ada, "", "")).Revision
+	}
+	amend := `{"expected_revision":` + itoa(after.Revision) + `,"from_index":0,"local_time":"21:00"}`
+	rec = e.req("POST", "/series/"+series.ID+"/amend", ada, "amend-1", amend)
+	if rec.Code != 201 {
+		t.Fatalf("amend imported series = %d %s", rec.Code, rec.Body)
+	}
+	json.Unmarshal(e.req("GET", "/series/"+series.ID, ada, "", "").Body.Bytes(), &after)
+	if after.Revision != series.Revision+2 {
+		t.Errorf("series revision after amend = %d, want %d", after.Revision, series.Revision+2)
+	}
+	wantLocal := map[int]string{0: "2027-01-07T21:00", 1: "2027-01-14T20:00", 2: "2027-01-21T19:00", 3: "2027-01-28T21:00"}
+	for i, o := range series.Occurrences {
+		got := decodeView(t, e.req("GET", "/reservations/"+o.Reference, ada, "", ""))
+		changed := i == 0 || i == 3
+		wantRev := revisions[i]
+		if changed {
+			wantRev++
+		}
+		if got.StartsAtLocal != wantLocal[i] || got.Revision != wantRev {
+			t.Errorf("occurrence %d = %s rev %d, want %s rev %d", i, got.StartsAtLocal, got.Revision, wantLocal[i], wantRev)
+		}
+		hist := pe.history(o.Reference)
+		last := hist.Entries[len(hist.Entries)-1]
+		if changed && (last.Event != "changed" || changesString(last.Changes) != "starts_at_local:"+map[int]string{0: "2027-01-07T19:00", 3: "2027-01-28T19:00"}[i]+">"+wantLocal[i]) {
+			t.Errorf("occurrence %d last entry = %+v", i, last)
+		}
+	}
+	if after.Occurrences[0].Exception || after.Occurrences[3].Exception || !after.Occurrences[1].Exception {
+		t.Errorf("exception flags after amend = %+v", after.Occurrences)
+	}
+	// The restaurant revision moved once more: the plan's revision +1 (apply) +1 (amend).
+	_, probe := pe.preview("probe", `{"table_id":"t_1","from":"2027-06-03T18:00:00+02:00","to":"2027-06-03T19:00:00+02:00"}`)
+	if probe.RestaurantRevision != p.RestaurantRevision+2 {
+		t.Errorf("restaurant revision = %d, want %d", probe.RestaurantRevision, p.RestaurantRevision+2)
+	}
 }
+
+func itoa(n int) string { return strconv.Itoa(n) }
