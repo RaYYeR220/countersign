@@ -4,6 +4,8 @@ package state
 import (
 	"strings"
 	"time"
+
+	"tablekeeper/internal/localtime"
 )
 
 // User is an account. Only the password hash is stored.
@@ -15,11 +17,7 @@ type User struct {
 }
 
 // OpeningHours is one opening interval on a weekday, in local HH:MM.
-type OpeningHours struct {
-	Weekday string `json:"weekday"`
-	Opens   string `json:"opens"`
-	Closes  string `json:"closes"`
-}
+type OpeningHours = localtime.Hours
 
 // Table is a bookable table.
 type Table struct {
@@ -50,13 +48,17 @@ func (r *Restaurant) Table(id string) *Table {
 	return nil
 }
 
+// Stamp normalises a creation time as R-21 requires: UTC, whole seconds.
+func Stamp(t time.Time) time.Time { return t.UTC().Truncate(time.Second) }
+
 // Reservation statuses.
 const (
 	Confirmed = "confirmed"
 	Cancelled = "cancelled"
 )
 
-// Reservation is a booking. ID, Reference, UserID and CreatedAt never change.
+// Reservation is a booking. ID, Reference, UserID and CreatedAt never change. It occupies its
+// table over the half-open interval [StartsAt, EndsAt) while confirmed.
 type Reservation struct {
 	ID            string    `json:"id"`
 	Reference     string    `json:"reference"`
@@ -66,14 +68,18 @@ type Reservation struct {
 	PartySize     int       `json:"party_size"`
 	Status        string    `json:"status"`
 	StartsAtLocal string    `json:"starts_at_local"`
+	StartsAt      time.Time `json:"starts_at"` // absolute start: StartsAtLocal resolved in the restaurant's zone
+	EndsAt        time.Time `json:"ends_at"`   // StartsAt + reservation_duration_minutes (absolute)
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-// State is the complete service state. Slices keep fixture order; the maps are indexes over them.
+// State is the complete service state. Exported fields are the persisted state; slices keep
+// fixture order and the unexported maps are indexes over them, rebuilt by reindex.
 type State struct {
-	Users        []*User
-	Restaurants  []*Restaurant
-	Reservations []*Reservation
+	Users        []*User           `json:"users"`
+	Restaurants  []*Restaurant     `json:"restaurants"`
+	Reservations []*Reservation    `json:"reservations"`
+	Tokens       map[string]string `json:"tokens"` // bearer token -> user id
 
 	usersByID         map[string]*User
 	usersByEmail      map[string]*User
@@ -92,6 +98,9 @@ func Empty() *State {
 func EmailKey(email string) string { return strings.ToLower(email) }
 
 func (st *State) reindex() {
+	if st.Tokens == nil {
+		st.Tokens = map[string]string{}
+	}
 	st.usersByID = make(map[string]*User, len(st.Users))
 	st.usersByEmail = make(map[string]*User, len(st.Users))
 	for _, u := range st.Users {

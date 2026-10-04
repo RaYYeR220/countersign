@@ -1,6 +1,7 @@
 // Package jsonin parses JSON request bodies and reads their fields with the error rules of §5:
 // an unparseable body or a field of the wrong JSON type is 400 malformed_request, an absent
-// required field or an out-of-range value is 422 validation_failed. JSON null counts as absent.
+// required field or an out-of-range value is 422 validation_failed. JSON null is a value of the
+// wrong type, never an omission (R-2).
 package jsonin
 
 import (
@@ -35,6 +36,7 @@ type Kind byte
 
 const (
 	Absent Kind = iota
+	Null
 	String
 	Number
 	Bool
@@ -42,7 +44,7 @@ const (
 	ObjectKind
 )
 
-// Kind reports the JSON kind of member name; null and missing members are Absent.
+// Kind reports the JSON kind of member name; a missing member is Absent.
 func (o Object) Kind(name string) Kind {
 	raw := bytes.TrimSpace(o[name])
 	if len(raw) == 0 {
@@ -50,7 +52,7 @@ func (o Object) Kind(name string) Kind {
 	}
 	switch raw[0] {
 	case 'n':
-		return Absent
+		return Null
 	case '"':
 		return String
 	case 't', 'f':
@@ -64,7 +66,7 @@ func (o Object) Kind(name string) Kind {
 	}
 }
 
-// Has reports whether member name is present and not null.
+// Has reports whether member name is present, null included.
 func (o Object) Has(name string) bool { return o.Kind(name) != Absent }
 
 func wrongType(name, want string) error {
