@@ -64,12 +64,13 @@ def apply_mutant(n: int) -> None:
             return alt if alt.astimezone(zone).replace(tzinfo=None) == naive else utc
         M.resolve_local = second_occurrence
     elif n == 2:
-        orig_lookup = M.Model._idem_lookup
+        orig_keyed = M.Model._keyed
 
-        def lookup(self, user_id, path, key, obj):
-            hit = orig_lookup(self, user_id, path, key, obj)
-            return (201, hit[1]) if hit else None
-        M.Model._idem_lookup = lookup
+        def keyed(self, user_id, method, path, headers, body, fn):
+            replay = f"{user_id}|{method}|{path}|{headers.get('idempotency-key')}" in self.idem
+            st, out = orig_keyed(self, user_id, method, path, headers, body, fn)
+            return (201, out) if replay and st == 200 else (st, out)
+        M.Model._keyed = keyed
     elif n == 3:
         orig_list = M.Model.list_reservations
 

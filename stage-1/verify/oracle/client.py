@@ -4,6 +4,7 @@ from __future__ import annotations
 import http.client
 import json
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 from urllib.parse import urlsplit
@@ -38,6 +39,7 @@ class Client:
     timeout: float = 5.0
     statuses: list = field(default_factory=list)
     fail_on_5xx: bool = True
+    _conn: Optional[http.client.HTTPConnection] = field(default=None, repr=False)
 
     def request(self, method: str, path: str, *, json_body: Any = None, raw: Optional[bytes] = None,
                 headers: Optional[dict] = None, token: Optional[str] = None, key: Optional[str] = None,
@@ -57,14 +59,8 @@ class Client:
             hdrs["Idempotency-Key"] = key
         if headers:
             hdrs.update(headers)
-        conn = http.client.HTTPConnection(u.hostname, u.port or 80, timeout=timeout or self.timeout)
-        try:
-            conn.request(method, (u.path.rstrip("/") + path) if u.path else path, body=body, headers=hdrs)
-            r = conn.getresponse()
-            data = r.read()
-            resp = Resp(r.status, {k.lower(): v for k, v in r.getheaders()}, data.decode("utf-8", "replace"))
-        finally:
-            conn.close()
+        resp = self._send(u, method, (u.path.rstrip("/") + path) if u.path else path, body, hdrs,
+                          timeout or self.timeout)
         try:
             resp.json = json.loads(resp.text) if resp.text else None
             resp.raw_json_ok = True
@@ -74,6 +70,53 @@ class Client:
         if self.fail_on_5xx and resp.status >= 500:
             raise ServerError(f"{method} {path} -> {resp.status}: {resp.text[:300]}")
         return resp
+
+    def _connect(self, u, timeout: float) -> http.client.HTTPConnection:
+        conn = http.client.HTTPConnection(u.hostname, u.port or 80, timeout=timeout)
+        # Retry on Windows ephemeral-port exhaustion (WinError 10048/10055): nothing has been sent yet.
+        for attempt in range(8):
+            try:
+                conn.connect()
+                return conn
+            except OSError as e:
+                if getattr(e, "winerror", None) not in (10048, 10055) or attempt == 7:
+                    raise
+                time.sleep(0.5 * (attempt + 1))
+        return conn
+
+    def _send(self, u, method: str, path: str, body, hdrs: dict, timeout: float) -> Resp:
+        """One request on a kept-alive connection; a stale connection is re-opened once."""
+        for attempt in range(2):
+            conn = self._conn
+            fresh = conn is None
+            if fresh:
+                conn = self._conn = self._connect(u, timeout)
+            else:
+                conn.timeout = timeout
+                if conn.sock is not None:
+                    conn.sock.settimeout(timeout)
+            try:
+                conn.request(method, path, body=body, headers=hdrs)
+                r = conn.getresponse()
+                data = r.read()
+            except (http.client.RemoteDisconnected, http.client.BadStatusLine, ConnectionResetError,
+                    ConnectionAbortedError, BrokenPipeError) as e:
+                conn.close()
+                self._conn = None
+                if fresh or attempt == 1:
+                    raise
+                continue   # the server closed an idle keep-alive connection before reading: retry once
+            resp = Resp(r.status, {k_.lower(): v for k_, v in r.getheaders()}, data.decode("utf-8", "replace"))
+            if r.will_close:
+                conn.close()
+                self._conn = None
+            return resp
+        raise AssertionError("unreachable")
+
+    def close(self) -> None:
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
 
     # convenience ----------------------------------------------------------
     def get(self, path: str, **kw) -> Resp:

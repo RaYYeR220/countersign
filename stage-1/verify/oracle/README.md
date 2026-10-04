@@ -4,12 +4,12 @@ Everything here talks to the service through HTTP only. Nothing in this folder s
 
 | file | purpose |
 |---|---|
-| `model.py` | Reference model of the stage-1 specification: one in-memory state machine, deterministic ids, injectable clock. Precedence defaults for the open questions Q1–Q10 of `evidence/stage-1/ledger-B.md` are marked `# Qn`. |
+| `model.py` | Reference model of the stage-1 contract (`evidence/stage-1/ledger.md`, 134 clauses) under rulings R-1 … R-24 (`evidence/stage-1/rulings.md`); each ruling is cited where applied. One in-memory state machine, deterministic reservation ids/references, random tokens, injectable clock. |
 | `serve_model.py` | Serves the model over HTTP so the suites can be validated against it: `python serve_model.py --port 18400`. |
-| `client.py` | Stdlib HTTP client (`Client`) plus `burst()` for barrier-released concurrent requests. Any 5xx fails the test that caused it (B70). |
+| `client.py` | Stdlib HTTP client (`Client`, one kept-alive connection per instance) plus `burst()` for barrier-released concurrent requests on fresh connections. Any 5xx fails the test that caused it (C1.46). |
 | `fixtures.py` | Shared fixtures and dates (future dates for mutable bookings, past dates for cutoff cases, the four DST transitions). |
 | `conftest.py` | `--base-url` (or `ORACLE_BASE_URL`), optional `--second-base-url` for the cross-process import test. |
-| `test_acceptance.py` | Acceptance suite; test names carry the ledger-B ids they cover. |
+| `test_acceptance.py` | Acceptance suite; test names carry the master-ledger ids (`C1_<n>`) they cover. `clauses.json` maps the original entry-B ids to C1 ids. |
 | `diff_runner.py` | Differential runner: seeded random operation sequences against the model and the service, every response compared, mismatches shrunk to the shortest replaying sequence and saved as JSON for `--replay`. |
 | `op_stats.py` | Prints which (operation, status, code) outcomes the generator reaches on the model, to judge coverage of a seed range. |
 
@@ -18,7 +18,7 @@ Everything here talks to the service through HTTP only. Nothing in this folder s
 ```sh
 # against any running service (candidate container, or the model itself)
 python -m pytest stage-1/verify/oracle -q --base-url http://127.0.0.1:18401 -p no:cacheprovider
-# with a second, independent instance for the import-into-fresh-container test (B149)
+# with a second, independent instance for the import-into-fresh-container test (C1.107)
 python -m pytest stage-1/verify/oracle -q --base-url http://127.0.0.1:18401 --second-base-url http://127.0.0.1:18403 -p no:cacheprovider
 # differential run
 python stage-1/verify/oracle/diff_runner.py --base-url http://127.0.0.1:18401 --seed 1 --runs 50 --ops 60

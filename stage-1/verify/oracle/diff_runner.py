@@ -114,10 +114,15 @@ class ModelTarget(Target):
         return self.model.handle(method, path, query, headers, body)
 
 
+_CLIENTS: dict[str, Client] = {}
+
+
 class HttpTarget(Target):
     def __init__(self, base_url: str):
         super().__init__("service")
-        self.client = Client(base_url, timeout=10, fail_on_5xx=False)
+        # one kept-alive client per base URL for the whole process: shrinking runs hundreds of sequences and a
+        # fresh connection per sequence exhausts the host's ephemeral ports
+        self.client = _CLIENTS.setdefault(base_url, Client(base_url, timeout=10, fail_on_5xx=False))
 
     def raw_call(self, method, path, query, headers, body):
         full = path + ("?" + query if query else "")
