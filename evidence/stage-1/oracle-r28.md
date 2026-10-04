@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-r28 sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-r28 sha=79cd1b2
 
 # Evidence — R-28 applied (supersedes R-26): every reference matches ^[A-Z0-9]{6,12}$ and is unique
 
