@@ -160,11 +160,16 @@ func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
 	if err != nil {
 		return nil, err
 	}
+	seen := map[string]bool{}
 	for _, h := range hours {
 		oh, err := loadOpeningHours(h)
 		if err != nil {
 			return nil, err
 		}
+		if seen[oh.Weekday] {
+			return nil, apperr.Validation("duplicate opening hours for " + oh.Weekday + " in restaurant " + r.ID)
+		}
+		seen[oh.Weekday] = true
 		r.OpeningHours = append(r.OpeningHours, oh)
 	}
 	tables, _, err := o.Objects("tables")
@@ -219,7 +224,7 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 	}
 	ids := map[string]bool{}
 	for _, o := range items {
-		res := &Reservation{Status: Confirmed, CreatedAt: createdAt}
+		res := &Reservation{Status: Confirmed, CreatedAt: Stamp(createdAt)}
 		if res.ID, err = requiredID(o, "id", "reservations[]"); err != nil {
 			return err
 		}
@@ -246,7 +251,7 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		}
 		if s, _, err := o.String("created_at"); err == nil {
 			if t, perr := time.Parse(time.RFC3339, s); perr == nil {
-				res.CreatedAt = t // R-16: a valid fixture timestamp wins over the reset time
+				res.CreatedAt = Stamp(t) // R-16: a valid fixture timestamp wins over the reset time
 			}
 		}
 		r := st.Restaurant(res.RestaurantID)

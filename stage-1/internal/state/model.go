@@ -50,6 +50,9 @@ func (r *Restaurant) Table(id string) *Table {
 	return nil
 }
 
+// Stamp normalises a creation time as R-21 requires: UTC, whole seconds.
+func Stamp(t time.Time) time.Time { return t.UTC().Truncate(time.Second) }
+
 // Reservation statuses.
 const (
 	Confirmed = "confirmed"
