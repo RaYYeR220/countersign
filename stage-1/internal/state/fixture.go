@@ -26,7 +26,7 @@ var LocalStartPattern = regexp.MustCompile(`^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}
 
 // FromFixture builds a complete state from a reset fixture (§3.3, §4). Wrong JSON types are
 // 400 malformed_request; missing fields, bad values and dangling references are 422.
-// Seeded reservations are confirmed and stamped with createdAt.
+// Seeded reservations are confirmed; created_at is the fixture's RFC 3339 value, else createdAt.
 func FromFixture(fx jsonin.Object, createdAt time.Time) (*State, error) {
 	st := Empty()
 	plains, err := loadUsers(st, fx)
@@ -161,11 +161,16 @@ func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
 	if err != nil {
 		return nil, err
 	}
+	seen := map[string]bool{}
 	for _, h := range hours {
 		oh, err := loadOpeningHours(h)
 		if err != nil {
 			return nil, err
 		}
+		if seen[oh.Weekday] {
+			return nil, apperr.Validation("duplicate opening hours for " + oh.Weekday + " in restaurant " + r.ID)
+		}
+		seen[oh.Weekday] = true
 		r.OpeningHours = append(r.OpeningHours, oh)
 	}
 	tables, _, err := o.Objects("tables")
@@ -220,7 +225,7 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 	}
 	ids := map[string]bool{}
 	for _, o := range items {
-		res := &Reservation{Status: Confirmed, CreatedAt: createdAt}
+		res := &Reservation{Status: Confirmed, CreatedAt: Stamp(createdAt)}
 		if res.ID, err = requiredID(o, "id", "reservations[]"); err != nil {
 			return err
 		}
@@ -244,6 +249,11 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		}
 		if _, perr := time.Parse("2006-01-02T15:04", res.StartsAtLocal); perr != nil || !LocalStartPattern.MatchString(res.StartsAtLocal) {
 			return apperr.Validation("reservations[].starts_at_local must be YYYY-MM-DDTHH:MM")
+		}
+		if s, _, err := o.String("created_at"); err == nil {
+			if t, perr := time.Parse(time.RFC3339, s); perr == nil {
+				res.CreatedAt = Stamp(t) // R-16: a valid fixture timestamp wins over the reset time
+			}
 		}
 		r := st.Restaurant(res.RestaurantID)
 		if st.User(res.UserID) == nil || r == nil || r.Table(res.TableID) == nil {
