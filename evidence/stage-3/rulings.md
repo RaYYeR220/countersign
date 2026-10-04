@@ -7,7 +7,7 @@ stage-3 entry-A row `A<n>` where both readers agree. R-46 … R-58 were issued f
 - Clauses: C3.3, C3.4
 - Decision: `explain` is checked after R-12's parameter checks (restaurant_id, date, party_size) and before the 404
   for an unknown restaurant; any value other than the exact string `true` (including `false`, `1`, `""`, `TRUE`) →
-  422 `validation_failed`. A repeated `explain` is accepted only if every occurrence is exactly `true`. Without `explain`, slots carry exactly the stage-2 fields (`starts_at_local`,
+  422 `validation_failed`. A repeated `explain` behaves like the other parameters: only the first value counts. Without `explain`, slots carry exactly the stage-2 fields (`starts_at_local`,
   `starts_at`, `available_table_ids`, `available_options`) and no explanation fields.
 
 ## R-47 — Policy publication: order and field errors
@@ -116,7 +116,7 @@ P1 → R-47 stands (not the proposed order): §7 resolves idempotency "before en
 current-resource checks", so 401 → 400 body → key checks → idempotency → 404 restaurant → 403 → policy validation.
 P2 → R-47: every policy field problem is 422, including a non-object `capacities`, missing/extra table ids,
 non-integer or 0/101 capacities, closes ≤ opens and duplicate weekdays. P3 → R-46: after party_size, before the
-404; repeated `explain` accepted only if every value is `true`. P4 → R-49 (not the proposed order): 404 → 422
+404; a repeated `explain` uses its first value, like the other parameters. P4 → R-49 (not the proposed order): 404 → 422
 invalid `expected_revision` (any non-positive-integer incl. strings, booleans, null, 0, −1, 1.5) → 409
 stale_revision → 409 reservation_cancelled → 409 cutoff_passed → values; per move item R-57. P5 → yes: a stale
 `expected_revision` gives 409 even when the PATCH would be a no-op. P6 → R-50: cancel ignores `expected_revision`;
@@ -127,3 +127,22 @@ stage 3, not observable; do not assert on export field names (the state is opaqu
 `created` entry, at = created_at, revision 1 whatever the status, policy-0 terms from the (imported) fixture
 config. P11 → yes: the resulting date's policy supplies terms and capacities, including a pair's summed capacity
 (C3.49).
+
+## R-59 — `manager_user_ids` fixture validation (extends R-8/R-20)
+- Clauses: C3.18
+- Decision: optional (absent → `[]`); not an array of strings → 400; an id that is empty, longer than 64 characters,
+  not a fixture user, or duplicated → 422, state unchanged. `GET /restaurants/{id}` keeps the fixture shape and
+  includes `manager_user_ids` (and `combinable`); published policies and the restaurant revision never appear there.
+
+## Answers to the Builder's E1–E9 and the Stylist's E1–E4 (stage 3)
+Builder: E1 → R-47 (your default). E2 → R-47 (your default; field order as you list). E3 → R-59 (your default).
+E4 → R-49 (your default: stale before cancelled). E5 → R-51 (restaurant zone, whole seconds). E6 → R-51/R-55
+(revision 1, history [created] only). E7 → R-54 (internal only; not served anywhere in stage 3). E8 → confirmed: a
+real amendment re-checks every resulting field against the resulting date's policy; a no-op only needs confirmed +
+accepted cutoff (+ expected_revision). E9 → confirmed: `PolicyFor(date)` owned by the Builder.
+Stylist: E1 → R-46 (your default, incl. first value for a repeated `explain`). E2 → R-52 refined: types pass first
+(anchor_reference not a string → 400; count/interval_weeks of a non-integer JSON type → 422), then missing → 422 in
+the order anchor_reference, count, interval_weeks, then ranges → 422 — observably identical to R-52; a generated
+occurrence is in a series, so adopting it → 409 already_in_series. E3 → confirmed (created_at = adoption time,
+revision 1, its own date's terms, one created entry; occurrence 0 can become an exception; series revision starts
+at 1). E4 → confirmed: series logic in your package; the Builder's write paths call one hook.
