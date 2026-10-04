@@ -30,3 +30,4 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 | WI | owner | from | clauses | status |
 |----|-------|------|---------|--------|
 | WI-13 | Builder | stage-2 verdict-1 escalation Q2; R-42 | C1.18, C1.41, C2.46–C2.53 | evidence 04196be, merged (rework round 1 of 2 on WI-8 validation) |
+| 2 | (this commit) | + WI-13 (04196be), oracle 363c365 (R-41/R-42/R-35 model) | pending |
