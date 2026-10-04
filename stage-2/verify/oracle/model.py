@@ -584,10 +584,14 @@ class Model:
                 raise Err(422, "validation_failed", "table_ids is required")
             return None
         ids = [obj["table_id"]] if has_one else list(obj["table_ids"])
-        if not ids or any(x == "" for x in ids):
-            raise Err(422, "validation_failed", "table ids must be non-empty")
+        if not ids:
+            raise Err(422, "validation_failed", "table_ids must not be empty")
+        if any(x == "" or len(x) > ID_MAX for x in ids):                          # R-42
+            raise Err(422, "validation_failed", "table ids must be 1..64 characters")
         if len(set(ids)) != len(ids):
             raise Err(422, "validation_failed", "duplicate table id in the set")
+        if len(ids) > 2:                                                          # R-35: before any 404
+            raise Err(422, "combination_not_allowed", "more than two tables")
         return ids
 
     @staticmethod
@@ -600,10 +604,8 @@ class Model:
         return list(ids)
 
     def _check_combination(self, r: dict, ids: list[str]) -> list[str]:
-        """R-35: more than two -> combination_not_allowed; then 404 for an unknown table; then an undeclared pair ->
+        """R-35: (more than two was refused in _table_set) 404 for an unknown table; then an undeclared pair ->
         combination_not_allowed (before the time rules). Returns declared order."""
-        if len(ids) > 2:
-            raise Err(422, "combination_not_allowed", "more than two tables")
         for x in ids:
             if not any(t["id"] == x for t in r["tables"]):
                 raise Err(404, "not_found", "no such table at this restaurant")
@@ -874,8 +876,8 @@ class Model:
         check_fields(obj, self.BOOKING_FIELDS)                       # R-19 passes 1 and 2
         if "table_id" not in obj and "table_ids" not in obj:
             raise Err(422, "validation_failed", "table_ids is required")
-        if obj["restaurant_id"] == "":
-            raise Err(422, "validation_failed", "restaurant_id must not be empty")
+        if obj["restaurant_id"] == "" or len(obj["restaurant_id"]) > ID_MAX:      # R-42
+            raise Err(422, "validation_failed", "restaurant_id must be 1..64 characters")
         table_ids = self._table_set(obj, required=True)              # pass 3
         naive = local_value(obj["starts_at_local"])
         party = party_value(obj["party_size"])
@@ -950,7 +952,7 @@ class Model:
             raise Err(422, "validation_failed", "moves must contain 1..8 objects")
         refs: list[str] = []
         for m in moves:
-            if not isinstance(m, dict) or not isinstance(m.get("reference"), str):
+            if not isinstance(m, dict) or not isinstance(m.get("reference"), str) or m["reference"] == "":   # R-42
                 raise Err(422, "validation_failed", "each move needs a string reference")
             if m["reference"] in refs:
                 raise Err(422, "validation_failed", "duplicate reference")

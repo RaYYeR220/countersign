@@ -84,6 +84,9 @@ func (s *Server) createReservation(w http.ResponseWriter, r *http.Request, user 
 			return nil, apperr.Validation("party_size is required")
 		}
 		restaurantID, _, _ := body.String("restaurant_id")
+		if !validBodyID(restaurantID) {
+			return nil, invalidID("restaurant_id")
+		}
 		requested, _, err := requestedTables(body)
 		if err != nil {
 			return nil, err

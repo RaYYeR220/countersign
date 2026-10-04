@@ -30,8 +30,8 @@ func moveItems(body jsonin.Object) ([]jsonin.Object, []string, error) {
 			return nil, nil, invalid("every move must be an object")
 		}
 		ref, ok, err := items[i].String("reference")
-		if err != nil || !ok {
-			return nil, nil, invalid("every move needs a string reference")
+		if err != nil || !ok || ref == "" {
+			return nil, nil, invalid("every move needs a non-empty string reference")
 		}
 		if seen[ref] {
 			return nil, nil, invalid("references in moves must be distinct")

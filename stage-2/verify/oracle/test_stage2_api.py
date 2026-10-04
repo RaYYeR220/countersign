@@ -188,9 +188,25 @@ def test_C2_53_C2_47_validation_order(c, ada):
     err(book_ids(c, ada, "r_trio", [""], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
     err(book_ids(c, ada, "r_trio", ["q_1", "zzz"], f"{FUT_FRI}T19:00", 2), 404, "not_found")
     err(book_ids(c, ada, "r_trio", ["q_1", "a_1"], f"{FUT_FRI}T19:00", 2), 404, "not_found")
-    # R-35: more than two is reported before an unknown member; an undeclared pair after 404
+    # R-35: more than two is reported before an unknown member or an unknown restaurant; an undeclared pair after 404
     err(book_ids(c, ada, "r_trio", ["q_1", "q_2", "zzz"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
+    err(book_ids(c, ada, "nope", ["q_1", "q_2", "q_3"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
     err(book_ids(c, ada, "r_trio", ["q_1", "zzz"], f"{FUT_FRI}T19:07", 2), 404, "not_found")
+    # R-42: empty or over-64-character ids are 422 before any 404
+    long_id = "x" * 65
+    err(book_ids(c, ada, long_id, ["q_1"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(book_ids(c, ada, "", ["q_1"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(book_ids(c, ada, "nope", [long_id], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(book_ids(c, ada, "r_trio", ["", "q_1"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(book_ids(c, ada, "r_trio", [long_id, "zzz"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(c.book(ada, k(), "nope", long_id, f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(c.book(ada, k(), "nope", "", f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    # inside table_ids: after both-fields and empty-set, before duplicates and the count rule
+    err(c.post("/reservations", {"restaurant_id": "r_trio", "table_id": long_id, "table_ids": [long_id],
+                                 "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}, token=ada, key=k()), 422, "validation_failed")
+    err(book_ids(c, ada, "r_trio", [long_id, long_id], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    err(book_ids(c, ada, "r_trio", [long_id, "q_1", "q_2"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
+    assert c.get("/reservations", token=ada).json["reservations"] == []
     for bad in ("q_1", 5, None, [1], [None], ["q_1", 2], {"id": "q_1"}):
         body = {"restaurant_id": "r_trio", "table_ids": bad, "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
         err(c.post("/reservations", body, token=ada, key=k()), 400, "malformed_request")
@@ -267,6 +283,18 @@ def test_C2_58_moves_with_table_ids(c, ada, bob):
                token=ada, key=k()), 422, "validation_failed")
     err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"], "table_ids": [3]}]},
                token=ada, key=k()), 400, "malformed_request")
+    # R-42 on move items and PATCH: empty / over-64 ids -> 422 before 404; an empty moves reference -> 422
+    long_id = "x" * 65
+    err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"], "table_ids": [long_id]}]},
+               token=ada, key=k()), 422, "validation_failed")
+    err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"], "table_id": ""}]},
+               token=ada, key=k()), 422, "validation_failed")
+    err(c.post("/reservation-moves", {"moves": [{"reference": ""}]}, token=ada, key=k()), 422, "validation_failed")
+    err(c.post("/reservation-moves", {"moves": [{"reference": b["reference"]}, {"reference": ""}]}, token=ada, key=k()), 422, "validation_failed")
+    err(c.patch(f"/reservations/{b['reference']}", {"table_ids": [long_id]}, token=ada), 422, "validation_failed")
+    err(c.patch(f"/reservations/{b['reference']}", {"table_id": long_id}, token=ada), 422, "validation_failed")
+    err(c.patch(f"/reservations/{b['reference']}", {"table_ids": ["", "q_1"]}, token=ada), 422, "validation_failed")
+    assert c.get(f"/reservations/{b['reference']}", token=ada).json == r.json["reservations"][1]
     assert c.get(f"/reservations/{a['reference']}", token=ada).json == r.json["reservations"][0]
     assert c.get(f"/reservations/{b['reference']}", token=ada).json == r.json["reservations"][1]
     # a swap that reshuffles members: a -> [t_2,t_3] party 5, b -> t_1 party 2

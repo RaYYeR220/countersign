@@ -90,19 +90,15 @@ def test_C2_3_C2_10_C2_15_screens_expose_testids_and_nav(page):
     page.goto("/login")
     for n in ("login-email", "login-password", "login-submit"):
         assert tid(page, n).count() == 1, n
-    page.goto("/lookup")
-    page.wait_for_url("**/login")                                   # R-40: lookup needs a session
-    login(page)
-    page.goto("/lookup")
+    page.goto("/lookup")                                            # R-41: reachable by URL while signed out
     for n in ("lookup-reference-input", "lookup-submit"):
         assert tid(page, n).count() == 1, n
-    tid(page, "logout-button").click()
+    assert page.url.endswith("/lookup")
     page.goto("/")
     wait_ready(page)
     for n in ("restaurant-select", "date-input", "party-size-input", "search-button"):
         assert tid(page, n).count() == 1, n
     navs = []
-    login(page)
     for path in ("/", "/signup", "/login", "/lookup"):
         page.goto(path)
         navs.append(sorted(set(page.locator("nav a").evaluate_all("as => as.map(a => a.getAttribute('href'))"))))
@@ -266,15 +262,20 @@ def test_C2_30_booking_requires_sign_in(page, c, ada):
     summary = tid(page, "booking-summary").inner_text()
     assert "1" in summary and "19:00" in summary, summary
     assert cells(page)["slot-t_1-19:00"] == "true"
-    # lookup while signed out goes to /login and comes back to /lookup
+    # R-41: /lookup opens signed out; submitting a lookup goes to /login and comes back to /lookup with the lookup run
+    o = c.book(ada, "k-ui-r41", "r_all", "a_1", f"{FUT_DAY}T12:00", 2).json
     tid(page, "logout-button").click()
     page.goto("/lookup")
+    assert page.url.endswith("/lookup") and tid(page, "lookup-reference-input").count() == 1
+    tid(page, "lookup-reference-input").fill(o["reference"])
+    tid(page, "lookup-submit").click()
     page.wait_for_url("**/login")
     tid(page, "login-email").fill("ada@example.com")
     tid(page, "login-password").fill("correct horse")
     tid(page, "login-submit").click()
     page.wait_for_url("**/lookup")
-    assert tid(page, "lookup-reference-input").count() == 1
+    tid(page, "reservation-detail").wait_for()
+    assert tid(page, "reservation-status").inner_text().strip() == "confirmed"
 
 
 def test_C2_56_C2_57_pair_booking_labels(page, c, ada):
