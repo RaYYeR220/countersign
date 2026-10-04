@@ -214,3 +214,42 @@ func TestResetAndImportRefuseUndeclaredPair(t *testing.T) {
 		t.Error("refused import changed state")
 	}
 }
+
+// R-42: empty or over-long ids in bodies are invalid values (422) before any 404.
+func TestEmptyAndLongIDsAre422(t *testing.T) {
+	e := newComboEnv(t)
+	long := strings.Repeat("x", 65)
+	posts := []string{
+		`{"restaurant_id":"","table_id":"t_1","starts_at_local":"2026-09-24T19:00","party_size":2}`,
+		`{"restaurant_id":"` + long + `","table_id":"t_1","starts_at_local":"2026-09-24T19:00","party_size":2}`,
+		`{"restaurant_id":"r_anker","table_id":"","starts_at_local":"2026-09-24T19:00","party_size":2}`,
+		`{"restaurant_id":"r_anker","table_id":"` + long + `","starts_at_local":"2026-09-24T19:00","party_size":2}`,
+		pairBooking(`[""]`, "2026-09-24T19:00", 2),
+		pairBooking(`["","t_1"]`, "2026-09-24T19:00", 2),
+		pairBooking(`["`+long+`"]`, "2026-09-24T19:00", 2),
+		pairBooking(`["","",""]`, "2026-09-24T19:00", 2),
+	}
+	for i, body := range posts {
+		rec := e.book(e.ada, fmt.Sprintf("id%d", i), body)
+		if rec.Code != 422 || errorCode(t, rec) != "validation_failed" {
+			t.Errorf("POST %s = %d %s", body, rec.Code, rec.Body)
+		}
+	}
+	expect(t, e.book(e.ada, "three", pairBooking(`["t_1","t_2","t_9"]`, "2026-09-24T19:00", 2)), 422, "combination_not_allowed")
+	expect(t, e.book(e.ada, "unknown", pairBooking(`["t_9"]`, "2026-09-24T19:00", 2)), 404, "not_found")
+	if rec := e.req("GET", "/reservations", e.ada, "", ""); strings.Count(rec.Body.String(), `"reference"`) != 2 {
+		t.Errorf("rejected requests created bookings: %s", rec.Body) // only the two seeds
+	}
+
+	a := e.mustBook(e.ada, "a", "t_3", "2026-09-24T19:00", 2)
+	before := e.req("GET", "/reservations/"+a.Reference, e.ada, "", "").Body.String()
+	for i, fields := range []string{`"table_id":""`, `"table_id":"` + long + `"`, `"table_ids":[""]`, `"table_ids":["","t_1"]`, `"table_ids":["` + long + `"]`} {
+		expect(t, e.req("PATCH", "/reservations/"+a.Reference, e.ada, "", "{"+fields+"}"), 422, "validation_failed")
+		body := fmt.Sprintf(`{"moves":[{"reference":%q,%s}]}`, a.Reference, fields)
+		expect(t, e.move(e.ada, fmt.Sprintf("mv%d", i), body), 422, "validation_failed")
+	}
+	expect(t, e.move(e.ada, "mv-empty-ref", `{"moves":[{"reference":""}]}`), 422, "validation_failed")
+	if after := e.req("GET", "/reservations/"+a.Reference, e.ada, "", "").Body.String(); after != before {
+		t.Errorf("booking changed:\n%s\n%s", before, after)
+	}
+}
