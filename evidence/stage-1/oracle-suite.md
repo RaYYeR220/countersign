@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-suite sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-suite sha=65605b2
 
 # Evidence — Oracle acceptance suite, stage 1
 
