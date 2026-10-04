@@ -50,6 +50,11 @@ func TestUnknownRouteAndMethod(t *testing.T) {
 	if rec := do(h, http.MethodGet, "/nope", ""); rec.Code != 404 || errorCode(t, rec) != "not_found" {
 		t.Errorf("unknown path = %d %s", rec.Code, rec.Body)
 	}
+	for _, p := range []string{"/reservations//cancel", "/restaurants/", "/health/", "/a/../health"} {
+		if rec := do(h, http.MethodGet, p, ""); rec.Code != 404 || errorCode(t, rec) != "not_found" {
+			t.Errorf("non-canonical path %s = %d %s", p, rec.Code, rec.Body)
+		}
+	}
 	if rec := do(h, http.MethodDelete, "/health", ""); rec.Code != 405 || errorCode(t, rec) != "method_not_allowed" {
 		t.Errorf("wrong method = %d %s", rec.Code, rec.Body)
 	}
