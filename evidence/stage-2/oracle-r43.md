@@ -1,4 +1,4 @@
-[EVIDENCE] stage=2 wi=oracle-r43 sha=<filled at commit>
+[EVIDENCE] stage=2 wi=oracle-r43 sha=109903b
 
 # Evidence — R-43 applied: both table fields present → 422 before the type pass
 
