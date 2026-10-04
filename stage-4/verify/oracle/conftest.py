@@ -25,6 +25,8 @@ def pytest_addoption(parser):
                      help="a running accepted stage-1 service, used to produce a real stage-1 export for the upgrade test")
     parser.addoption("--stage2-base-url", default=os.environ.get("ORACLE_STAGE2_BASE_URL", ""),
                      help="a running accepted stage-2 service, used to produce a real stage-2 export for the upgrade test")
+    parser.addoption("--stage3-base-url", default=os.environ.get("ORACLE_STAGE3_BASE_URL", ""),
+                     help="a running accepted stage-3 service, used to produce a real stage-3 export for the upgrade test")
     parser.addoption("--stage1-export", default=os.environ.get("ORACLE_STAGE1_EXPORT", ""),
                      help="path to a saved stage-1 export (used when no --stage1-base-url)")
     parser.addoption("--ui", action="store_true", default=False, help="run the headless-browser suite too")

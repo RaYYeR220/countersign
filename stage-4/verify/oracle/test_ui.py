@@ -503,3 +503,27 @@ def test_C2_14_no_horizontal_scroll_labels_focus(browser, base_url, c, width):
         assert not style.startswith("none|0px|none"), style
     finally:
         ctx.close()
+
+
+# ============================================================ stage 4: screens reflect an applied plan (B4)
+def test_C4_B4_screens_reflect_applied_plan(page, c, ada):
+    mia = c.login("mia@example.com", "mia manages")
+    o = c.post("/reservations", {"restaurant_id": "r_trio", "table_id": "q_2", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 3}, token=ada, key="k-ui-plan").json
+    p = c.post("/restaurants/r_trio/replans", {"table_id": "q_2", "from": f"{FUT_FRI}T18:00:00+02:00", "to": f"{FUT_FRI}T23:00:00+02:00"}, token=mia, key="k-ui-prev")
+    assert p.status == 201, p
+    a = c.post(f"/restaurants/r_trio/replans/{p.json['plan_id']}/apply", {}, token=mia, key="k-ui-apply")
+    assert a.status == 201 and a.json["reservations"][0]["table_ids"] == ["q_3"], a
+    login(page)
+    search(page, "r_trio", FUT_FRI, 1)
+    got = cells(page)
+    for hm in ("18:00", "19:00", "20:30", "21:00", "21:30"):
+        assert got[f"slot-q_2-{hm}"] == "false", hm                     # the closure shows as unavailable
+        assert got.get(f"slot-q_1+q_2-{hm}") in (None, "false") and got.get(f"slot-q_2+q_3-{hm}") in (None, "false"), hm
+    assert got["slot-q_1-21:00"] == "true"
+    page.goto("/lookup")
+    tid(page, "lookup-reference-input").fill(o["reference"])
+    tid(page, "lookup-submit").click()
+    tid(page, "reservation-detail").wait_for()
+    t = tid(page, "reservation-tables").inner_text()
+    assert "Garden" in t and "Centre" not in t, t                       # lookup shows the new table
+    assert tid(page, "reservation-status").inner_text().strip() == "confirmed"

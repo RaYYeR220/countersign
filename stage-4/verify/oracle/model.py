@@ -1,4 +1,8 @@
-"""Tablekeeper stage-3 reference model (Oracle seat).
+"""Tablekeeper stage-4 reference model (Oracle seat).
+
+Stage 4 adds seating replans after a table closure (preview with a brute-force optimal planner, atomic apply with
+stale_plan / plan_already_applied), closures that block availability, explanations and bookings, series amendments,
+the observable restaurant revision, and the upgrade path from stage-1/2/3 model states (schema v4).
 
 Stage 3 adds dated booking policies (publication, selection by local start date, accepted terms and revisions on
 every reservation), availability explanations, reservation history and decision, expected_revision, recurring
@@ -43,7 +47,8 @@ DIGITS_RE = re.compile(r"^[0-9]+$")
 ID_MAX = 64
 TRACK = "tablekeeper"
 FORMAT_VERSION = 1
-STATE_MARKER = "oracle-model-v3"
+STATE_MARKER = "oracle-model-v4"
+STATE_MARKER_V3 = "oracle-model-v3"
 STATE_MARKER_V2 = "oracle-model-v2"
 STATE_MARKER_V1 = "oracle-model-v1"
 TERMS_KEYS = ("policy_version", "slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes",
@@ -215,6 +220,9 @@ ROUTES = [  # (method, pattern as list of segments; "*" matches one segment)
     ("POST", ["restaurants", "*", "policies"]), ("GET", ["restaurants", "*", "policies"]),
     ("GET", ["reservations", "*", "history"]), ("GET", ["reservations", "*", "decision"]),
     ("POST", ["series"]), ("GET", ["series", "*"]),
+    # stage 4
+    ("POST", ["restaurants", "*", "replans"]), ("POST", ["restaurants", "*", "replans", "*", "apply"]),
+    ("POST", ["series", "*", "amend"]),
 ]
 
 
@@ -250,11 +258,15 @@ class Model:
         self.idem: dict[str, dict] = {}           # "user|METHOD|path|key" -> {"body","status","response"}
         self.series: dict[str, dict] = {}         # series_id -> {series_id,user_id,revision,interval_weeks,count,occurrences}
         self.series_order: list[str] = []
+        self.closures: list[dict] = []            # {restaurant_id, table_id, from, to (UTC datetimes), plan_id}
+        self.plans: dict[str, dict] = {}          # plan_id -> stored preview
+        self.plan_order: list[str] = []
         self.counters = {"user": 0, "reservation": 0}
 
     def _adopt(self, other: "Model") -> None:
         for attr in ("users", "user_order", "tokens", "restaurants", "restaurant_order",
-                     "reservations", "reservation_order", "references", "idem", "counters", "series", "series_order"):
+                     "reservations", "reservation_order", "references", "idem", "counters", "series", "series_order",
+                     "closures", "plans", "plan_order"):
             setattr(self, attr, getattr(other, attr))
 
     # ------------------------------------------------------------------ id generation
@@ -341,10 +353,22 @@ class Model:
             return self.get_series(self._auth_or_404(headers), parts[1])             # B69
         # protected endpoints: 401 first (R-1, C1.36), then body parsing
         user_id = self._auth(headers)
-        if method == "POST" and parts[0] == "restaurants":
+        if method == "POST" and parts[0] == "restaurants" and parts[2] == "policies":
             rid = parts[1]
             return self._keyed(user_id, "POST", f"/restaurants/{rid}/policies", headers, body,
                                lambda u, o: self.publish_policy(u, rid, o))
+        if method == "POST" and parts[0] == "restaurants" and len(parts) == 3:              # stage 4: preview
+            rid = parts[1]
+            return self._keyed(user_id, "POST", f"/restaurants/{rid}/replans", headers, body,
+                               lambda u, o: self.replan_preview(u, rid, o))
+        if method == "POST" and parts[0] == "restaurants" and len(parts) == 5:              # stage 4: apply
+            rid, pid = parts[1], parts[3]
+            return self._keyed(user_id, "POST", f"/restaurants/{rid}/replans/{pid}/apply", headers, body,
+                               lambda u, o: self.replan_apply(u, rid, pid, o))
+        if method == "POST" and len(parts) == 3 and parts[0] == "series":                   # stage 4: amend
+            sid = parts[1]
+            return self._keyed(user_id, "POST", f"/series/{sid}/amend", headers, body,
+                               lambda u, o: self.amend_series(u, sid, o))
         if method == "POST" and parts == ["series"]:
             return self._keyed(user_id, "POST", "/series", headers, body, self.create_series)
         if method == "POST" and parts == ["reservations"]:
@@ -824,6 +848,8 @@ class Model:
             "idempotency": [{"key": k_, **v} for k_, v in self.idem.items()],
             "counters": dict(self.counters),
             "series": [self.series[s_] for s_ in self.series_order],
+            "closures": [{**c, "from": fmt_utc(c["from"]), "to": fmt_utc(c["to"])} for c in self.closures],
+            "plans": [self._plan_export(self.plans[p_]) for p_ in self.plan_order],
         }
         return json.loads(json.dumps({"track": TRACK, "format_version": FORMAT_VERSION, "state": state}))
 
@@ -831,14 +857,19 @@ class Model:
         if doc.get("track") != TRACK or doc.get("format_version") != FORMAT_VERSION:
             raise Err(422, "validation_failed", "wrong track or format_version")
         state = doc.get("state")
-        if not isinstance(state, dict) or state.get("schema") not in (STATE_MARKER, STATE_MARKER_V2, STATE_MARKER_V1):
+        if not isinstance(state, dict) or state.get("schema") not in (STATE_MARKER, STATE_MARKER_V3, STATE_MARKER_V2, STATE_MARKER_V1):
             raise Err(422, "validation_failed", "state is not one this service produced")   # R-24
         if state.get("schema") == STATE_MARKER_V1:
             state = self._migrate_v1(state)                                                  # stage 2 (B52)
         if state.get("schema") == STATE_MARKER_V2:
             state = json.loads(json.dumps(state))
-            state["schema"] = STATE_MARKER
+            state["schema"] = STATE_MARKER_V3
             state.setdefault("series", [])        # stage-3 (B76): records without revision/terms/history are filled in
+        if state.get("schema") == STATE_MARKER_V3:
+            state = json.loads(json.dumps(state))
+            state["schema"] = STATE_MARKER
+            state.setdefault("closures", [])      # stage-4 (B41): no closures, no plans
+            state.setdefault("plans", [])
         new = self._validated_state(state)
         self._adopt(new)
         return 204, None
@@ -919,7 +950,9 @@ class Model:
                 hist = s_.get("history")
                 need(isinstance(hist, list) and len(hist) >= 1)
                 for i_, h in enumerate(hist):
-                    need(isinstance(h, dict) and h.get("seq") == i_ + 1 and h.get("event") in ("created", "changed", "cancelled"))
+                    need(isinstance(h, dict) and h.get("seq") == i_ + 1
+                         and h.get("event") in ("created", "changed", "cancelled", "reassigned"))
+                    need(h.get("event") != "reassigned" or (isinstance(h.get("plan_id"), str) and h["plan_id"] != ""))   # stage 4
                     need(isinstance(h.get("changes"), list) and parse_rfc3339(h.get("at")) is not None)
                     need(is_json_int(h.get("revision")) and 1 <= int(h["revision"]) <= int(s_["revision"]))
                     need(isinstance(h.get("accepted_terms"), dict) and set(h["accepted_terms"]) == set(TERMS_KEYS))
@@ -973,7 +1006,36 @@ class Model:
             sid = rec.get("series_id")
             need(sid is None or (sid in new.series and any(o["reservation_id"] == rec["reservation_id"]
                                                              for o in new.series[sid]["occurrences"])))
+        for c in alist("closures"):                                                 # stage 4
+            need(isinstance(c, dict) and c.get("restaurant_id") in new.restaurants and isinstance(c.get("table_id"), str))
+            need(any(t["id"] == c["table_id"] for t in new.restaurants[c["restaurant_id"]]["tables"]))
+            frm, to = parse_rfc3339(c.get("from")), parse_rfc3339(c.get("to"))
+            need(frm is not None and to is not None and frm < to and isinstance(c.get("plan_id"), str))
+            new.closures.append({"restaurant_id": c["restaurant_id"], "table_id": c["table_id"], "from": frm, "to": to,
+                                 "plan_id": c["plan_id"]})
+        for pl in alist("plans"):
+            need(isinstance(pl, dict) and isinstance(pl.get("plan_id"), str) and 0 < len(pl["plan_id"]) <= ID_MAX)
+            need(pl["plan_id"] not in new.plans and pl.get("restaurant_id") in new.restaurants)
+            need(is_json_int(pl.get("revision_at_preview")) and isinstance(pl.get("applied"), bool))
+            cl = pl.get("closure")
+            need(isinstance(cl, dict) and isinstance(cl.get("table_id"), str))
+            frm, to = parse_rfc3339(cl.get("from")), parse_rfc3339(cl.get("to"))
+            need(frm is not None and to is not None and frm < to)
+            need(isinstance(pl.get("assignments"), list) and isinstance(pl.get("response"), dict))
+            for a in pl["assignments"]:
+                need(isinstance(a, dict) and a.get("reservation_id") in new.reservations and isinstance(a.get("table_ids"), list)
+                     and isinstance(a.get("changed"), bool))
+            new.plans[pl["plan_id"]] = {"plan_id": pl["plan_id"], "restaurant_id": pl["restaurant_id"],
+                                        "revision_at_preview": int(pl["revision_at_preview"]), "applied": pl["applied"],
+                                        "closure": {"table_id": cl["table_id"], "from": frm, "to": to},
+                                        "assignments": [dict(a) for a in pl["assignments"]], "response": pl["response"]}
+            new.plan_order.append(pl["plan_id"])
         return new
+
+    @staticmethod
+    def _plan_export(pl: dict) -> dict:
+        return {**pl, "closure": {"table_id": pl["closure"]["table_id"], "from": fmt_utc(pl["closure"]["from"]),
+                                  "to": fmt_utc(pl["closure"]["to"])}}
 
     # ------------------------------------------------------------------ auth (R-4, R-19)
     def signup(self, obj: dict):
@@ -1085,7 +1147,12 @@ class Model:
             slots.append(slot)
         return 200, {"restaurant_id": r["id"], "date": q["date"], "timezone": r["timezone"], "slots": slots}
 
+    def _table_closed(self, table_id: str, start: datetime, end: datetime) -> bool:
+        return any(c["table_id"] == table_id and c["from"] < end and start < c["to"] for c in self.closures)
+
     def _table_busy(self, table_id: str, start: datetime, end: datetime, exclude: Optional[set[str]]) -> bool:
+        if self._table_closed(table_id, start, end):                       # stage 4 (B25): closures block like bookings
+            return True
         for rec in self.reservations.values():
             if rec["status"] != "confirmed" or table_id not in rec["table_ids"]:
                 continue
@@ -1344,8 +1411,8 @@ class Model:
         for f in ("anchor_reference", "count", "interval_weeks"):
             if f not in obj:
                 raise Err(422, "validation_failed", f"{f} is required")
-        if obj["anchor_reference"] == "":
-            raise Err(422, "validation_failed", "anchor_reference must not be empty")
+        if obj["anchor_reference"] == "" or len(obj["anchor_reference"]) > ID_MAX:            # R-60
+            raise Err(422, "validation_failed", "anchor_reference must be 1..64 characters")
         count, interval = obj["count"], obj["interval_weeks"]
         if not is_json_int(count) or not 2 <= int(count) <= 12:
             raise Err(422, "validation_failed", "count must be an integer 2..12")
@@ -1392,3 +1459,189 @@ class Model:
         if ser is None or ser["user_id"] != user_id:
             raise Err(404, "not_found", "no such series")
         return 200, self._series_view(ser)
+
+    # ------------------------------------------------------------------ seating replans (stage 4)
+    @staticmethod
+    def _instant(v: Any) -> datetime:
+        """B6 (Q1): an RFC 3339 instant with a numeric offset; `Z` is not an explicit offset."""
+        if not isinstance(v, str):
+            raise Err(400, "malformed_request", "instants must be strings")
+        if v.endswith("Z") or v.endswith("z"):
+            raise Err(422, "validation_failed", "instants need an explicit numeric offset")
+        dt = parse_rfc3339(v)
+        if dt is None or not re.search(r"[+-]\d{2}:\d{2}$", v):
+            raise Err(422, "validation_failed", "instants must be RFC 3339 with an explicit offset")
+        return dt
+
+    def _manager(self, user_id: str, rid: str) -> dict:
+        r = self.restaurants.get(rid)
+        if r is None:
+            raise Err(404, "not_found", "no such restaurant")
+        if user_id not in r["manager_user_ids"]:
+            raise Err(403, "forbidden", "not a manager of this restaurant")
+        return r
+
+    def _options(self, r: dict) -> list[list[str]]:
+        """Option ranks (B12): singles in fixture order, then declared pairs."""
+        return [[t["id"]] for t in r["tables"]] + [list(p_) for p_ in r["combinable"]]
+
+    def replan_preview(self, user_id: str, rid: str, obj: dict):
+        r = self._manager(user_id, rid)
+        if "table_id" in obj and not isinstance(obj["table_id"], str):
+            raise Err(400, "malformed_request", "table_id must be a string")
+        for f in ("table_id", "from", "to"):
+            if f not in obj:
+                raise Err(422, "validation_failed", f"{f} is required")
+        if obj["table_id"] == "" or len(obj["table_id"]) > ID_MAX:
+            raise Err(422, "validation_failed", "table_id must be 1..64 characters")
+        frm, to = self._instant(obj["from"]), self._instant(obj["to"])
+        if not frm < to:
+            raise Err(422, "validation_failed", "from must be before to")
+        if not any(t["id"] == obj["table_id"] for t in r["tables"]):
+            raise Err(404, "not_found", "no such table at this restaurant")
+        closed = obj["table_id"]
+        considered = sorted((rec for rec in self.reservations.values()
+                             if rec["status"] == "confirmed" and rec["restaurant_id"] == rid
+                             and rec["start"] < to and frm < rec["end"]), key=lambda x: x["reference"])
+        if len(r["tables"]) > 6 or len(r["combinable"]) > 4 or len(considered) > 6:
+            raise Err(422, "planning_limit", "input too large to plan")
+        considered_ids = {rec["reservation_id"] for rec in considered}
+        options = self._options(r)
+
+        def feasible(rec: dict, ids: list[str]) -> bool:
+            caps = rec["terms"]["capacities"]
+            if closed in ids or sum(caps.get(x, 0) for x in ids) < rec["party_size"]:
+                return False
+            return not any(self._table_busy(x, rec["start"], rec["end"], exclude=considered_ids) for x in ids)
+
+        per = []
+        for rec in considered:
+            cands = [(rank, ids) for rank, ids in enumerate(options) if feasible(rec, ids)]
+            if not cands:
+                raise Err(409, "no_feasible_plan", "a considered booking cannot be seated")
+            per.append(cands)
+        best = None
+        best_key = None
+
+        def search(i: int, chosen: list):
+            nonlocal best, best_key
+            if i == len(considered):
+                moved = sum(1 for rec, (_, ids) in zip(considered, chosen) if set(ids) != set(rec["table_ids"]))
+                unused = sum(sum(rec["terms"]["capacities"][x] for x in ids) - rec["party_size"]
+                             for rec, (_, ids) in zip(considered, chosen))
+                key = (moved, unused, tuple(rank for rank, _ in chosen))
+                if best_key is None or key < best_key:
+                    best_key, best = key, list(chosen)
+                return
+            rec = considered[i]
+            for rank, ids in per[i]:
+                clash = False
+                for j in range(i):
+                    other, (_, ids2) = considered[j], chosen[j]
+                    if set(ids) & set(ids2) and rec["start"] < other["end"] and other["start"] < rec["end"]:
+                        clash = True
+                        break
+                if not clash:
+                    chosen.append((rank, ids))
+                    search(i + 1, chosen)
+                    chosen.pop()
+
+        search(0, [])
+        if best is None:
+            raise Err(409, "no_feasible_plan", "no conflict-free assignment exists")
+        zone = ZoneInfo(r["timezone"])
+        pid = f"plan_{next(_SEQ)}"
+        assignments = [{"reference": rec["reference"], "reservation_id": rec["reservation_id"], "table_ids": list(ids),
+                        "changed": set(ids) != set(rec["table_ids"])} for rec, (_, ids) in zip(considered, best)]
+        response = {"plan_id": pid, "restaurant_revision": r["revision"],
+                    "closure": {"table_id": closed, "from": fmt(frm, zone), "to": fmt(to, zone)},
+                    "assignments": [{k_: a[k_] for k_ in ("reference", "table_ids", "changed")} for a in assignments],
+                    "moved_count": best_key[0], "unused_seats": best_key[1]}
+        self.plans[pid] = {"plan_id": pid, "restaurant_id": rid, "revision_at_preview": r["revision"], "applied": False,
+                           "closure": {"table_id": closed, "from": frm, "to": to}, "assignments": assignments,
+                           "response": json.loads(json.dumps(response))}
+        self.plan_order.append(pid)
+        return 201, json.loads(json.dumps(response))
+
+    def replan_apply(self, user_id: str, rid: str, pid: str, obj: dict):
+        r = self._manager(user_id, rid)
+        pl = self.plans.get(pid)
+        if pl is None or pl["restaurant_id"] != rid:
+            raise Err(404, "not_found", "no such plan")                                      # B19
+        if pl["applied"]:
+            raise Err(409, "plan_already_applied", "plan was already applied")               # B21 (Q11)
+        if pl["revision_at_preview"] != r["revision"]:
+            raise Err(409, "stale_plan", "the restaurant changed since the preview")         # B20
+        at = self.now()
+        self.closures.append({"restaurant_id": rid, "table_id": pl["closure"]["table_id"], "from": pl["closure"]["from"],
+                              "to": pl["closure"]["to"], "plan_id": pid})
+        touched_series: set[str] = set()
+        for a in pl["assignments"]:
+            rec = self.reservations[a["reservation_id"]]
+            if a["changed"]:
+                before = list(rec["table_ids"])
+                rec["table_ids"] = list(a["table_ids"])
+                rec["revision"] += 1                                                         # B23
+                self._record(rec, "reassigned", [{"field": "table_ids", "from": before, "to": list(a["table_ids"])}], at)
+                rec["history"][-1]["plan_id"] = pid
+                if rec.get("series_id"):
+                    touched_series.add(rec["series_id"])
+        for sid in touched_series:                                                           # B39
+            self.series[sid]["revision"] += 1
+        r["revision"] += 1                                                                   # B24
+        pl["applied"] = True
+        out = {"plan_id": pid, "restaurant_revision": r["revision"],
+               "reservations": [self._view(self.reservations[a["reservation_id"]]) for a in pl["assignments"]]}
+        return 201, out
+
+    # ------------------------------------------------------------------ series amendment (stage 4)
+    def amend_series(self, user_id: str, sid: str, obj: dict):
+        ser = self.series.get(sid)
+        if ser is None or ser["user_id"] != user_id:
+            raise Err(404, "not_found", "no such series")                                    # B29
+        for f in ("expected_revision", "from_index", "local_time"):                          # B30: every problem 422
+            if f not in obj:
+                raise Err(422, "validation_failed", f"{f} is required")
+        ev, fi, lt = obj["expected_revision"], obj["from_index"], obj["local_time"]
+        if not is_json_int(ev) or int(ev) < 1:
+            raise Err(422, "validation_failed", "expected_revision must be a positive integer")
+        if not is_json_int(fi) or not 0 <= int(fi) <= ser["count"] - 1:
+            raise Err(422, "validation_failed", "from_index must be an integer in 0..count-1")
+        if not isinstance(lt, str) or hhmm_to_minutes(lt) is None or hhmm_to_minutes(lt) == 24 * 60:
+            raise Err(422, "validation_failed", "local_time must be HH:MM")
+        if int(ev) != ser["revision"]:
+            raise Err(409, "stale_revision", "expected_revision does not match the series revision")
+        plans = []
+        for occ in ser["occurrences"][int(fi):]:                                             # B31, index order
+            rec = self.reservations[occ["reservation_id"]]
+            if rec["status"] != "confirmed" or occ["exception"]:
+                continue
+            new_local = rec["starts_at_local"][:11] + lt
+            if new_local == rec["starts_at_local"]:
+                continue                                                                     # B32: no-op
+            if self._cutoff_passed(rec):
+                raise Err(409, "cutoff_passed", "an occurrence is within its cutoff")       # B33
+            r = self.restaurants[rec["restaurant_id"]]
+            naive = local_value(new_local)
+            pol = self._policy_for(r, naive.date())
+            start, end, ids = self._resolve_booking(r, pol, list(rec["table_ids"]), naive, rec["party_size"],
+                                                    check_overlap=False)
+            plans.append((rec, (ids, new_local, rec["party_size"], start, end, pol)))
+        changed_ids = {rec["reservation_id"] for rec, _ in plans}
+        for rec, (ids, _, _, start, end, _) in plans:                                        # B34
+            if any(self._table_busy(x, start, end, exclude=changed_ids) for x in ids):
+                raise Err(409, "table_unavailable", "a resulting occurrence conflicts")
+            for rec2, (ids2, _, _, s2, e2, _) in plans:
+                if rec2 is not rec and set(ids) & set(ids2) and start < e2 and s2 < end:
+                    raise Err(409, "table_unavailable", "resulting occurrences conflict")
+        at = self.now()
+        for rec, plan in plans:
+            table_ids, local, party, start, end, pol = plan
+            changes = self._diff(rec["table_ids"], table_ids, rec["starts_at_local"], local, rec["party_size"], party)
+            rec.update({"starts_at_local": local, "start": start, "end": end, "terms": json.loads(json.dumps(pol)),
+                        "revision": rec["revision"] + 1})
+            self._record(rec, "changed", changes, at)                                        # B36: no exception flag
+        if plans:
+            ser["revision"] += 1
+            self.restaurants[self.reservations[ser["occurrences"][0]["reservation_id"]]["restaurant_id"]]["revision"] += 1
+        return 201, self._series_view(ser)
