@@ -109,3 +109,7 @@ lookup confirmed/cancelled/error, auth-error, 375/768/1280 layouts)
 ## Result
 result=REJECT — one product finding (F-1, R-42 id validation → WI-13) plus two Oracle defects (F-2, F-3) keep steps 2 and 3 red;
 every other step, including 116 browser checks and the stage-1 upgrade, is green.
+
+## Closure
+Superseded on 2026-10-04 by stage-2 candidate 2 (090df19d857a659359cc2a6c19e943c7aad6d286): WI-13 (Builder 04196be) addresses F-1;
+Oracle 363c365 addresses F-2 and F-3.
