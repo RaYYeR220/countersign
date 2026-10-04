@@ -119,3 +119,12 @@ non-string, is 422 (not 400). Q2 → R-62 as listed, except that `from`/`to` typ
 (confirmed). Q12: confirmed — any manager of the restaurant may apply a plan previewed by another manager.
 Q13 → R-67 (confirmed). Q14 → R-69 (confirmed). Q15/Q16 → R-68 (confirmed). Q17–Q20 → R-70/R-71 (confirmed).
 Q21 → R-66/R-67 (confirmed). Q22 → R-18 (confirmed). Q23 → R-72 (confirmed). Q24 → R-60 (confirmed).
+
+## R-74 — Imported history must start with `created` (extends R-24)
+- Clauses: C1.109, C3.13, C3.28, C4.24
+- Decision: an imported reservation whose history is not a dense `seq` 1..n sequence starting with exactly one
+  `created` entry, with `cancelled` (if present) last, is an invalid state → 422 `validation_failed`, destination
+  unchanged. More generally, import refuses any record shape this service can never produce under C3.10–C3.16 and
+  R-51/R-67 (e.g. `created` after seq 1, an event other than created/changed/cancelled/reassigned).
+- Rationale: R-24 accepts only states "this service recognises"; such a history cannot arise from any sequence of
+  operations. Rejected: accepting it because each entry is individually well-formed.
