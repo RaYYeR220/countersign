@@ -128,3 +128,12 @@ stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted)
   A moves `reference` that is empty is a structural error (R-22 a) → 422. Path parameters are unaffected (R-25).
 - Rationale: C1.18 makes ids non-empty strings of at most 64 characters and C1.41 makes an invalid format a 422;
   R-8/O-11 already treat an empty fixture id as 422. Strict reading of a stated format (lesson of R-26/R-28).
+
+## R-43 — Both table fields with a wrongly typed `table_ids` (clarifies R-35 vs R-19)
+- Clauses: C2.47, C1.34
+- Decision: when both `table_id` and `table_ids` are present, the response is 422 `validation_failed` whatever the
+  JSON type of either field; the "both fields" check precedes R-19's type pass for these two fields. With only
+  `table_ids` present, a wrong type (not an array of strings) is 400 `malformed_request` (R-19 pass 1); with only
+  `table_id`, a non-string is 400.
+- Rationale: R-35 is the endpoint-specific order and lists "both" before the `table_ids` type check; C2.47 says
+  "Sending both is 422" without exception. Rejected: applying R-19's general type pass first (model default).
