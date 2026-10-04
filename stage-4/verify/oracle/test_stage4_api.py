@@ -537,3 +537,68 @@ def test_O15_import_boundaries(c, ada, bob, mia):
     assert c.import_(exp).status == 204
     assert _snapshot(c, [ada, bob]) | {"policies": c.get("/restaurants/r_anker/policies").json,
                                        "series": c.get(f"/series/{s['series_id']}", token=ada).json} == before
+
+
+# ============================================================ O-15b, O-16
+def test_O15b_import_refusals(c, ada, bob):
+    from test_hardening import _records, _reservation_records, _snapshot, _top_key_of
+    assert c.patch("/reservations/SEED01", {"party_size": 3}, token=bob).status == 200          # a history with a change
+    exp = c.export().json
+    before = _snapshot(c, [ada, bob]) | {"hist": c.get("/reservations/SEED01/history", token=bob).json}
+    cases = []
+    for which, locate in (("restaurants", lambda s: _records(s, id="r_anker")[0][2]),
+                          ("reservations", lambda s: _reservation_records(s, reference="SEED01")[0][2])):
+        e = copy.deepcopy(exp)
+        e["state"][_top_key_of(e["state"], locate(e["state"]))] = None
+        cases.append((f"{which} collection is null", e))
+    for bad in ("", "x" * 65):
+        e = copy.deepcopy(exp)
+        _records(e["state"], email="ada@example.com")[0][2]["id"] = bad
+        cases.append((f"user id {bad[:3]!r}", e))
+    e = copy.deepcopy(exp)
+    _records(e["state"], id="r_anker")[0][2]["tables"] = None
+    cases.append(("restaurant tables null", e))
+    e = copy.deepcopy(exp)
+    rec = _reservation_records(e["state"], reference="SEED01")[0][2]
+    hist = next(v for v in rec.values() if isinstance(v, list) and v and isinstance(v[0], dict) and "seq" in v[0])
+    hist[-1]["changes"] = None
+    cases.append(("history changes null", e))
+    for name, doc in cases:
+        r = c.import_(doc)
+        assert r.status == 422 and r.code == "validation_failed", (name, r)
+        assert _snapshot(c, [ada, bob]) | {"hist": c.get("/reservations/SEED01/history", token=bob).json} == before, name
+    assert c.import_(exp).status == 204
+
+
+def test_O16_fixture_integers_at_2_pow_31(c, mia):
+    big = 2 ** 31 - 1
+    fx = base_fixture()
+    fx["restaurants"][0]["tables"][0]["capacity"] = big                                           # no stated upper bound
+    assert c.reset(fx).status == 204
+    assert c.get("/restaurants/r_anker").json["tables"][0]["capacity"] == big
+    ada = c.login("ada@example.com", "correct horse")
+    r = c.availability("r_anker", FUT_FRI, big)
+    assert r.status == 200 and r.json["slots"][0]["available_table_ids"] == ["t_1"]
+    o = c.book(ada, k(), "r_anker", "t_1", f"{FUT_FRI}T19:00", big)
+    assert o.status == 201 and o.json["party_size"] == big and o.json["accepted_terms"]["capacities"]["t_1"] == big
+    err(c.book(ada, k(), "r_anker", "t_2", f"{FUT_FRI}T19:00", big), 422, "party_exceeds_capacity")
+    fx = base_fixture()
+    fx["restaurants"][0]["reservation_duration_minutes"] = big                                    # policy-0 duration: no range stated
+    fx["restaurants"][0]["cancellation_cutoff_minutes"] = big
+    fx["restaurants"][0]["slot_minutes"] = big
+    assert c.reset(fx).status == 204
+    ada = c.login("ada@example.com", "correct horse")
+    r = c.availability("r_anker", FUT_FRI, 2)
+    assert r.status == 200 and r.json["slots"] == []                                              # nothing fits before closing
+    err(c.book(ada, k(), "r_anker", "t_1", f"{FUT_FRI}T18:00", 2), 422, "outside_opening_hours")
+    assert c.reset(base_fixture()).status == 204
+    mia2 = c.login("mia@example.com", "mia manages")
+    for field in ("slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes"):
+        err(publish(c, mia2, "r_anker", policy("2027-09-01", **{field: big})), 422, "validation_failed")   # stated ranges
+    err(publish(c, mia2, "r_anker", policy("2027-09-01", capacities={"t_1": big, "t_2": 4})), 422, "validation_failed")
+    fx = base_fixture()
+    fx["reservations"][0]["party_size"] = big                                                      # seeded, not re-validated (R-20)
+    fx["restaurants"][0]["tables"][1]["capacity"] = big
+    assert c.reset(fx).status == 204
+    bob = c.login("bob@example.com", "bob secret 1")
+    assert c.get("/reservations/SEED01", token=bob).json["party_size"] == big
