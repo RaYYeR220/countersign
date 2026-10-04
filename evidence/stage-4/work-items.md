@@ -21,4 +21,5 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
-| 1 | (this commit) | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head | pending |
+| 1 | (this commit) | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head + WI-27 RUN.md (d2b6859) | pending |
+| WI-27 | Builder | RUN.md for stage 4 | C1.6 | merged |
