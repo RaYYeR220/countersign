@@ -570,6 +570,12 @@ class Model:
 
     # ------------------------------------------------------------------ table sets (stage 2)
     @staticmethod
+    def _both_table_fields(obj: dict) -> None:
+        """R-43: both `table_id` and `table_ids` present -> 422 whatever their JSON types."""
+        if "table_id" in obj and "table_ids" in obj:
+            raise Err(422, "validation_failed", "send table_id or table_ids, not both")
+
+    @staticmethod
     def _table_set(obj: dict, required: bool) -> Optional[list[str]]:
         """Pass-3 value rules for `table_id` / `table_ids` (types were checked in pass 1).
 
@@ -873,6 +879,7 @@ class Model:
                       ("starts_at_local", True, "str"), ("party_size", True, "party")]
 
     def create_reservation(self, user_id: str, obj: dict):
+        self._both_table_fields(obj)                                 # R-43: before the type pass
         check_fields(obj, self.BOOKING_FIELDS)                       # R-19 passes 1 and 2
         if "table_id" not in obj and "table_ids" not in obj:
             raise Err(422, "validation_failed", "table_ids is required")
@@ -933,6 +940,7 @@ class Model:
         return table_ids, local, naive, party
 
     def patch(self, user_id: str, reference: str, obj: dict):             # R-14
+        self._both_table_fields(obj)                                      # R-43
         check_fields(obj, self.AMEND_FIELDS)                              # wrong types 400 before 404
         rec = self._mine(user_id, reference)
         if rec["status"] == "cancelled":
@@ -958,6 +966,7 @@ class Model:
                 raise Err(422, "validation_failed", "duplicate reference")
             refs.append(m["reference"])
         for m in moves:                                                    # (b) item field types -> 400
+            self._both_table_fields(m)                                     # R-43, per item in input order
             check_fields(m, self.AMEND_FIELDS)
         resolved = []                                                      # (c) per item, input order
         first_restaurant: Optional[str] = None
