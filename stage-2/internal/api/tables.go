@@ -17,13 +17,13 @@ func combinationNotAllowed(msg string) error {
 	return apperr.New(http.StatusUnprocessableEntity, "combination_not_allowed", msg)
 }
 
-// tableFieldTypes is the wrong-type pass for the table fields: alone, table_id must be a string
-// and table_ids an array of strings (400). When both are present neither is type-checked:
-// requestedTables reports 422 whatever their types (R-43).
+// tableFieldTypes takes the place of the type pass for the table fields (R-43, R-44): both
+// present → 422 validation_failed whatever their types; alone, table_id must be a string and
+// table_ids an array of strings (400).
 func tableFieldTypes(o jsonin.Object) error {
 	switch {
 	case bothTableFields(o):
-		return nil
+		return apperr.Validation("send table_id or table_ids, not both")
 	case o.Has("table_id") && o.Kind("table_id") != jsonin.String:
 		return apperr.Malformed("table_id must be a string")
 	}
@@ -46,14 +46,11 @@ func invalidID(field string) error {
 	return apperr.Validation(field + " must be 1 to 64 characters")
 }
 
-// requestedTables is the value pass over the table fields in R-35/R-42 order: both present, an
-// empty set, an empty or over-long id, or a duplicate id → 422 validation_failed; more than two
-// tables → 422 combination_not_allowed.
+// requestedTables is the value pass over the table fields in R-35/R-42 order, after
+// tableFieldTypes has refused both fields together: an empty set, an empty or over-long id, or a
+// duplicate id → 422 validation_failed; more than two tables → 422 combination_not_allowed.
 // ok is false when neither field is present.
 func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
-	if bothTableFields(o) {
-		return nil, false, apperr.Validation("send table_id or table_ids, not both")
-	}
 	single, hasSingle, _ := o.String("table_id")
 	ids, hasSet, _ := o.Strings("table_ids")
 	switch {

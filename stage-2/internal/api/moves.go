@@ -11,8 +11,8 @@ import (
 
 const maxMoves = 8
 
-// moveItems checks the structure of a moves body (R-22 a, all 422) and then the item field
-// types (R-22 b, 400). It returns the items and their references in input order.
+// moveItems checks the structure of a moves body (R-22 a, all 422) and then, item by item, both
+// table fields (422) or the field types (400) (R-22 b, R-44). It returns the items and their references in input order.
 func moveItems(body jsonin.Object) ([]jsonin.Object, []string, error) {
 	invalid := apperr.Validation
 	if body.Kind("moves") != jsonin.Array {
@@ -39,7 +39,10 @@ func moveItems(body jsonin.Object) ([]jsonin.Object, []string, error) {
 		seen[ref] = true
 		refs[i] = ref
 	}
-	for _, item := range items {
+	for _, item := range items { // R-44 (b): per item, both table fields → 422, else types → 400
+		if bothTableFields(item) {
+			return nil, nil, tableFieldTypes(item)
+		}
 		if err := changeFieldTypes(item); err != nil {
 			return nil, nil, err
 		}
