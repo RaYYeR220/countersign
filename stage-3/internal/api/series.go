@@ -68,7 +68,8 @@ func seriesInt(body jsonin.Object, name string, min, max int64) (int, error) {
 
 // createSeries is POST /series (C3.37–C3.47). keyedWrite supplies R-1 (401 → 400 body → key →
 // replay/reuse); then R-52: types (anchor_reference not a string → 400; count / interval_weeks of a
-// non-number type → 422) → missing → ranges → 404 anchor → 409 reservation_cancelled → 409
+// non-number type → 422) → missing → values (anchor_reference 1..64 characters per R-60, then the
+// count and interval_weeks ranges) → 404 anchor → 409 reservation_cancelled → 409
 // already_in_series → 409 cutoff_passed → occurrences 1 … count−1, the first failure deciding.
 // Every check runs before any write, so a failed adoption changes nothing.
 func (s *Server) createSeries(w http.ResponseWriter, r *http.Request, user *state.User) {
@@ -90,6 +91,9 @@ func (s *Server) createSeries(w http.ResponseWriter, r *http.Request, user *stat
 			}
 		}
 		ref, _, _ := body.String("anchor_reference")
+		if !validBodyID(ref) { // empty or over 64 characters: an invalid value, not an unknown one (R-60)
+			return nil, apperr.Validation("anchor_reference must be 1 to 64 characters")
+		}
 		count, err := seriesInt(body, "count", minSeriesCount, maxSeriesCount)
 		if err != nil {
 			return nil, err
