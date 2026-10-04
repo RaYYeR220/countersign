@@ -5,10 +5,10 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 
 | WI | owner | title | clauses | depends on | status |
 |----|-------|-------|---------|------------|--------|
-| WI-23 | Builder | Replans: preview (optimal planner), apply, closures, restaurant revision in responses | C4.3–C4.16, C4.22 | – | handed off |
-| WI-24 | Builder | Upgrade from schema 1–3 exports to schema 4; ADR-004 | C4.1, C4.24 | WI-23 | handed off |
-| WI-25 | Stylist | Series amend | C4.17–C4.21, C4.23 | WI-23 closures in occupancy | handed off |
-| WI-26 | Stylist | Screens and explain reflect applied plans | C4.2, C4.15 | WI-23 | handed off |
+| WI-23 | Builder | Replans: preview (optimal planner), apply, closures, restaurant revision in responses | C4.3–C4.16, C4.22 | – | merged |
+| WI-24 | Builder | Upgrade from schema 1–3 exports to schema 4; ADR-004 | C4.1, C4.24 | WI-23 | merged |
+| WI-25 | Stylist | Series amend | C4.17–C4.21, C4.23 | WI-23 closures in occupancy | merged |
+| WI-26 | Stylist | Screens and explain reflect applied plans | C4.2, C4.15 | WI-23 | merged |
 
 ## Retry budget (rework rounds used of 2)
 | WI | rounds | clean restart | notes |
@@ -21,3 +21,4 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
+| 1 | (this commit) | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head | pending |
