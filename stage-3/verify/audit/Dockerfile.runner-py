@@ -1,0 +1,3 @@
+# Runner with pytest for the Oracle acceptance suite, on the candidate's internal network.
+FROM python:3.12-alpine
+RUN apk add --no-cache tzdata && pip install --no-cache-dir pytest==8.4.2
