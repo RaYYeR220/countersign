@@ -288,3 +288,31 @@ func TestBothTableFieldsAnyType(t *testing.T) {
 		t.Errorf("rejected requests changed state:\n%s\n%s", before, after)
 	}
 }
+
+// R-44: the both-fields check runs where the type pass runs, before the ownership 404.
+func TestBothTableFieldsBeforeOwnership(t *testing.T) {
+	e := newComboEnv(t)
+	bob := decodeSession(t, do(e.h, "POST", "/auth/signup", `{"email":"bob@example.com","password":"12345678","display_name":"Bob"}`)).Token
+	foreign := e.mustBook(bob, "f", "t_3", "2026-09-24T19:00", 2)
+	mine := e.mustBook(e.ada, "m", "t_4", "2026-09-24T19:00", 2)
+	before := e.snapshot(e.ada) + e.snapshot(bob)
+	both := `{"table_id":"t_1","table_ids":["t_1","t_2"]}`
+	for _, ref := range []string{"NOPE00", foreign.Reference} {
+		expect(t, e.req("PATCH", "/reservations/"+ref, e.ada, "", both), 422, "validation_failed")
+		expect(t, e.req("PATCH", "/reservations/"+ref, e.ada, "", `{"table_id":"t_1"}`), 404, "not_found")
+	}
+	batch := fmt.Sprintf(`{"moves":[{"reference":"NOPE00"},{"reference":%q,"table_id":5,"table_ids":["t_1"]}]}`, mine.Reference)
+	expect(t, e.move(e.ada, "b1", batch), 422, "validation_failed")
+	batch = fmt.Sprintf(`{"moves":[{"reference":%q,"table_id":"t_1","table_ids":["t_1"]}]}`, foreign.Reference)
+	expect(t, e.move(e.ada, "b2", batch), 422, "validation_failed")
+	batch = fmt.Sprintf(`{"moves":[{"reference":"NOPE00"},{"reference":%q,"table_id":"t_1"}]}`, mine.Reference)
+	expect(t, e.move(e.ada, "b3", batch), 404, "not_found")
+	// Within a move item both fields precede its other types; earlier items' types still come first.
+	batch = fmt.Sprintf(`{"moves":[{"reference":%q,"starts_at_local":5,"table_id":"t_1","table_ids":["t_1"]}]}`, mine.Reference)
+	expect(t, e.move(e.ada, "b4", batch), 422, "validation_failed")
+	batch = fmt.Sprintf(`{"moves":[{"reference":"NOPE00","starts_at_local":5},{"reference":%q,"table_id":"t_1","table_ids":["t_1"]}]}`, mine.Reference)
+	expect(t, e.move(e.ada, "b5", batch), 400, "malformed_request")
+	if after := e.snapshot(e.ada) + e.snapshot(bob); after != before {
+		t.Error("rejected requests changed state")
+	}
+}
