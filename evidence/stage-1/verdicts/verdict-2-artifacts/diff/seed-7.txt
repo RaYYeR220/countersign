@@ -1,0 +1,12 @@
+MISMATCH seed=8 at op 50/81
+first detection, expected (model): {"status": 405, "error": {"code": "method_not_allowed"}}
+first detection, actual (service): {"status": 404, "error": {"code": "not_found"}}
+shrunk to 2 ops -> /out/diff-fail-seed8.json
+sequence:
+  0: {"op": "reset", "fixture": "base"}
+  1: {"op": "patch", "token": {"$sym": ["token", "s4"]}, "reference": "", "body": {"starts_at_local": "2027-06-16T12:30", "party_size": 1}}
+mismatch at op 1
+expected (model): {"status": 405, "error": {"code": "method_not_allowed"}}
+actual (service): {"status": 404, "error": {"code": "not_found"}}
+reproduce: python ../repo/stage-1/verify/oracle/diff_runner.py --base-url http://auditor-s1-diff:8080 --replay /out/diff-fail-seed8.json
+[bg run] exit 1 after 12.0s; full output: C:\countersign\tmp\aud-bg\run-1791123317317.log

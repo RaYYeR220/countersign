@@ -1,0 +1,20 @@
+{
+ "seed": 3,
+ "base_url": "http://auditor-s1-diff:8080",
+ "ops": [
+  {
+   "op": "reset",
+   "fixture": "base"
+  },
+  {
+   "op": "get",
+   "token": {
+    "$sym": [
+     "token",
+     "l1"
+    ]
+   },
+   "reference": ""
+  }
+ ]
+}

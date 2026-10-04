@@ -1,0 +1,12 @@
+MISMATCH seed=3 at op 4/81
+first detection, expected (model): {"status": 200, "reservations": [{"reservation_id": "res_seed", "reference": "SEED01", "restaurant_id": "r_anker", "table_id": "t_2", "party_size": 4, "status": "confirmed", "starts_at_local": "2027-09-23T18:00", "starts_at": "2027-09-23T18:00:00+02:00", "ends_at": "2027-09-23T19:30:00+02:00", "created_at": "<created:seeded>"}]}
+first detection, actual (service): {"status": 404, "error": {"code": "not_found"}}
+shrunk to 2 ops -> /out/diff-fail-seed3.json
+sequence:
+  0: {"op": "reset", "fixture": "base"}
+  1: {"op": "get", "token": {"$sym": ["token", "l1"]}, "reference": ""}
+mismatch at op 1
+expected (model): {"status": 401, "error": {"code": "unauthenticated"}}
+actual (service): {"status": 404, "error": {"code": "not_found"}}
+reproduce: python ../repo/stage-1/verify/oracle/diff_runner.py --base-url http://auditor-s1-diff:8080 --replay /out/diff-fail-seed3.json
+[bg run] exit 1 after 4.5s; full output: C:\countersign\tmp\aud-bg\run-1791123273526.log
