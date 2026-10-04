@@ -128,3 +128,21 @@ Q21 → R-66/R-67 (confirmed). Q22 → R-18 (confirmed). Q23 → R-72 (confirmed
   R-51/R-67 (e.g. `created` after seq 1, an event other than created/changed/cancelled/reassigned).
 - Rationale: R-24 accepts only states "this service recognises"; such a history cannot arise from any sequence of
   operations. Rejected: accepting it because each entry is individually well-formed.
+
+## R-75 — Large integers in fixtures (extends R-8; Oracle O-16 finding)
+- Clauses: C1.4, C1.22, C1.23, C1.26, C1.74
+- Decision: fixture integers (capacity, slot_minutes, reservation_duration_minutes, cancellation_cutoff_minutes,
+  seeded party_size) up to 2^31−1 are accepted and must be computed exactly — no overflow, no wrap-around: a
+  2^31−1-minute duration ends 2^31−1 real minutes after the start (so no slot fits within opening hours and a
+  booking is 422 `outside_opening_hours`); a 2^31−1-minute cutoff makes every future booking non-cancellable (409
+  `cutoff_passed`); a capacity of 2^31−1 seats a party of that size. Values above 2^31−1 → reset 422
+  `validation_failed`, state unchanged. Published policies keep their stage-3 ranges (R-47).
+- Rationale: the stage-1 fixture states no ranges, so in-range values must behave literally; refusing them would
+  risk rejecting legitimate fixtures. Exact arithmetic is the only reading that preserves C1.4/C1.23.
+
+## R-76 — Migrated bookings cancelled by an earlier service (clarifies R-55)
+- Clauses: C3.28, C3.48, C4.24
+- Decision: every booking migrated from a stage-1 or stage-2 export — seeded or created through the API, confirmed
+  or cancelled — gets revision 1, policy-0 terms and a history of exactly one `created` entry (at = created_at). No
+  `cancelled` entry and no revision 2 are synthesised for bookings cancelled before the upgrade.
+- Rationale: R-55's "revision 1 (whatever their status)"; earlier services kept no history to replay.
