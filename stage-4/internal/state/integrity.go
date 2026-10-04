@@ -150,16 +150,21 @@ func validHours(hours []OpeningHours) bool {
 }
 
 // validTerms checks a policy's or accepted terms' ranges and that capacities name exactly r's
-// tables.
+// tables. Policy 0 comes from the fixture, whose integers may reach 2^31−1 (R-75); published
+// policies keep the stage-3 ranges (R-47).
 func validTerms(r *Restaurant, t Terms) bool {
-	if t.PolicyVersion < 0 || t.PolicyVersion > len(r.Policies) || t.SlotMinutes < 1 || t.SlotMinutes > 1440 ||
-		t.ReservationDurationMinutes < 1 || t.ReservationDurationMinutes > 1440 ||
-		t.CancellationCutoffMinutes < 0 || t.CancellationCutoffMinutes > 10080 ||
+	maxGrid, maxCutoff, maxCapacity := 1440, 10080, 100
+	if t.PolicyVersion == 0 {
+		maxGrid, maxCutoff, maxCapacity = maxFixtureInt, maxFixtureInt, maxFixtureInt
+	}
+	if t.PolicyVersion < 0 || t.PolicyVersion > len(r.Policies) || t.SlotMinutes < 1 || t.SlotMinutes > maxGrid ||
+		t.ReservationDurationMinutes < 1 || t.ReservationDurationMinutes > maxGrid ||
+		t.CancellationCutoffMinutes < 0 || t.CancellationCutoffMinutes > maxCutoff ||
 		!validHours(t.OpeningHours) || len(t.Capacities) != len(r.Tables) {
 		return false
 	}
 	for _, tb := range r.Tables {
-		if c, ok := t.Capacities[tb.ID]; !ok || c < 1 {
+		if c, ok := t.Capacities[tb.ID]; !ok || c < 1 || c > maxCapacity {
 			return false
 		}
 	}

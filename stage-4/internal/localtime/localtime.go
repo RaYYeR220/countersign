@@ -13,6 +13,7 @@
 package localtime
 
 import (
+	"math"
 	"net/http"
 	"regexp"
 	"sort"
@@ -92,10 +93,24 @@ func Location(name string) (*time.Location, error) {
 // Format renders t in loc as RFC 3339 with an explicit offset.
 func Format(t time.Time, loc *time.Location) string { return t.In(loc).Format(OffsetLayout) }
 
-// End is the absolute end of an occupancy that starts at start.
-func End(start time.Time, durationMinutes int) time.Time {
-	return start.Add(time.Duration(durationMinutes) * time.Minute)
+// maxDurationMinutes is the largest whole number of minutes a time.Duration can hold (≈ 292 years).
+const maxDurationMinutes = math.MaxInt64 / int64(time.Minute)
+
+// AddMinutes returns t moved by minutes of absolute time, exactly, for any int minute count
+// (R-75): spans beyond what one time.Duration holds are added in pieces instead of overflowing.
+func AddMinutes(t time.Time, minutes int) time.Time {
+	m := int64(minutes)
+	for m > maxDurationMinutes {
+		t, m = t.Add(time.Duration(maxDurationMinutes)*time.Minute), m-maxDurationMinutes
+	}
+	for m < -maxDurationMinutes {
+		t, m = t.Add(-time.Duration(maxDurationMinutes)*time.Minute), m+maxDurationMinutes
+	}
+	return t.Add(time.Duration(m) * time.Minute)
 }
+
+// End is the absolute end of an occupancy that starts at start.
+func End(start time.Time, durationMinutes int) time.Time { return AddMinutes(start, durationMinutes) }
 
 // Overlaps reports whether the half-open intervals [aStart, aEnd) and [bStart, bEnd) intersect.
 func Overlaps(aStart, aEnd, bStart, bEnd time.Time) bool {
