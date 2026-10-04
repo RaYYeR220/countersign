@@ -65,7 +65,7 @@ Colour is never the only signal. Every state also has a text label, an icon glyp
 | State | Look |
 |---|---|
 | Available cell | Sage tint `--ok-bg`, `--ok-ink` text "Table 2", seats below ("4 seats"), 1 px `--ok-ink` border. Hover darkens the border; the cursor is a pointer. |
-| Unavailable cell | `--no-bg` with a 45° hatch strip on the leading edge, `--no-ink` text, no pointer, `aria-disabled="true"`, label "Table 2 · taken". Clicking does nothing. |
+| Unavailable cell | `--no-bg` with a 45° hatch strip on the leading edge, `--no-ink` text, no pointer; its accessible name ends "not available". It stays an enabled button (no `disabled`/`aria-disabled`) so a click is accepted and does nothing. |
 | Selected cell | Filled `--wine` with white text, a check glyph and `aria-pressed="true"`. |
 | Combination cell | Same states as a single cell. The label is "Tables 1 + 2" with a link glyph and the summed seats. It sits in a "Combined tables" group so it reads as an intentional option. |
 | Loading | The Search button shows "Searching…" and is busy. The results area shows a skeleton of three time rows with shimmering pills, plus `aria-busy="true"`. During submit the booking button shows "Booking…". |
