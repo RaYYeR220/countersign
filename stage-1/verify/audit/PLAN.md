@@ -75,3 +75,17 @@ Self-test of the battery (not a verdict): against an old image from an earlier r
 553 checks, 18 hard failures. All 18 are this run's rulings (R-3, R-4, R-8, R-9, R-11, R-13, R-20, R-22)
 that the old image does not implement. No other check fails, so ruling-independent checks don't fail a
 working implementation.
+
+## Step 5 and step 6 tooling (stack fixed by ADR-001: Go 1.26, one `sync.RWMutex`)
+- `mutate.py` — textual Go mutants (conditional boundary, negation, `&&`/`||`, `+`/`-`, boolean returns,
+  `if !`) over the non-test files of the domain-core packages, built natively with the host Go 1.26.5
+  toolchain, killed through HTTP by `audit.py` (all groups, 1 burst round) plus the Oracle pytest suite.
+  A mutant is killed when a check that passed on the unmutated baseline fails, or it crashes / never
+  becomes healthy; non-compiling mutants are excluded. Seeded shuffle, 20-minute budget, parallel
+  workers on ports 18321+. Survivors are reported to the Oracle as work items.
+  Dry run on main (state package, 150 s, 3 workers, core+create killers): 156 generated, 53 evaluated.
+- `race.py` — applies literal `--edit FILE::OLD::NEW` changes that disable one guard in a scratch copy,
+  runs the burst attacks (and optionally the Oracle suite) against the guard-less build (repeated up to 3
+  times) and against the unmodified build; reports red-without / green-with.
+  Planned guards: `Store.Write` lock (B1/B3/B5/B6/B7/B8), `Store.Replace` lock (export under write load),
+  plus whatever claim/commit guards the candidate adds for idempotency receipts and batch moves.
