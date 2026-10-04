@@ -20,6 +20,7 @@
     form: null,                     // {party, key, bodyText, inFlight, error, uncertain}
     confirmation: null,             // {key, reservation, restaurant}
     pendingAfterLogin: null,        // selection to reopen after sign-in
+    pendingLookup: null,            // reference to look up after sign-in
     authError: null,
     authNote: null,
     lookup: { reference: "", status: "idle", reservation: null, restaurant: null, error: null, busy: false },
@@ -62,6 +63,10 @@
     }
     return el;
   }
+  function authErrorLine(text) {
+    return h("p", { testid: "auth-error", role: "alert" }, text + " ",
+      h("a", { href: "/login", "data-link": true }, "Sign in"));
+  }
   function notice(kind, testid, glyph, lines, actions) {
     const role = kind === "error" ? "alert" : "status";
     return h("div", { class: "notice notice-" + kind, role, testid },
@@ -79,7 +84,8 @@
     return new Intl.DateTimeFormat("en-GB", opts).format(new Date(Date.UTC(y, m - 1, d)));
   }
   function fmtLocal(startsAtLocal) {
-    return fmtDate(startsAtLocal.slice(0, 10), false) + " · " + startsAtLocal.slice(11, 16);
+    const date = startsAtLocal.slice(0, 10);
+    return fmtDate(date, false) + " · " + startsAtLocal.slice(11, 16) + " (" + date + ")";
   }
   function tableOf(restaurant, id) {
     return (restaurant && (restaurant.tables || []).find((t) => t.id === id)) || null;
@@ -175,7 +181,7 @@
 
   function logout() {
     saveSession(null);
-    S.selection = null; S.form = null; S.confirmation = null; S.pendingAfterLogin = null;
+    S.selection = null; S.form = null; S.confirmation = null; S.pendingAfterLogin = null; S.pendingLookup = null;
     S.lookup = { reference: S.lookup.reference, status: "idle", reservation: null, restaurant: null, error: null, busy: false };
     render();
   }
@@ -257,12 +263,21 @@
 
   function afterSignIn() {
     const pending = S.pendingAfterLogin;
+    const lookupRef = S.pendingLookup;
     S.pendingAfterLogin = null;
+    S.pendingLookup = null;
     if (pending) {
       openSelection(pending);
+      navigate("/");
+      scrollToPanel();
+      return;
+    }
+    if (lookupRef !== null) {
+      navigate("/lookup");
+      runLookup();
+      return;
     }
     navigate("/");
-    if (pending) scrollToPanel();
   }
 
   function renderSignup(main) {
@@ -443,7 +458,8 @@
         h("p", null, "The restaurant is closed or has no bookable times — try another date."))));
       return;
     }
-    const pairs = declaredPairs(rest, R.slots);
+    const partyNum = Number(R.params.party) || 0;
+    const pairs = declaredPairs(rest, R.slots).filter((p) => seats(rest, p) >= partyNum);
     const list = h("ol", { class: "slots" });
     for (const slot of R.slots) {
       const hhmm = slot.starts_at_local.slice(11, 16);
@@ -578,7 +594,11 @@
     const f = S.form;
     const { status, submit, confirmSlot } = panelRefs;
     status.replaceChildren();
-    if (f.error) status.append(notice("error", "booking-error", "!", f.error));
+    if (f.error) {
+      const panel = notice("error", "booking-error", "!", f.error);
+      if (f.authError) panel.querySelector("div").append(authErrorLine(f.authError));
+      status.append(panel);
+    }
     if (f.uncertain) {
       status.append(notice("warn", "booking-uncertain", "?", [
         "We couldn't confirm your booking — the connection dropped before Tablekeeper answered.",
@@ -636,7 +656,7 @@
     f.inFlight = false;
 
     if (r && (r.status === 200 || r.status === 201) && r.data && r.data.reference) {
-      f.error = null; f.uncertain = null;
+      f.error = null; f.uncertain = null; f.authError = null;
       S.confirmation = { key, reservation: r.data, restaurant: S.selection.restaurant };
       renderBookingStatus();
       const ref = document.querySelector('[data-testid="confirmation"]');
@@ -645,7 +665,7 @@
     }
     if (!r || r.status >= 500) {
       // Outcome unknown: the booking may have committed. Keep key and body for a safe retry.
-      f.error = null;
+      f.error = null; f.authError = null;
       f.uncertain = true;
       if (S.confirmation && S.confirmation.key !== key) S.confirmation = null;
       renderBookingStatus();
@@ -654,9 +674,12 @@
     // A definite refusal.
     f.uncertain = null;
     const code = errorCode(r);
+    f.authError = null;
     if (code === "unauthenticated" || r.status === 401) {
       sessionEnded();
-      f.error = ["Your session has ended. Sign in again to book this table."];
+      S.pendingAfterLogin = S.selection;
+      f.error = ["Your booking wasn't made."];
+      f.authError = "Your session has ended. Sign in again to book this table.";
     } else {
       f.error = bookingMessage(code, r);
     }
@@ -727,7 +750,12 @@
     L.reference = ref;
     L.error = null; L.reservation = null; L.restaurant = null;
     if (!ref) { L.error = "Enter the reference from your confirmation."; renderLookupResult(); return; }
-    if (!S.session) { L.error = "Sign in to look up your bookings."; L.needsLogin = true; renderLookupResult(); return; }
+    if (!S.session) {
+      S.pendingLookup = ref;
+      S.authNote = "Sign in to look up booking " + ref + ".";
+      navigate("/login");
+      return;
+    }
     L.needsLogin = false;
     L.busy = true; L.status = "loading";
     renderLookupResult();
@@ -742,7 +770,7 @@
       L.status = "found"; L.reservation = r.data;
       L.restaurant = detail && detail.status === 200 ? detail.data : { id: r.data.restaurant_id, name: r.data.restaurant_id, tables: [] };
     } else if (r && r.status === 401) {
-      sessionEnded(); L.status = "idle"; L.error = "Your session has ended. Sign in again to look up your bookings."; L.needsLogin = true;
+      sessionEnded(); L.status = "idle"; L.error = "We couldn't look up that booking."; L.needsLogin = true;
     } else if (r && r.status === 404) {
       L.status = "idle"; L.error = "We couldn't find a booking with reference “" + ref + "” on your account.";
     } else {
@@ -754,7 +782,7 @@
   async function cancelBooking() {
     const L = S.lookup;
     if (L.busy || !L.reservation) return;
-    L.busy = true; L.error = null;
+    L.busy = true; L.error = null; L.needsLogin = false;
     renderLookupResult();
     let r = null;
     try {
@@ -767,7 +795,7 @@
     } else if (r && errorCode(r) === "cutoff_passed") {
       L.error = "This booking is inside the restaurant's cancellation window, so it can't be cancelled online. Please call the restaurant.";
     } else if (r && r.status === 401) {
-      sessionEnded(); L.error = "Your session has ended. Sign in again to cancel."; L.needsLogin = true;
+      sessionEnded(); L.error = "Your booking wasn't cancelled."; L.needsLogin = true;
     } else if (r && r.status === 404) {
       L.error = "We couldn't find that booking on your account any more.";
     } else {
@@ -785,8 +813,12 @@
     if (L.status === "loading") { submit.setAttribute("aria-busy", "true"); submit.textContent = "Looking up…"; }
     else { submit.removeAttribute("aria-busy"); submit.textContent = "Look up"; }
     if (L.error) {
-      out.append(h("div", { class: "card" }, notice("error", "reservation-error", "!", [L.error],
-        L.needsLogin ? h("a", { class: "btn btn-secondary btn-sm", href: "/login", "data-link": true }, "Sign in") : null)));
+      const panel = notice("error", "reservation-error", "!", [L.error]);
+      if (L.needsLogin) {
+        panel.querySelector("div").append(authErrorLine("Your session has ended."));
+        S.pendingLookup = L.reference;
+      }
+      out.append(h("div", { class: "card" }, panel));
     }
     if (L.status === "loading") {
       out.append(h("div", { class: "card skeleton", "aria-busy": "true" }, h("p", { class: "sr-only" }, "Looking up your booking…"),

@@ -92,6 +92,24 @@ async def shot(page, width, name):
     await page.screenshot(path=str(OUT / f"{width}-{name}.png"), full_page=True, animations="disabled")
 
 
+async def grid_matches_api(page, base, width, restaurant, date, party, label):
+    """Every cell against GET /availability and GET /restaurants/{id} (C2.26, C2.28, R-39)."""
+    _, avail = http(base, "GET", f"/availability?restaurant_id={restaurant}&date={date}&party_size={party}")
+    _, rest = http(base, "GET", f"/restaurants/{restaurant}")
+    caps = {t["id"]: t["capacity"] for t in rest["tables"]}
+    want = {}
+    for slot in avail["slots"]:
+        hhmm = slot["starts_at_local"][11:16]
+        for t in rest["tables"]:
+            want[f"slot-{t['id']}-{hhmm}"] = "true" if t["id"] in slot["available_table_ids"] else "false"
+        options = {frozenset(o["table_ids"]) for o in slot.get("available_options", [])}
+        for a, b in rest.get("combinable", []):
+            if caps[a] + caps[b] >= int(party):
+                want[f"slot-{a}+{b}-{hhmm}"] = "true" if frozenset((a, b)) in options else "false"
+    got = await page.eval_on_selector_all('[data-testid^="slot-"]', "els => els.map(e => [e.dataset.testid, e.dataset.available])")
+    check(dict(got) == want and len(got) == len(want), f"{width}: grid == API for {label} ({len(got)} cells)")
+
+
 async def search(page, restaurant="r_anker", date=D, party="2"):
     await page.get_by_test_id("restaurant-select").select_option(restaurant)
     await page.get_by_test_id("date-input").fill(date)
@@ -140,6 +158,7 @@ async def run_width(pw, base, width):
     check(await page.get_by_test_id("slot-t_1-17:30").get_attribute("data-available") == "true", f"{width}: t_1 17:30 ends as 19:00 starts")
     check(await page.get_by_test_id("slot-t_1-20:30").get_attribute("data-available") == "true", f"{width}: t_1 20:30 free (half-open)")
     check(await page.get_by_test_id("no-slots").count() == 0, f"{width}: no-slots absent when slots exist")
+    await grid_matches_api(page, base, width, "r_anker", D, "2", "party 2")
     await shot(page, width, "03-results")
 
     # Clicking an unavailable cell does nothing.
@@ -188,7 +207,7 @@ async def run_width(pw, base, width):
     await expect(page.get_by_test_id("current-user")).to_contain_text("Ada Lovelace")
     check(await page.get_by_test_id("auth-error").count() == 0, f"{width}: auth-error absent after sign-in")
     summary = await page.get_by_test_id("booking-summary").inner_text()
-    check("2" in summary and "19:00" in summary, f"{width}: summary names table and time ({summary!r})")
+    check("2" in summary and "19:00" in summary and D in summary, f"{width}: summary names table, time and ISO date ({summary!r})")
     check(await page.get_by_test_id("booking-party-size").input_value() == "2", f"{width}: party pre-filled")
     await shot(page, width, "08-selected-form")
 
@@ -206,7 +225,7 @@ async def run_width(pw, base, width):
     ref = (await page.get_by_test_id("confirmation-reference").inner_text()).strip()
     details = await page.get_by_test_id("confirmation-details").inner_text()
     check(ref.isalnum() and ref.isupper() and 6 <= len(ref) <= 12, f"{width}: reference text exact ({ref!r})")
-    check("Zum Anker" in details and "19:00" in details and "2" in details, f"{width}: confirmation details ({details!r})")
+    check("Zum Anker" in details and "19:00" in details and "2" in details and D in details, f"{width}: confirmation details ({details!r})")
     check(await page.get_by_test_id("booking-error").count() == 0, f"{width}: booking-error cleared on success")
     check(await page.get_by_test_id("booking-form").count() == 1, f"{width}: form stays after success")
     await shot(page, width, "10-success")
@@ -328,58 +347,147 @@ async def run_width(pw, base, width):
     await page.goto(base + "/lookup")
     await page.get_by_test_id("lookup-reference-input").fill(ref)
     await page.get_by_test_id("lookup-submit").click()
-    await expect(page.get_by_test_id("reservation-error")).to_be_visible()
+    await page.wait_for_url("**/login")
     await shot(page, width, "21-lookup-signed-out")
+    await sign_in(page)
+    await page.wait_for_url("**/lookup")
+    await expect(page.get_by_test_id("reservation-detail")).to_be_visible()
+    check((await page.get_by_test_id("reservation-status").inner_text()).strip() == "cancelled", f"{width}: lookup resumes after sign-in")
+    await page.get_by_test_id("logout-button").click()
 
     await combo_step(page, base, width)
     await browser.close()
 
 
 async def combo_step(page, base, width):
-    """Combination cells, rendered from the stage-2 response shape (mocked until the core lands it)."""
-    detail = {"id": "r_anker", "name": "Zum Anker", "timezone": "Europe/Berlin", "slot_minutes": 30,
-              "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120, "opening_hours": [],
-              "tables": FIXTURE["restaurants"][0]["tables"], "combinable": [["t_1", "t_2"], ["t_2", "t_3"]]}
-    slots = []
-    for hhmm, singles, options in [
-        ("19:00", ["t_3"], [{"table_ids": ["t_3"], "capacity": 6}, {"table_ids": ["t_1", "t_2"], "capacity": 6}]),
-        ("19:30", [], [{"table_ids": ["t_2", "t_3"], "capacity": 10}]),
-    ]:
-        slots.append({"starts_at_local": f"{D}T{hhmm}", "starts_at": f"{D}T{hhmm}:00+01:00",
-                      "available_table_ids": singles, "available_options": options})
-    avail = {"restaurant_id": "r_anker", "date": D, "timezone": "Europe/Berlin", "slots": slots}
-
-    async def fulfil(route):
-        body = avail if "/availability" in route.request.url else detail
-        await route.fulfill(status=200, content_type="application/json; charset=utf-8", body=json.dumps(body))
-    await page.route("**/availability?*", fulfil)
-    await page.route("**/restaurants/r_anker", fulfil)
+    """Combination cells and a pair booking on the real core (C2.55-C2.57, R-39), then a 401 (R-30)."""
     await page.goto(base + "/")
     await search(page, party="6")
     await expect(page.get_by_test_id("availability-grid")).to_be_visible()
-    for tid, want in [("slot-t_1+t_2-19:00", "true"), ("slot-t_2+t_3-19:00", "false"),
-                      ("slot-t_1+t_2-19:30", "false"), ("slot-t_2+t_3-19:30", "true"), ("slot-t_3-19:00", "true")]:
-        check(await page.get_by_test_id(tid).get_attribute("data-available") == want, f"{width}: {tid} data-available={want}")
-    await page.get_by_test_id("slot-t_1+t_2-19:00").click()
+    await grid_matches_api(page, base, width, "r_anker", D, "6", "party 6")
+    await search(page, party="7")
+    await expect(page.get_by_test_id("availability-grid")).to_be_visible()
+    await grid_matches_api(page, base, width, "r_anker", D, "7", "party 7")
+    check(await page.locator('[data-testid^="slot-t_1+t_2-"]').count() == 0, f"{width}: pair too small for 7 has no cell")
+    await search(page, party="6")
+    await expect(page.get_by_test_id("availability-grid")).to_be_visible()
+    cell = page.locator('[data-testid^="slot-t_1+t_2-"][data-available="true"]').first
+    tid = await cell.get_attribute("data-testid")
+    hhmm = tid.rsplit("-", 1)[1]
+    await cell.click()
     await page.wait_for_url("**/login")  # signed out at this point: sign in, then the form opens
     await sign_in(page)
     await expect(page.get_by_test_id("booking-form")).to_be_visible()
     summary = await page.get_by_test_id("booking-summary").inner_text()
-    check("1" in summary and "2" in summary and "19:00" in summary, f"{width}: combination summary names both tables ({summary!r})")
+    check("1" in summary and "2" in summary and hhmm in summary and D in summary, f"{width}: pair summary ({summary!r})")
     await shot(page, width, "22-combination")
-    await page.unroute("**/availability?*")
-    await page.unroute("**/restaurants/r_anker")
+    await page.get_by_test_id("booking-submit").click()
+    await expect(page.get_by_test_id("confirmation")).to_be_visible()
+    tables = await page.get_by_test_id("confirmation-tables").inner_text()
+    check("1" in tables and "2" in tables, f"{width}: confirmation-tables lists both ({tables!r})")
+    pair_ref = (await page.get_by_test_id("confirmation-reference").inner_text()).strip()
+    ada = token_for(base, "ada@example.com")
+    _, got = http(base, "GET", f"/reservations/{pair_ref}", token=ada)
+    check(got.get("table_ids") == ["t_1", "t_2"], f"{width}: server holds the pair ({got.get('table_ids')})")
+    await shot(page, width, "23-combination-booked")
+    await page.get_by_role("link", name="Look up a booking").click()
+    await page.get_by_test_id("lookup-reference-input").fill(pair_ref)
+    await page.get_by_test_id("lookup-submit").click()
+    await expect(page.get_by_test_id("reservation-detail")).to_be_visible()
+    rt = await page.get_by_test_id("reservation-tables").inner_text()
+    check("1" in rt and "2" in rt, f"{width}: reservation-tables lists both ({rt!r})")
+
+    # 401: the server forgets the token (reset); the next booking shows booking-error + auth-error.
+    await page.get_by_role("link", name="Find a table").click()
+    await search(page, party="2")
+    await expect(page.get_by_test_id("availability-grid")).to_be_visible()
+    await page.get_by_test_id("slot-t_3-17:00").click()
+    await expect(page.get_by_test_id("booking-form")).to_be_visible()
+    reset(base)
+    await page.get_by_test_id("booking-submit").click()
+    await expect(page.get_by_test_id("auth-error")).to_be_visible()
+    await expect(page.get_by_test_id("booking-error")).to_be_visible()
+    check(await page.get_by_test_id("current-user").count() == 0, f"{width}: 401 clears the session")
+    check(await page.evaluate("localStorage.getItem('tk.session')") is None, f"{width}: 401 forgets the token")
+    await shot(page, width, "24-session-ended")
+
+
+async def stage1_upgrade(pw, base, base1, width):
+    """C2.35-C2.37: browser on a stage-1 service, lost booking, export → import into stage-2, retry."""
+    reset(base1)
+    reset(base)
+    browser = await pw.chromium.launch()
+    ctx = await browser.new_context(viewport={"width": width, "height": 900})
+    page = await ctx.new_page()
+    page.set_default_timeout(8000)
+    api_prefixes = ("/auth/", "/restaurants", "/availability", "/reservations")
+    mode = {"lose": False}
+
+    async def to_stage1(route):
+        path = route.request.url[len(base):]
+        if not path.startswith(api_prefixes):
+            await route.continue_()
+            return
+        resp = await route.fetch(url=base1 + path)
+        if mode["lose"] and route.request.method == "POST" and path == "/reservations":
+            await route.abort("connectionreset")  # committed on stage 1, response lost
+            return
+        await route.fulfill(response=resp)
+    await page.route("**/*", to_stage1)
+
+    await page.goto(base + "/login")
+    await sign_in(page)
+    await expect(page.get_by_test_id("current-user")).to_contain_text("Ada")
+    await search(page, party="2")
+    await expect(page.get_by_test_id("availability-grid")).to_be_visible()
+    await page.get_by_test_id("slot-t_3-17:00").click()
+    await page.get_by_test_id("booking-submit").click()
+    await expect(page.get_by_test_id("confirmation")).to_be_visible()
+    kept = (await page.get_by_test_id("confirmation-reference").inner_text()).strip()
+    await page.get_by_test_id("slot-t_2-17:00").click()
+    mode["lose"] = True
+    await page.get_by_test_id("booking-submit").click()
+    await expect(page.get_by_test_id("booking-uncertain")).to_be_visible()
+    await shot(page, width, "25-stage1-uncertain")
+
+    st, exported = http(base1, "GET", "/_test/export")
+    st2, _ = http(base, "POST", "/_test/import", exported)
+    check(st == 200 and st2 == 204, f"{width}: stage-1 export {st} → stage-2 import {st2}")
+    await page.unroute("**/*")  # from now on the browser talks to the stage-2 service
+
+    await page.get_by_test_id("booking-submit").click()
+    await expect(page.get_by_test_id("confirmation")).to_be_visible()
+    recovered = (await page.get_by_test_id("confirmation-reference").inner_text()).strip()
+    token = json.loads(await page.evaluate("localStorage.getItem('tk.session')"))["token"]
+    _, stage1_list = http(base1, "GET", "/reservations", token=token)
+    committed = [r["reference"] for r in stage1_list["reservations"]
+                 if r["starts_at_local"] == f"{D}T17:00" and r["table_id"] == "t_2"]
+    check(committed == [recovered], f"{width}: upgrade retry shows the original reference ({recovered} vs {committed})")
+    check(await page.get_by_test_id("booking-uncertain").count() == 0 and await page.get_by_test_id("booking-error").count() == 0,
+          f"{width}: no uncertainty after recovery")
+    await expect(page.get_by_test_id("current-user")).to_contain_text("Ada")
+    await shot(page, width, "26-stage1-recovered")
+    await page.get_by_role("link", name="Look up a booking").click()
+    await page.get_by_test_id("lookup-reference-input").fill(kept)
+    await page.get_by_test_id("lookup-submit").click()
+    await expect(page.get_by_test_id("reservation-detail")).to_be_visible()
+    check((await page.get_by_test_id("reservation-status").inner_text()).strip() == "confirmed",
+          f"{width}: retained reference looks up after upgrade")
+    await browser.close()
 
 
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", required=True)
     ap.add_argument("--widths", default="375,768,1280")
+    ap.add_argument("--stage1", help="base URL of a stage-1 service for the upgrade scenario")
     args = ap.parse_args()
     async with async_playwright() as pw:
         for w in [int(x) for x in args.widths.split(",")]:
             try:
                 await run_width(pw, args.base.rstrip("/"), w)
+                if args.stage1:
+                    await stage1_upgrade(pw, args.base.rstrip("/"), args.stage1.rstrip("/"), w)
             except Exception as e:  # report and continue with the next width
                 import traceback
                 traceback.print_exc(limit=-3)
