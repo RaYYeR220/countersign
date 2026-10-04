@@ -1,0 +1,6 @@
+$ docker run --network auditor-s1-probe-net … auditor-runner-img python /p/probe-ref.py http://auditor-s1-probe:8080   (candidate 4 image)
+['bad ref', 'reset', 204, None, 'export->import', 204, None, 'GET by ref', 200]
+['abc123', 'reset', 204, None, 'export->import', 204, None, 'GET by ref', 200]
+['SEED1', 'reset', 204, None, 'export->import', 204, None, 'GET by ref', 200]
+['AAAAAAAAAAAAA', 'reset', 204, None, 'export->import', 204, None, 'GET by ref', 200]
+['SEED-01', 'reset', 204, None, 'export->import', 204, None, 'GET by ref', 200]

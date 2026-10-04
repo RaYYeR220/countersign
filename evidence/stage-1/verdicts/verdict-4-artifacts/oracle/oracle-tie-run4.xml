@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="7.640" timestamp="2026-10-04T15:53:05.885572+00:00" hostname="04fb1f7afeda"><testcase classname="test_hardening" name="test_C1_89_tie_order_seeded_created_at" time="0.213" /><testcase classname="test_hardening" name="test_C1_89_tie_order_live_created_at" time="5.647"><failure message="AssertionError: assert 4 &lt; 0&#10; +  where 4 = &lt;built-in method index of list object at 0x7bbef0435340&gt;({'created_at': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...})&#10; +    where &lt;built-in method index of list object at 0x7bbef0435340&gt; = [{'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EO...': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...}].index&#10; +  and   0 = &lt;built-in method index of list object at 0x7bbef0435340&gt;({'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EOCDSVWE', ...})&#10; +    where &lt;built-in method index of list object at 0x7bbef0435340&gt; = [{'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EO...': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...}].index">c = Client(base_url='http://auditor-s1-oa:8080', timeout=5.0, statuses=[204, 200, 201, 201, 201, 201, 201, 200], fail_on_5xx=True)
+ada = 'E7MGVAA2U7X5PME7TV5TFGJT667IA6RYHUDCZ3JJKPMHDNKPGECB'
+
+    def test_C1_89_tie_order_live_created_at(c, ada):
+        """Live bookings at one instant on different tables, created ≥ 1 s apart: order is created_at ascending
+        whatever the references are; ties on created_at fall back to reference ascending."""
+        made = []
+        for table in ("a_1", "a_2", "a_3"):
+            made.append(book_all(c, ada, "r_all", table, f"{FUT_DAY}T15:00", 1))
+            time.sleep(1.1)
+        for table in ("t_1", "t_2"):
+            made.append(book_all(c, ada, "r_anker", table, f"{FUT_FRI}T19:00", 1))
+            time.sleep(1.1)
+        created = [x["created_at"] for x in made]
+        assert created == sorted(created) and len(set(created)) == len(created), created
+        lst = c.get("/reservations", token=ada).json["reservations"]
+        berlin = [x for x in lst if x["starts_at"] == f"{FUT_FRI}T19:00:00+02:00"]
+        assert [x["reference"] for x in berlin] == [made[3]["reference"], made[4]["reference"]]
+        noon = [x for x in lst if x["starts_at"] == f"{FUT_DAY}T15:00:00+02:00"]
+        assert [x["reference"] for x in noon] == [x["reference"] for x in made[:3]]
+        assert lst[:2] == berlin and lst[2:] == noon
+        inversions = [(a, b) for a, b in zip(made, made[1:]) if b["reference"] &lt; a["reference"]]
+        # when an implementation's references are not monotonic, at least one pair proves created_at wins
+        for a, b in inversions:
+&gt;           assert lst.index(a) &lt; lst.index(b)
+E           AssertionError: assert 4 &lt; 0
+E            +  where 4 = &lt;built-in method index of list object at 0x7bbef0435340&gt;({'created_at': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...})
+E            +    where &lt;built-in method index of list object at 0x7bbef0435340&gt; = [{'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EO...': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...}].index
+E            +  and   0 = &lt;built-in method index of list object at 0x7bbef0435340&gt;({'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EOCDSVWE', ...})
+E            +    where &lt;built-in method index of list object at 0x7bbef0435340&gt; = [{'created_at': '2026-10-04T15:53:11+00:00', 'ends_at': '2027-09-24T20:30:00+02:00', 'party_size': 1, 'reference': 'EO...': '2026-10-04T15:53:10+00:00', 'ends_at': '2027-06-15T16:00:00+02:00', 'party_size': 1, 'reference': 'GGY2CALR', ...}].index
+
+/repo/stage-1/verify/oracle/test_hardening.py:74: AssertionError</failure></testcase></testsuite></testsuites>
