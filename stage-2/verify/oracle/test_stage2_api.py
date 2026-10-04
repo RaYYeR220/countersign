@@ -1,6 +1,6 @@
 """Stage-2 HTTP acceptance suite (Oracle): combinable pairs, table_ids, available_options, upgrade import,
-and the stage-1 leftovers O-9..O-11. Test names carry the entry-B ids (evidence/stage-2/ledger-B.md) until the
-master ledger assigns C2.<n>.
+and the stage-1 leftovers O-9..O-11. Test names carry the master-ledger ids C2.<n> (evidence/stage-2/ledger.md); clauses2.json maps the
+entry-B ids to them.
 """
 from __future__ import annotations
 
@@ -26,21 +26,28 @@ def by_slot(c: Client, restaurant: str, date: str, party: int) -> dict:
 
 
 # ============================================================ fixture / model
-def test_B60_B61_combinable_fixture(c):
+def test_C2_40_combinable_fixture(c):
     r = c.get("/restaurants/r_trio").json
     assert r["combinable"] == [["q_1", "q_2"], ["q_2", "q_3"]]
     assert c.get("/restaurants/r_anker").json["combinable"] == [["t_1", "t_2"]]
     assert c.reset(stage1_fixture()).status == 204          # stage-1 shape still accepted (B59)
-    for bad in ([["t_1", "t_2", "t_3"]], [["t_1"]], [["t_1", "zzz"]], [["t_1", "t_1"]], ["t_1,t_2"], [[1, 2]], "none"):
+    assert c.reset(base_fixture()).status == 204
+    # R-34: every malformed entry is 422; a repeated pair in either order is 422; `combinable` itself not an array is 400
+    for bad in ([["t_1", "t_2", "t_3"]], [["t_1"]], [["t_1", "zzz"]], [["t_1", "t_1"]], ["t_1,t_2"], [[1, 2]],
+                [["t_1", "t_2"], ["t_2", "t_1"]], [["t_1", "t_2"], ["t_1", "t_2"]], [[]], [None]):
         fx = base_fixture()
         fx["restaurants"][0]["combinable"] = bad
-        r = c.reset(fx)
-        assert r.status in (400, 422) and r.code in ("validation_failed", "malformed_request"), (bad, r)
-        if isinstance(bad, list) and all(isinstance(p, list) and all(isinstance(x, str) for x in p) for p in bad):
-            assert r.status == 422, (bad, r)
+        err(c.reset(fx), 422, "validation_failed")
+        assert c.get("/restaurants/r_anker").json["combinable"] == [["t_1", "t_2"]], bad
+    fx = base_fixture()
+    fx["restaurants"][0]["combinable"] = "none"
+    err(c.reset(fx), 400, "malformed_request")
+    fx = base_fixture()
+    del fx["restaurants"][0]["combinable"]
+    assert c.reset(fx).status == 204 and c.get("/restaurants/r_anker").json["combinable"] == []
 
 
-def test_B65_seeded_status_and_table_ids(c, bob):
+def test_C2_43_seeded_status_and_table_ids(c, bob):
     fx = base_fixture()
     fx["reservations"] = [
         {"id": "res_pair", "reference": "PAIR01", "user_id": "u_bob", "restaurant_id": "r_trio",
@@ -58,7 +65,8 @@ def test_B65_seeded_status_and_table_ids(c, bob):
     assert s["available_table_ids"] == ["q_3"]
     assert [o["table_ids"] for o in s["available_options"]] == [["q_3"]]
     for bad in ({"status": "weird"}, {"table_ids": ["q_1", "q_2", "q_3"]}, {"table_id": "q_1", "table_ids": ["q_2"]},
-                {"table_ids": ["q_1", "q_1"]}, {"table_ids": []}, {"table_ids": "q_1"}):
+                {"table_ids": ["q_1", "q_1"]}, {"table_ids": []}, {"table_ids": "q_1"},
+                {"table_ids": ["q_1", "q_3"]}, {"status": "CONFIRMED"}, {"status": None}):      # R-34: undeclared pair
         fx2 = base_fixture()
         row = {"id": "res_x", "reference": "SEEDX1", "user_id": "u_bob", "restaurant_id": "r_trio",
                "table_id": "q_1", "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
@@ -68,10 +76,28 @@ def test_B65_seeded_status_and_table_ids(c, bob):
         fx2["reservations"].append(row)
         r = c.reset(fx2)
         assert r.status in (400, 422), (bad, r)
+        if "table_ids" in bad and bad["table_ids"] == ["q_1", "q_3"]:
+            err(r, 422, "validation_failed")
+    # an undeclared seeded pair is refused on import as well (R-34)
+    assert c.reset(base_fixture()).status == 204
+    tok = c.login("bob@example.com", "bob secret 1")
+    exp = c.export().json
+    from test_hardening import _reservation_records
+    doc = copy.deepcopy(exp)
+    for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+        rec["table_ids"] = ["t_1", "t_2"]
+        rec["restaurant_id"] = "r_anker"
+    assert c.import_(doc).status == 204                                   # declared pair: fine
+    doc = copy.deepcopy(exp)
+    for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+        rec["restaurant_id"] = "r_trio"
+        rec["table_ids"] = ["q_1", "q_3"]
+    err(c.import_(doc), 422, "validation_failed")
+    assert c.get("/reservations/SEED01", token=tok).json["table_ids"] == ["t_1", "t_2"]
 
 
 # ============================================================ availability
-def test_B66_B67_B68_available_options(c, ada):
+def test_C2_44_C2_45_available_options(c, ada):
     s = by_slot(c, "r_trio", FUT_FRI, 1)["19:00"]
     assert s["available_table_ids"] == ["q_1", "q_2", "q_3"]
     assert s["available_options"] == [{"table_ids": ["q_1"], "capacity": 2}, {"table_ids": ["q_2"], "capacity": 4},
@@ -101,7 +127,7 @@ def test_B66_B67_B68_available_options(c, ada):
 
 
 # ============================================================ POST /reservations
-def test_B58_B69_B71_pair_booking(c, ada, bob):
+def test_C2_38_C2_46_C2_48_pair_booking(c, ada, bob):
     r = book_ids(c, ada, "r_trio", ["q_1", "q_2"], f"{FUT_FRI}T19:00", 6)
     assert r.status == 201, r
     o = r.json
@@ -121,7 +147,7 @@ def test_B58_B69_B71_pair_booking(c, ada, bob):
     assert c.book(bob, k(), "r_trio", "q_3", f"{FUT_FRI}T19:00", 1).status == 201
 
 
-def test_B70_table_id_and_table_ids(c, ada):
+def test_C2_47_table_id_and_table_ids(c, ada):
     r = book_ids(c, ada, "r_trio", ["q_1"], f"{FUT_FRI}T19:00", 2)
     assert r.status == 201 and r.json["table_ids"] == ["q_1"] and r.json["table_id"] == "q_1"
     r = c.book(ada, k(), "r_trio", "q_2", f"{FUT_FRI}T19:00", 2)
@@ -133,7 +159,7 @@ def test_B70_table_id_and_table_ids(c, ada):
     assert len(c.get("/reservations", token=ada).json["reservations"]) == 2
 
 
-def test_B62_B63_B72_B73_combination_not_allowed(c, ada):
+def test_C2_41_C2_49_C2_50_combination_not_allowed(c, ada):
     err(book_ids(c, ada, "r_trio", ["q_1", "q_3"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
     err(book_ids(c, ada, "r_trio", ["q_3", "q_1"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
     err(book_ids(c, ada, "r_trio", ["q_1", "q_2", "q_3"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
@@ -142,26 +168,29 @@ def test_B62_B63_B72_B73_combination_not_allowed(c, ada):
     assert c.get("/reservations", token=ada).json["reservations"][0]["table_ids"] == ["q_1", "q_2"]
 
 
-def test_B64_B75_summed_capacity(c, ada):
+def test_C2_42_C2_52_summed_capacity(c, ada):
     err(book_ids(c, ada, "r_trio", ["q_1", "q_2"], f"{FUT_FRI}T19:00", 7), 422, "party_exceeds_capacity")
     assert book_ids(c, ada, "r_trio", ["q_1", "q_2"], f"{FUT_FRI}T19:00", 6).status == 201
     err(book_ids(c, ada, "r_trio", ["q_2", "q_3"], f"{FUT_FRI}T21:30", 9), 422, "party_exceeds_capacity")
     assert book_ids(c, ada, "r_trio", ["q_2", "q_3"], f"{FUT_FRI}T21:30", 8).status == 201
 
 
-def test_B74_any_member_taken(c, ada, bob):
+def test_C2_51_any_member_taken(c, ada, bob):
     assert c.book(bob, k(), "r_trio", "q_2", f"{FUT_FRI}T19:00", 2).status == 201
     err(book_ids(c, ada, "r_trio", ["q_1", "q_2"], f"{FUT_FRI}T19:30", 2), 409, "table_unavailable")
     err(book_ids(c, ada, "r_trio", ["q_2", "q_3"], f"{FUT_FRI}T18:00", 2), 409, "table_unavailable")
     assert book_ids(c, ada, "r_trio", ["q_1", "q_2"], f"{FUT_FRI}T20:30", 2).status == 201
 
 
-def test_B76_B70_validation_order(c, ada):
+def test_C2_53_C2_47_validation_order(c, ada):
     err(book_ids(c, ada, "r_trio", ["q_1", "q_1"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
     err(book_ids(c, ada, "r_trio", [], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
     err(book_ids(c, ada, "r_trio", [""], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
     err(book_ids(c, ada, "r_trio", ["q_1", "zzz"], f"{FUT_FRI}T19:00", 2), 404, "not_found")
     err(book_ids(c, ada, "r_trio", ["q_1", "a_1"], f"{FUT_FRI}T19:00", 2), 404, "not_found")
+    # R-35: more than two is reported before an unknown member; an undeclared pair after 404
+    err(book_ids(c, ada, "r_trio", ["q_1", "q_2", "zzz"], f"{FUT_FRI}T19:00", 2), 422, "combination_not_allowed")
+    err(book_ids(c, ada, "r_trio", ["q_1", "zzz"], f"{FUT_FRI}T19:07", 2), 404, "not_found")
     for bad in ("q_1", 5, None, [1], [None], ["q_1", 2], {"id": "q_1"}):
         body = {"restaurant_id": "r_trio", "table_ids": bad, "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 2}
         err(c.post("/reservations", body, token=ada, key=k()), 400, "malformed_request")
@@ -170,7 +199,7 @@ def test_B76_B70_validation_order(c, ada):
     err(book_ids(c, ada, "r_trio", ["q_1", "q_1", "q_1"], f"{FUT_FRI}T19:00", 2), 422, "validation_failed")
 
 
-def test_B49_pair_idempotency(c, ada):
+def test_C2_32_pair_idempotency(c, ada):
     key = k()
     body = {"restaurant_id": "r_trio", "table_ids": ["q_1", "q_2"], "starts_at_local": f"{FUT_FRI}T19:00", "party_size": 6}
     r = c.post("/reservations", body, token=ada, key=key)
@@ -182,7 +211,7 @@ def test_B49_pair_idempotency(c, ada):
 
 
 # ============================================================ PATCH, cancel, moves
-def test_B77_B78_patch_and_cancel_with_pairs(c, ada, bob):
+def test_C2_54_patch_and_cancel_with_pairs(c, ada, bob):
     o = c.book(ada, k(), "r_trio", "q_1", f"{FUT_FRI}T19:00", 2).json
     ref = o["reference"]
     p = c.patch(f"/reservations/{ref}", {"table_ids": ["q_1", "q_2"], "party_size": 6}, token=ada)
@@ -214,7 +243,7 @@ def test_B77_B78_patch_and_cancel_with_pairs(c, ada, bob):
     assert s["available_table_ids"] == ["q_1", "q_2", "q_3"] and len(s["available_options"]) == 5
 
 
-def test_B84_B85_moves_with_table_ids(c, ada, bob):
+def test_C2_58_moves_with_table_ids(c, ada, bob):
     a = c.book(ada, k(), "r_trio", "q_1", f"{FUT_FRI}T19:00", 2).json
     b = c.book(ada, k(), "r_trio", "q_3", f"{FUT_FRI}T19:00", 2).json
     key = k()
@@ -247,7 +276,7 @@ def test_B84_B85_moves_with_table_ids(c, ada, bob):
 
 
 # ============================================================ concurrency
-def test_B87_concurrent_pairs_sharing_a_table(c, ada, bob):
+def test_C2_59_concurrent_pairs_sharing_a_table(c, ada, bob):
     toks = [ada, bob] + [c.signup(f"p{i}@example.com").json["token"] for i in range(4)]
     choices = [["q_1", "q_2"], ["q_2", "q_3"], ["q_2"], ["q_1"], ["q_3"]]
     fns = [(lambda t=toks[i % 6], ids=choices[i % 5]: book_ids(Client(c.base_url, timeout=15), t, "r_trio", ids,
@@ -297,7 +326,7 @@ def stage1_export(request):
     pytest.skip("no --stage1-base-url or --stage1-export")
 
 
-def test_B52_B53_B54_B55_upgrade_from_stage1_export(c, stage1_export):
+def test_C2_35_C2_36_upgrade_from_stage1_export(c, stage1_export):
     exp = stage1_export["export"]
     assert exp.get("track") == "tablekeeper" and "state" in exp
     r = c.import_(exp)

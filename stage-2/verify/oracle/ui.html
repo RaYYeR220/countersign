@@ -41,10 +41,16 @@
 <main id="main"></main>
 <script>
 (function () {
-  const S = { token: sessionStorage.getItem("tk.token"), name: sessionStorage.getItem("tk.name"), search: null, slots: [], seq: 0, form: null, confirmation: null, lastSearch: null };
-  const setSession = (token, name) => { S.token = token; S.name = name;
-    if (token) { sessionStorage.setItem("tk.token", token); sessionStorage.setItem("tk.name", name); }
-    else { sessionStorage.removeItem("tk.token"); sessionStorage.removeItem("tk.name"); } };
+  const S = { token: localStorage.getItem("tk.token"), name: localStorage.getItem("tk.name"), search: null, slots: [], seq: 0, form: null, confirmation: null, lastSearch: null };
+  const setSession = (token, name) => { S.token = token; S.name = name;                      // R-30: localStorage
+    if (token) { localStorage.setItem("tk.token", token); localStorage.setItem("tk.name", name); }
+    else { localStorage.removeItem("tk.token"); localStorage.removeItem("tk.name"); } };
+  const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const readableDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); const dt = new Date(Date.UTC(y, m - 1, d));
+    return `${WEEKDAYS[dt.getUTCDay()]} ${d} ${MONTHS[m - 1]} ${y}`; };                       // R-32
+  // R-40: a signed-out diner is sent to /login and comes back with the search and selection restored
+  const PENDING = "tk.pending";
   const $ = (sel, root) => (root || document).querySelector(sel);
   const el = (tag, attrs, ...kids) => {
     const e = document.createElement(tag);
@@ -86,7 +92,13 @@
       errBox.innerHTML = "";
       const body = isSignup ? { email: email.value, password: pw.value, display_name: name.value } : { email: email.value, password: pw.value };
       const r = await api("POST", isSignup ? "/auth/signup" : "/auth/login", body);
-      if (r.status === 200 || r.status === 201) { setSession(r.json.token, r.json.display_name); renderHeader(); history.pushState({}, "", "/"); route(); }
+      if (r.status === 200 || r.status === 201) {
+        setSession(r.json.token, r.json.display_name); renderHeader();
+        const pending = JSON.parse(localStorage.getItem(PENDING) || "null"); localStorage.removeItem(PENDING);
+        history.pushState({}, "", pending && pending.path ? pending.path : "/");
+        if (pending && pending.search) { S.lastSearch = pending.search; S.pendingSelection = pending.selection || null; }
+        route();
+      }
       else errBox.append(el("div", { testid: "auth-error", class: "error" }, (r.json && r.json.error && r.json.error.message) || "Could not sign in"));
     } }, isSignup ? "Create account" : "Log in");
     const card = el("div", { class: "card" }, el("h1", {}, isSignup ? "Sign up" : "Log in"));
@@ -115,7 +127,9 @@
       el("div", {}, el("label", { for: "party-size-input" }, "Party size"), party),
       el("div", {}, btn)), results, formBox);
     if (S.form) renderForm();
-    if (S.lastSearch && S.slots.length) renderGrid(S.lastSearch, S.slots);
+    if (S.lastSearch && S.lastSearch.rid && (S.pendingSelection || !S.slots.length)) {
+      sel.value = S.lastSearch.rid; date.value = S.lastSearch.date; party.value = S.lastSearch.party; await runSearch();
+    } else if (S.lastSearch && S.slots.length) renderGrid(S.lastSearch, S.slots);
 
     async function runSearch() {
       const q = { rid: sel.value, date: date.value, party: party.value };
@@ -126,6 +140,12 @@
       S.lastSearch = q; S.lastSearch.name = (restaurants.find(x => x.id === q.rid) || {}).name || q.rid;
       S.slots = r.status === 200 ? r.json.slots : [];
       renderGrid(q, S.slots, r);
+      if (S.pendingSelection && S.token) {                       // R-40: restore the selection after sign-in
+        const ps = S.pendingSelection; S.pendingSelection = null;
+        const cell = document.querySelector(`[data-testid="${ps.testid}"]`);
+        const slot = S.slots.find(x => x.starts_at_local === ps.local);
+        if (cell && slot) openForm(q, slot, ps.tables, cell);
+      }
     }
 
     function renderGrid(q, slots, r) {
@@ -143,12 +163,14 @@
           c.onclick = () => avail && openForm(q, s, [t], c);
           row.append(c);
         }
-        for (const o of s.available_options) {
-          if (o.table_ids.length !== 2) continue;
-          const labels = o.table_ids.map(id => (tables.find(t => t.id === id) || { label: id }));
-          const c = el("button", { testid: `slot-${o.table_ids.join("+")}-${hm}`, class: "cell pair", "data-available": "true" },
+        const caps = Object.fromEntries(tables.map(t => [t.id, t.capacity]));
+        for (const pair of (S.pairs[q.rid] || [])) {                 // R-39: a cell for every capable declared pair
+          if (caps[pair[0]] + caps[pair[1]] < Number(q.party)) continue;
+          const avail = s.available_options.some(o => o.table_ids.length === 2 && o.table_ids[0] === pair[0] && o.table_ids[1] === pair[1]);
+          const labels = pair.map(id => (tables.find(t => t.id === id) || { label: id }));
+          const c = el("button", { testid: `slot-${pair.join("+")}-${hm}`, class: "cell pair", "data-available": String(avail) },
                        "Tables " + labels.map(t => t.label).join(" + "));
-          c.onclick = () => openForm(q, s, labels, c);
+          c.onclick = () => avail && openForm(q, s, labels, c);
           row.append(c);
         }
         grid.append(row);
@@ -157,7 +179,11 @@
     }
 
     function openForm(q, s, tablesSel, cell) {
-      if (!S.token) { history.pushState({}, "", "/login"); route(); return; }
+      if (!S.token) {                                              // R-40
+        localStorage.setItem(PENDING, JSON.stringify({ path: "/", search: S.lastSearch,
+          selection: { testid: cell.getAttribute("data-testid"), local: s.starts_at_local, tables: tablesSel } }));
+        history.pushState({}, "", "/login"); route(); return;
+      }
       document.querySelectorAll(".cell.selected").forEach(x => x.classList.remove("selected"));
       cell.classList.add("selected");
       S.form = { rid: q.rid, rname: S.lastSearch.name, tables: tablesSel, local: s.starts_at_local, party: String(q.party),
@@ -184,7 +210,10 @@
         msg.innerHTML = "";
         let r;
         try { r = await api("POST", "/reservations", body, { "Idempotency-Key": f.key }); }
-        catch (e) { f.uncertain = true; msg.append(el("div", { testid: "booking-uncertain", class: "uncertain" }, "We could not confirm whether your booking went through. Please retry.")); return; }
+        catch (e) { r = null; }
+        if (r === null || r.status >= 500) {                        // R-38: network failure or 5xx -> uncertain, key kept
+          f.uncertain = true; msg.append(el("div", { testid: "booking-uncertain", class: "uncertain" }, "We could not confirm whether your booking went through. Please retry.")); return;
+        }
         if (r.status === 201 || r.status === 200) {
           f.uncertain = false; msg.innerHTML = "";
           S.confirmation = r.json; renderConfirmation(conf, r.json, f);
@@ -195,7 +224,7 @@
       } }, "Book");
       const card = el("div", { testid: "booking-form", class: "card" },
         el("h2", {}, "Your booking"),
-        el("div", { testid: "booking-summary" }, `${f.rname}: ${labels.length > 1 ? "Tables " : "Table "}${labels.join(" + ")} at ${hm} on ${f.local.slice(0, 10)}`),
+        el("div", { testid: "booking-summary" }, `${f.rname}: ${labels.length > 1 ? "Tables " : "Table "}${labels.join(" + ")} at ${hm} on ${readableDate(f.local.slice(0, 10))} (${f.local.slice(0, 10)})`),
         el("label", { for: "booking-party-size" }, "Party size"), partyIn, el("div", { style: "margin-top:.75rem" }, submit), msg, conf);
       formBox.append(card);
       if (S.confirmation) renderConfirmation(conf, S.confirmation, f);
@@ -207,7 +236,7 @@
       box.append(el("div", { testid: "confirmation", class: "card" },
         el("div", { class: "muted" }, "Confirmed. Your reference:"),
         el("div", { testid: "confirmation-reference", class: "ref" }, o.reference),
-        el("div", { testid: "confirmation-details" }, `${f.rname}, ${labels.length > 1 ? "tables " : "table "}${labels.join(" + ")}, ${o.starts_at_local.slice(11)} on ${o.starts_at_local.slice(0, 10)}`),
+        el("div", { testid: "confirmation-details" }, `${f.rname}, ${labels.length > 1 ? "tables " : "table "}${labels.join(" + ")}, ${o.starts_at_local.slice(11)} on ${readableDate(o.starts_at_local.slice(0, 10))} (${o.starts_at_local.slice(0, 10)})`),
         el("div", { testid: "confirmation-tables" }, labels.join(" + "))));
     }
   }
@@ -215,6 +244,10 @@
   // ---------------------------------------------------------------- lookup screen
   function lookupScreen() {
     const m = $("#main"); m.innerHTML = "";
+    if (!S.token) {                                                // R-40: lookup needs a session
+      localStorage.setItem(PENDING, JSON.stringify({ path: "/lookup" }));
+      history.pushState({}, "", "/login"); return authScreen("login");
+    }
     const input = el("input", { testid: "lookup-reference-input", id: "lookup-reference-input", type: "text" });
     const out = el("div");
     const show = async (ref) => {
@@ -241,12 +274,13 @@
   }
 
   // ---------------------------------------------------------------- routing
-  S.tables = {};
+  S.tables = {}; S.pairs = {};
   async function loadTables() {
     const rs = await api("GET", "/restaurants");
     for (const r of (rs.json && rs.json.restaurants) || []) {
       const d = await api("GET", "/restaurants/" + encodeURIComponent(r.id));
       S.tables[r.id] = (d.json && d.json.tables) || [];
+      S.pairs[r.id] = (d.json && d.json.combinable) || [];
     }
   }
   async function route() {

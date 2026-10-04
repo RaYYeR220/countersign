@@ -1,4 +1,4 @@
-"""Stage-2 browser suite (Oracle): the UI clauses of evidence/stage-2/ledger-B.md through a headless Chromium.
+"""Stage-2 browser suite (Oracle): the UI clauses of evidence/stage-2/ledger.md (C2.<n>), under rulings R-29..R-40 through a headless Chromium.
 
 Runs only with `--ui`. Every check goes through the served screens plus the public HTTP API for cross-checks.
 Network conditions (out-of-order searches, lost responses) are produced with Playwright route interception, so
@@ -76,14 +76,14 @@ def cells(page) -> dict:
 
 
 # ============================================================ routes and chrome
-def test_B4_B7_routes_return_html(c, base_url):
+def test_C2_3_C2_4_routes_return_html(c, base_url):
     for path in ("/", "/signup", "/login", "/lookup"):
         r = c.get(path)
         assert r.status == 200 and r.headers.get("content-type", "").startswith("text/html"), (path, r.status)
     assert c.get("/restaurants").headers.get("content-type", "").startswith("application/json")
 
 
-def test_B4_B18_B27_screens_expose_testids_and_nav(page):
+def test_C2_3_C2_10_C2_15_screens_expose_testids_and_nav(page):
     page.goto("/signup")
     for n in ("signup-email", "signup-password", "signup-display-name", "signup-submit"):
         assert tid(page, n).count() == 1, n
@@ -91,13 +91,18 @@ def test_B4_B18_B27_screens_expose_testids_and_nav(page):
     for n in ("login-email", "login-password", "login-submit"):
         assert tid(page, n).count() == 1, n
     page.goto("/lookup")
+    page.wait_for_url("**/login")                                   # R-40: lookup needs a session
+    login(page)
+    page.goto("/lookup")
     for n in ("lookup-reference-input", "lookup-submit"):
         assert tid(page, n).count() == 1, n
+    tid(page, "logout-button").click()
     page.goto("/")
     wait_ready(page)
     for n in ("restaurant-select", "date-input", "party-size-input", "search-button"):
         assert tid(page, n).count() == 1, n
     navs = []
+    login(page)
     for path in ("/", "/signup", "/login", "/lookup"):
         page.goto(path)
         navs.append(sorted(set(page.locator("nav a").evaluate_all("as => as.map(a => a.getAttribute('href'))"))))
@@ -105,7 +110,7 @@ def test_B4_B18_B27_screens_expose_testids_and_nav(page):
 
 
 # ============================================================ auth
-def test_B29_B31_B32_B33_signup_login_logout(page, c):
+def test_C2_16_C2_18_C2_19_C2_20_signup_login_logout(page, c):
     page.goto("/signup")
     assert tid(page, "auth-error").count() == 0
     tid(page, "signup-email").fill("ui@example.com")
@@ -131,7 +136,7 @@ def test_B29_B31_B32_B33_signup_login_logout(page, c):
     assert tid(page, "auth-error").count() == 0 and "Ada" in tid(page, "current-user").inner_text()
 
 
-def test_B30_B31_signup_errors(page):
+def test_C2_17_C2_18_signup_errors(page):
     page.goto("/signup")
     tid(page, "signup-email").fill("ada@example.com")
     tid(page, "signup-password").fill("another-password")
@@ -142,7 +147,7 @@ def test_B30_B31_signup_errors(page):
 
 
 # ============================================================ search grid
-def test_B34_B40_B41_grid_matches_api(page, c):
+def test_C2_21_C2_27_C2_28_grid_matches_api(page, c):
     page.goto("/")
     wait_ready(page)
     values = tid(page, "restaurant-select").locator("option").evaluate_all("os => os.map(o => o.value)")
@@ -159,56 +164,70 @@ def test_B34_B40_B41_grid_matches_api(page, c):
         for t in tables:
             assert got.get(f"slot-{t}-{hm}") == ("true" if t in s["available_table_ids"] else "false"), (t, hm)
     assert len([k_ for k_ in got if "+" not in k_]) == len(tables) * len(api["slots"])
+    assert tid(page, "no-slots").count() == 0                                   # R-29: absent, not hidden
     # closed day
     search(page, "r_anker", FUT_WED, 2)
     assert tid(page, "no-slots").is_visible()
-    assert page.locator('[data-testid^="slot-"]').count() == 0
+    assert tid(page, "availability-grid").count() == 0 and page.locator('[data-testid^="slot-"]').count() == 0
 
 
-def test_B37_search_sends_the_inputs(page):
+def test_C2_24_search_sends_the_inputs(page):
     seen = []
     page.on("request", lambda r: seen.append(r.url) if "/availability" in r.url else None)
     search(page, "r_all", FUT_DAY, 4)
     assert any(f"restaurant_id=r_all" in u and f"date={FUT_DAY}" in u and "party_size=4" in u for u in seen), seen
 
 
-def test_B79_B21_pair_cells(page, c):
-    search(page, "r_anker", FUT_FRI, 5)
-    api = c.availability("r_anker", FUT_FRI, 5).json
+def test_C2_55_C2_11_pair_cells(page, c, ada):
+    """R-39: a cell for every declared pair whose summed capacity >= party size, true iff in available_options."""
+    assert c.book(ada, "k-ui-pair-busy", "r_trio", "q_2", f"{FUT_FRI}T19:00", 2).status == 201
+    search(page, "r_trio", FUT_FRI, 5)
+    api = c.availability("r_trio", FUT_FRI, 5).json
     got = cells(page)
     for s in api["slots"]:
         hm = s["starts_at_local"][-5:]
-        pairs = {"+".join(o["table_ids"]) for o in s["available_options"] if len(o["table_ids"]) == 2}
-        true_pairs = {k_[5:-6] for k_, v in got.items() if k_.endswith("-" + hm) and "+" in k_ and v == "true"}
-        assert true_pairs == pairs, (hm, true_pairs, pairs)
-        assert all(got[f"slot-{t}-{hm}"] == "false" for t in ("t_1", "t_2")), hm
-    cell = tid(page, "slot-t_1+t_2-19:00")
-    txt = cell.inner_text()
-    assert "1" in txt and "2" in txt and "t_1+t_2" not in txt, txt
+        avail = {"+".join(o["table_ids"]) for o in s["available_options"] if len(o["table_ids"]) == 2}
+        pair_cells = {k_[5:-6]: v for k_, v in got.items() if k_.endswith("-" + hm) and "+" in k_}
+        assert set(pair_cells) == {"q_1+q_2", "q_2+q_3"}, (hm, pair_cells)      # both pairs seat 5
+        assert {p for p, v in pair_cells.items() if v == "true"} == avail, (hm, pair_cells, avail)
+        assert all(got[f"slot-{t}-{hm}"] == "false" for t in ("q_1", "q_2", "q_3")), hm
+    assert got["slot-q_1+q_2-19:00"] == "false" and got["slot-q_2+q_3-19:00"] == "false"
+    assert got["slot-q_1+q_2-21:00"] == "true"
+    tid(page, "slot-q_1+q_2-19:00").click()
+    page.wait_for_timeout(200)
+    assert tid(page, "booking-form").count() == 0                              # clicking a false pair cell does nothing
+    txt = tid(page, "slot-q_1+q_2-21:00").inner_text()
+    assert "Window" in txt and "Centre" in txt and "q_1+q_2" not in txt, txt
+    # a pair whose summed capacity is below the party size has no cell
+    search(page, "r_trio", FUT_FRI, 7)
+    got = cells(page)
+    assert "slot-q_1+q_2-21:00" not in got and got.get("slot-q_2+q_3-21:00") == "true", [k_ for k_ in got if "+" in k_][:4]
 
 
-def test_B23_states_visually_distinct(page):
-    search(page, "r_anker", FUT_FRI, 5)
-    avail = tid(page, "slot-t_1+t_2-19:00").evaluate("e => getComputedStyle(e).backgroundColor + '|' + getComputedStyle(e).color")
-    unavail = tid(page, "slot-t_1-19:00").evaluate("e => getComputedStyle(e).backgroundColor + '|' + getComputedStyle(e).color")
+def test_C2_12_states_visually_distinct(page, c, ada):
+    assert c.book(ada, "k-ui-busy", "r_anker", "t_2", f"{FUT_FRI}T18:00", 2).status == 201
+    search(page, "r_anker", FUT_FRI, 2)
+    assert cells(page)["slot-t_1-19:00"] == "true" and cells(page)["slot-t_2-18:00"] == "false"
+    avail = tid(page, "slot-t_1-19:00").evaluate("e => getComputedStyle(e).backgroundColor + '|' + getComputedStyle(e).color")
+    unavail = tid(page, "slot-t_2-18:00").evaluate("e => getComputedStyle(e).backgroundColor + '|' + getComputedStyle(e).color")
     assert avail != unavail
 
 
 # ============================================================ booking form and confirmation
-def test_B42_B43_B45_B46_B47_B48_B50_booking_flow(page, c, ada):
+def test_C2_29_C2_31_C2_32_C2_33_booking_flow(page, c, ada):
     login(page)
     search(page, "r_anker", FUT_FRI, 2)
     tid(page, "slot-t_2-19:00").click()
     tid(page, "booking-form").wait_for()
     summary = tid(page, "booking-summary").inner_text()
-    assert "2" in summary and "19:00" in summary, summary
+    assert "2" in summary and "19:00" in summary and FUT_FRI in summary and "Friday" in summary, summary   # R-32
     assert tid(page, "booking-party-size").input_value() == "2"
     tid(page, "booking-submit").click()
     tid(page, "confirmation").wait_for()
     ref = tid(page, "confirmation-reference").inner_text().strip()
     assert REF.match(ref), ref
     details = tid(page, "confirmation-details").inner_text()
-    assert "Zum Anker" in details and "2" in details and "19:00" in details, details
+    assert "Zum Anker" in details and "2" in details and "19:00" in details and FUT_FRI in details and "Friday" in details, details
     assert tid(page, "booking-form").is_visible() and tid(page, "booking-error").count() == 0
     mine = c.get("/reservations", token=ada).json["reservations"]
     assert [x["reference"] for x in mine] == [ref] and mine[0]["table_ids"] == ["t_2"]
@@ -233,14 +252,32 @@ def test_B42_B43_B45_B46_B47_B48_B50_booking_flow(page, c, ada):
     assert len(c.get("/reservations", token=ada).json["reservations"]) == 2
 
 
-def test_B44_booking_requires_sign_in(page):
+def test_C2_30_booking_requires_sign_in(page, c, ada):
+    """R-40: signed out, an available cell sends the diner to /login; after sign-in the search and selection return."""
     search(page, "r_anker", FUT_FRI, 2)
     tid(page, "slot-t_1-19:00").click()
-    page.wait_for_timeout(300)
-    assert tid(page, "auth-error").count() == 1 or page.url.endswith("/login"), page.url
+    page.wait_for_url("**/login")
+    assert tid(page, "current-user").count() == 0 and tid(page, "logout-button").count() == 0   # R-29
+    tid(page, "login-email").fill("ada@example.com")
+    tid(page, "login-password").fill("correct horse")
+    tid(page, "login-submit").click()
+    page.wait_for_url(lambda u: u.endswith("/"))
+    tid(page, "booking-form").wait_for()
+    summary = tid(page, "booking-summary").inner_text()
+    assert "1" in summary and "19:00" in summary, summary
+    assert cells(page)["slot-t_1-19:00"] == "true"
+    # lookup while signed out goes to /login and comes back to /lookup
+    tid(page, "logout-button").click()
+    page.goto("/lookup")
+    page.wait_for_url("**/login")
+    tid(page, "login-email").fill("ada@example.com")
+    tid(page, "login-password").fill("correct horse")
+    tid(page, "login-submit").click()
+    page.wait_for_url("**/lookup")
+    assert tid(page, "lookup-reference-input").count() == 1
 
 
-def test_B80_B81_B82_pair_booking_labels(page, c, ada):
+def test_C2_56_C2_57_pair_booking_labels(page, c, ada):
     login(page)
     search(page, "r_anker", FUT_FRI, 6)
     tid(page, "slot-t_1+t_2-19:00").click()
@@ -263,11 +300,12 @@ def test_B80_B81_B82_pair_booking_labels(page, c, ada):
 
 
 # ============================================================ lookup
-def test_B51_lookup_and_cancel(page, c, ada):
+def test_C2_34_lookup_and_cancel(page, c, ada):
     o = c.book(ada, "k-ui-lookup", "r_all", "a_1", f"{FUT_DAY}T12:00", 2).json
     past = c.book(ada, "k-ui-past", "r_all", "a_2", f"{PAST_DAY}T12:00", 2).json
     login(page)
     page.goto("/lookup")
+    assert tid(page, "reservation-detail").count() == 0 and tid(page, "reservation-error").count() == 0   # R-29
     tid(page, "lookup-reference-input").fill("NOPE01")
     tid(page, "lookup-submit").click()
     tid(page, "reservation-error").wait_for()
@@ -289,7 +327,7 @@ def test_B51_lookup_and_cancel(page, c, ada):
 
 
 # ============================================================ competing clients
-def test_B9_out_of_order_searches(page, c):
+def test_C2_6_out_of_order_searches(page, c):
     """Search A (r_anker, Friday) is held until search B (r_all) has rendered; A's late response must not win."""
     gate = threading.Event()
     held = []
@@ -319,7 +357,7 @@ def test_B9_out_of_order_searches(page, c):
     page.unroute("**/availability*")
 
 
-def test_B10_B17_conflict_after_form_opens(page, c, ada, bob):
+def test_C2_7_C2_9_conflict_after_form_opens(page, c, ada, bob):
     login(page)
     search(page, "r_anker", FUT_FRI, 2)
     tid(page, "slot-t_1-19:00").click()
@@ -352,7 +390,7 @@ def _lost_response_once(page):
     return state
 
 
-def test_B11_B12_B13_lost_response_then_retry(page, c, ada):
+def test_C2_8_lost_response_then_retry(page, c, ada):
     login(page)
     search(page, "r_anker", FUT_FRI, 2)
     tid(page, "slot-t_2-19:00").click()
@@ -373,7 +411,7 @@ def test_B11_B12_B13_lost_response_then_retry(page, c, ada):
     page.unroute("**/reservations")
 
 
-def test_B14_B15_lost_response_then_rejection_pair(page, c, ada, bob):
+def test_C2_8_C2_9_lost_response_then_rejection_pair(page, c, ada, bob):
     login(page)
     search(page, "r_anker", FUT_FRI, 6)
     tid(page, "slot-t_1+t_2-19:00").click()
@@ -400,7 +438,7 @@ def test_B14_B15_lost_response_then_rejection_pair(page, c, ada, bob):
 
 
 # ============================================================ upgrade (B53, B55, B57)
-def test_B53_B54_B55_B57_browser_survives_import(page, c, ada):
+def test_C2_35_C2_36_C2_37_browser_survives_import(page, c, ada):
     """Sign in, start a booking whose response is lost, then replace the state through export/import
     (between browser requests); the session, the lookup and the pending retry must survive."""
     login(page)
@@ -431,7 +469,7 @@ def test_B53_B54_B55_B57_browser_survives_import(page, c, ada):
 
 # ============================================================ layout and accessibility
 @pytest.mark.parametrize("width", [375, 768, 1280])
-def test_B25_B26_no_horizontal_scroll_labels_focus(browser, base_url, c, width):
+def test_C2_14_no_horizontal_scroll_labels_focus(browser, base_url, c, width):
     ctx = browser.new_context(viewport={"width": width, "height": 812}, base_url=base_url)
     page = ctx.new_page()
     page.set_default_timeout(8000)
@@ -447,9 +485,9 @@ def test_B25_B26_no_horizontal_scroll_labels_focus(browser, base_url, c, width):
                 }""")
                 assert ok, (path, inp.get_attribute("data-testid"))
         login(page)
-        search(page, "r_anker", FUT_FRI, 5)
+        search(page, "r_trio", FUT_FRI, 5)
         assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth + 1"), ("grid", width)
-        tid(page, "slot-t_1+t_2-19:00").click()
+        tid(page, "slot-q_1+q_2-19:00").click()
         tid(page, "booking-form").wait_for()
         assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth + 1"), ("form", width)
         # keyboard: the search button is reachable by Tab and shows a visible focus style

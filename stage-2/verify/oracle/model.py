@@ -505,11 +505,12 @@ class Model:
             if rid in self.restaurants:
                 raise Err(422, "validation_failed", "duplicate restaurant id")            # R-20
             combinable = []
-            for pair in self._flist(r, "combinable"):                                     # stage 2 (B60, B61)
-                if not isinstance(pair, list) or any(not isinstance(x, str) for x in pair):
-                    raise Err(400, "malformed_request", "combinable entries must be arrays of table ids")
-                if len(pair) != 2 or pair[0] == pair[1] or any(x not in seen_t for x in pair):
+            for pair in self._flist(r, "combinable"):                                     # R-34
+                if (not isinstance(pair, list) or len(pair) != 2 or any(not isinstance(x, str) for x in pair)
+                        or pair[0] == pair[1] or any(x not in seen_t for x in pair)):
                     raise Err(422, "validation_failed", "combinable entries are pairs of distinct tables of this restaurant")
+                if any({a, b} == set(pair) for a, b in combinable):
+                    raise Err(422, "validation_failed", "duplicate combinable pair")
                 combinable.append([pair[0], pair[1]])
             self.restaurants[rid] = {
                 "id": rid, "name": name, "timezone": tz, "slot_minutes": slot,
@@ -541,8 +542,8 @@ class Model:
             r = self.restaurants.get(restaurant_id)
             if r is None or any(not any(t["id"] == x for t in r["tables"]) for x in table_ids):
                 raise Err(422, "validation_failed", "unknown restaurant/table")           # R-20
-            if len(table_ids) > 2:
-                raise Err(422, "validation_failed", "a seeded set has at most two tables")
+            if len(table_ids) > 2 or (len(table_ids) == 2 and not any({a, b} == set(table_ids) for a, b in r["combinable"])):
+                raise Err(422, "validation_failed", "a seeded set is one table or a declared pair")   # R-34
             table_ids = self._declared_order(r, table_ids)
             naive = parse_local(local)
             if naive is None:
@@ -599,12 +600,13 @@ class Model:
         return list(ids)
 
     def _check_combination(self, r: dict, ids: list[str]) -> list[str]:
-        """404 for an unknown table, then the pair rules (Q3: before the time rules). Returns declared order."""
+        """R-35: more than two -> combination_not_allowed; then 404 for an unknown table; then an undeclared pair ->
+        combination_not_allowed (before the time rules). Returns declared order."""
+        if len(ids) > 2:
+            raise Err(422, "combination_not_allowed", "more than two tables")
         for x in ids:
             if not any(t["id"] == x for t in r["tables"]):
                 raise Err(404, "not_found", "no such table at this restaurant")
-        if len(ids) > 2:
-            raise Err(422, "combination_not_allowed", "more than two tables")
         if len(ids) == 2 and not any({a, b} == set(ids) for a, b in r["combinable"]):
             raise Err(422, "combination_not_allowed", "pair is not combinable")
         return self._declared_order(r, ids)
@@ -694,6 +696,7 @@ class Model:
             ids = s_.get("table_ids")
             need(r is not None and isinstance(ids, list) and 1 <= len(ids) <= 2 and len(set(ids)) == len(ids))
             need(all(isinstance(x, str) and any(t["id"] == x for t in r["tables"]) for x in ids))
+            need(len(ids) == 1 or any({a, b} == set(ids) for a, b in r["combinable"]))   # R-34: declared pair only
             need(is_json_int(s_.get("party_size")) and int(s_["party_size"]) >= 1)
             need(parse_local(s_["starts_at_local"]) is not None)
             start, end, created = (parse_rfc3339(s_[f]) for f in ("start", "end", "created"))
