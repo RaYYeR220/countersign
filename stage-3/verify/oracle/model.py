@@ -907,12 +907,27 @@ class Model:
             need(s_["reservation_id"] not in new.reservations and s_["reference"] not in new.references)
             if "revision" in s_ or "terms" in s_ or "history" in s_:                      # stage-3 record
                 need(is_json_int(s_.get("revision")) and int(s_["revision"]) >= 1)
-                need(isinstance(s_.get("terms"), dict) and set(s_["terms"]) == set(TERMS_KEYS))
-                need(isinstance(s_.get("history"), list) and len(s_["history"]) >= 1)
-                for i_, h in enumerate(s_["history"]):
+                terms = s_.get("terms")
+                need(isinstance(terms, dict) and set(terms) == set(TERMS_KEYS))
+                need(is_json_int(terms["policy_version"]) and 0 <= int(terms["policy_version"]) <= len(r["policies"]))
+                for f_, lo, hi in (("slot_minutes", 1, 1440), ("reservation_duration_minutes", 1, 1440),
+                                   ("cancellation_cutoff_minutes", 0, 10080)):
+                    need(is_json_int(terms[f_]) and lo <= int(terms[f_]) <= hi)
+                need(isinstance(terms["opening_hours"], list) and isinstance(terms["capacities"], dict))
+                need(set(terms["capacities"]) == {t["id"] for t in r["tables"]}
+                     and all(is_json_int(v) and 1 <= int(v) <= 100 for v in terms["capacities"].values()))
+                hist = s_.get("history")
+                need(isinstance(hist, list) and len(hist) >= 1)
+                for i_, h in enumerate(hist):
                     need(isinstance(h, dict) and h.get("seq") == i_ + 1 and h.get("event") in ("created", "changed", "cancelled"))
                     need(isinstance(h.get("changes"), list) and parse_rfc3339(h.get("at")) is not None)
-                    need(is_json_int(h.get("revision")) and isinstance(h.get("accepted_terms"), dict))
+                    need(is_json_int(h.get("revision")) and 1 <= int(h["revision"]) <= int(s_["revision"]))
+                    need(isinstance(h.get("accepted_terms"), dict) and set(h["accepted_terms"]) == set(TERMS_KEYS))
+                need(hist[0]["event"] == "created" and all(h["event"] != "created" for h in hist[1:]))
+                need(all(h["event"] != "cancelled" for h in hist[:-1]))                          # nothing follows cancelled
+                need(int(hist[-1]["revision"]) == int(s_["revision"]))                            # last entry = current revision
+                need((hist[-1]["event"] == "cancelled") == (s_["status"] == "cancelled") or hist[-1]["event"] != "cancelled")
+                need(all(int(hist[j]["revision"]) <= int(hist[j + 1]["revision"]) for j in range(len(hist) - 1)))
                 new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
                                      new._declared_order(r, ids), int(s_["party_size"]), s_["starts_at_local"], start, end,
                                      created, s_["terms"], history=json.loads(json.dumps(s_["history"])))
@@ -937,6 +952,7 @@ class Model:
         new.counters = {k_: int(counters[k_]) for k_ in ("user", "reservation")}
         for ser in alist("series"):
             need(isinstance(ser, dict) and isinstance(ser.get("series_id"), str) and ser["series_id"] not in new.series)
+            need(0 < len(ser["series_id"]) <= ID_MAX)
             need(ser.get("user_id") in new.users and is_json_int(ser.get("revision")) and int(ser["revision"]) >= 1)
             need(is_json_int(ser.get("interval_weeks")) and 1 <= int(ser["interval_weeks"]) <= 4)
             occ = ser.get("occurrences")
@@ -946,11 +962,17 @@ class Model:
                      and isinstance(o.get("exception"), bool))
                 rec = new.reservations[o["reservation_id"]]
                 need(rec["user_id"] == ser["user_id"] and rec.get("series_id") == ser["series_id"] and rec.get("series_index") == i_)
+            seen_res = [o["reservation_id"] for o in occ]
+            need(len(set(seen_res)) == len(seen_res))
             new.series[ser["series_id"]] = {"series_id": ser["series_id"], "user_id": ser["user_id"], "revision": int(ser["revision"]),
                                             "interval_weeks": int(ser["interval_weeks"]), "count": int(ser["count"]),
                                             "occurrences": [{"index": o["index"], "reservation_id": o["reservation_id"],
                                                              "exception": o["exception"]} for o in occ]}
             new.series_order.append(ser["series_id"])
+        for rec in new.reservations.values():                                      # a record claiming a series must be in it
+            sid = rec.get("series_id")
+            need(sid is None or (sid in new.series and any(o["reservation_id"] == rec["reservation_id"]
+                                                             for o in new.series[sid]["occurrences"])))
         return new
 
     # ------------------------------------------------------------------ auth (R-4, R-19)
