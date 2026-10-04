@@ -21,7 +21,7 @@ stage-3 rulings R-46 …. Complete clause text travels in each `[HANDOFF]`.
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
-| 1 | 1aaecec | WI-17/18 (builder f052006), WI-19/20 (stylist 4c50589), oracle fbe9fd2, auditor head | superseded by 2 (R-60 anchor_reference finding → WI-21) |
+| 1 | 1aaecec | WI-17/18 (builder f052006), WI-19/20 (stylist 4c50589), oracle fbe9fd2, auditor head | REJECT (verdict 1: F-1 R-60 → WI-21); superseded by 2 |
 
 ## Rework
 | WI | owner | from | clauses | status |
