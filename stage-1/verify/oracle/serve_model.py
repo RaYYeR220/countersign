@@ -56,6 +56,7 @@ def main() -> None:
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=18400)
     a = ap.parse_args()
+    ThreadingHTTPServer.request_queue_size = 256  # bursts of 50 must not be refused by the backlog
     srv = ThreadingHTTPServer((a.host, a.port), Handler)
     srv.daemon_threads = True
     print(f"oracle model listening on {a.host}:{a.port}", flush=True)
