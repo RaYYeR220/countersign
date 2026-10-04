@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-tamper-fix sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-tamper-fix sha=b61bdfa
 
 # Evidence — tamper generator targets reservation records (candidate-3 step-2 test defect)
 
