@@ -166,22 +166,70 @@ func validTerms(r *Restaurant, t Terms) bool {
 	return true
 }
 
-// checkRecord requires a revision, valid accepted terms and a dense history ending at the
-// current revision.
+// checkRecord requires a revision, valid accepted terms and a history this service could have
+// written (R-51, R-67, R-74): dense seq from 1; exactly one created entry, first, at revision 1;
+// every later entry one revision above the previous one; a cancelled entry, if any, last and only
+// on a cancelled booking; plan_id exactly on reassigned entries; and each event's changes in its
+// own shape. The last entry carries the current revision.
 func checkRecord(r *Restaurant, res *Reservation) error {
 	if res.Revision < 1 || !validTerms(r, res.Terms) || len(res.History) == 0 {
 		return invalid("reservation %s has an invalid revision or terms", res.ID)
 	}
+	last := len(res.History) - 1
 	for i, e := range res.History {
-		if e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||
-			(e.Event != EventCreated && e.Event != EventChanged && e.Event != EventCancelled && e.Event != EventReassigned) {
+		ok := e.Seq == i+1 && !e.At.IsZero() && validTerms(r, e.AcceptedTerms) && e.Changes != nil &&
+			e.Revision == i+1 && (i == 0) == (e.Event == EventCreated) &&
+			(e.Event == EventReassigned) == (e.PlanID != "") && validChanges(e)
+		if e.Event == EventCancelled && (i != last || res.Status != Cancelled) {
+			ok = false
+		}
+		if !ok {
 			return invalid("reservation %s has an invalid history", res.ID)
 		}
 	}
-	if res.History[len(res.History)-1].Revision != res.Revision {
+	if res.History[last].Revision != res.Revision {
 		return invalid("reservation %s history does not end at its revision", res.ID)
 	}
 	return nil
+}
+
+// changeOrder is the order of fields in created and changed entries (C3.13, C3.14, C3.50).
+var changeOrder = map[string]int{"table_id": 0, "table_ids": 0, "starts_at_local": 1, "party_size": 2}
+
+// validChanges checks an entry's changes against its event: created names the three fields from
+// null; changed names one to three distinct fields in order; cancelled names none; reassigned
+// names exactly table_ids.
+func validChanges(e HistoryEntry) bool {
+	switch e.Event {
+	case EventCreated:
+		if len(e.Changes) != 3 {
+			return false
+		}
+		for i, c := range e.Changes {
+			if pos, ok := changeOrder[c.Field]; !ok || pos != i || c.From != nil || c.To == nil {
+				return false
+			}
+		}
+		return true
+	case EventChanged:
+		if len(e.Changes) == 0 || len(e.Changes) > 3 {
+			return false
+		}
+		prev := -1
+		for _, c := range e.Changes {
+			pos, ok := changeOrder[c.Field]
+			if !ok || pos <= prev || c.From == nil || c.To == nil {
+				return false
+			}
+			prev = pos
+		}
+		return true
+	case EventCancelled:
+		return len(e.Changes) == 0
+	case EventReassigned:
+		return len(e.Changes) == 1 && e.Changes[0].Field == "table_ids" && e.Changes[0].From != nil && e.Changes[0].To != nil
+	}
+	return false
 }
 
 // checkSeries requires every series to belong to a known user and to list 2..12 distinct

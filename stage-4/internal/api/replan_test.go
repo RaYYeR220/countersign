@@ -207,6 +207,13 @@ func TestPreviewAndApply(t *testing.T) {
 	expect(t, e.book(e.ada, "c2", pairBooking(`["t_1","t_2"]`, "2026-09-24T21:00", 5)), 409, "table_unavailable")
 	expect(t, e.req("PATCH", "/reservations/"+b.Reference, e.ada, "", `{"table_id":"t_2"}`), 409, "table_unavailable")
 	expect(t, e.book(e.ada, "c3", booking("t_2", "2026-10-01T21:00", 2)), 201, "") // outside the closure
+
+	// A stage-4 export with a reassigned history, a closure and an applied plan imports cleanly.
+	exported := do(e.h, "GET", "/_test/export", "").Body.String()
+	fresh := New(state.NewStore(state.Empty()), e.clock.now)
+	if rec := do(fresh, "POST", "/_test/import", exported); rec.Code != 204 {
+		t.Errorf("stage-4 round trip = %d %s", rec.Code, rec.Body)
+	}
 }
 
 func TestStalePlanAndOtherRestaurant(t *testing.T) {
