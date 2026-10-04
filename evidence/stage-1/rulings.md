@@ -239,3 +239,13 @@ Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, th
 - Consequence for the Oracle: hardening tampers that use a non-conforming but non-empty ≤ 64-character
   reference (e.g. 'bad ref', 'abcdef') expect 204, not 422 — replace them with empty, over-64-character or
   duplicate references. For candidate 4, the single failing tamper case is explained by this ruling.
+
+## R-27 — Cross-group pairs in the tie-order test (verdict 4, F-2)
+- Clauses: C1.89, R-11
+- Question: `test_C1_89_tie_order_live_created_at` also asserts created_at order for consecutive bookings with
+  different `starts_at` (FUT_DAY 15:00 vs FUT_FRI 19:00); it fails 4 of 5 runs against a correct order.
+- Decision: R-11's created_at tie-break applies only between reservations with equal `starts_at`; reservations
+  with different `starts_at` are ordered by `starts_at` descending alone. The cross-group assertion contradicts
+  C1.89 and is a test defect; the test's R-11 assertions within groups pass in every run. For candidate
+  1bfe6e2, step 2's two failing cases (F-1 under R-26, F-2 under this ruling) are explained gaps; the Oracle's
+  fixes merge at stage close.
