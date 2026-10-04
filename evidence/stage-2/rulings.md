@@ -79,3 +79,33 @@ clauses are appended at reconciliation. R-29 … R-38 were issued from entry A b
   and keeps it in memory until a field changes. A resubmission with unchanged fields reuses key and body exactly
   (byte-identical JSON). A network failure or a 5xx keeps the key and shows `booking-uncertain`; a 4xx shows
   `booking-error` (409 also refreshes availability, keeping the form).
+
+## R-39 — Combination cells (supersedes R-33)
+- Clauses: C2.55, C2.28
+- Ambiguity: "combination cells, shown when a declared pair is available for the searched party size" next to
+  "Carries `data-available` like a single cell". R-33 read "available" as "free", which makes `data-available`
+  always true and the second sentence pointless; the Stylist built a cell for every pair in every slot.
+- Decision: in every slot, a combination cell `slot-{t_a}+{t_b}-{HH:MM}` (ids in `combinable` order) is rendered for
+  every declared pair whose summed capacity ≥ the searched party size; it carries `data-available="true"` exactly
+  when the pair is in that slot's `available_options`, else `"false"`. Pairs whose summed capacity is below the
+  party size have no cell. Clicking a `false` combination cell does nothing.
+- Rationale: "available for the searched party size" = able to seat that party; "like a single cell" = true/false by
+  occupancy. Rejected: R-33 (free-only), and a cell for every pair regardless of capacity.
+
+## R-40 — Signed-out actions (supersedes R-31)
+- Clauses: C2.30, C2.34
+- Decision: clicking an available cell while signed out navigates to `/login`; after a successful sign-in the
+  diner returns to `/` with the search and selection restored and the booking form open. Using the lookup screen
+  while signed out navigates to `/login` and returns to `/lookup` after sign-in. (The spec allows `auth-error` or
+  navigation; navigation is the behaviour already built.)
+
+## Answers to entry B's open questions (stage 2)
+Q1 → R-35 (`[]` → 422, confirmed). Q2 → R-35 (404 before the combination rule, confirmed). Q3 → R-35 (after 404,
+before invalid_local_time / hours / grid / capacity / overlap, confirmed). Q4 → a single option's capacity is the
+table's capacity (confirmed). Q5 → R-35 (declared order everywhere, confirmed). Q6 → R-35 (types 400; duplicates
+→ validation_failed before the more-than-two rule, confirmed). Q7 → R-36 + R-22 (422 at that item in input order,
+confirmed). Q8 → R-34 OVERRULES the B default: a seeded set must be one table or a DECLARED pair; an undeclared
+seeded pair → reset 422, and import refuses it too. Q9 → R-39 (pair cell for every declared pair whose summed
+capacity ≥ party size; `data-available` true iff in available_options; no cell for pairs below the party size).
+Q10 → R-37 (export envelope stays `format_version: 1`; the inner schema number distinguishes stages; import accepts
+stage-1 exports and its own). Q11 → confirmed. Q12 → confirmed (key omitted). Q13 → confirmed (declared order).
