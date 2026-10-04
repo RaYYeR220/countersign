@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=O-8 sha=<filled at commit>
+[EVIDENCE] stage=1 wi=O-8 sha=30c1518
 
 # Evidence — O-8: more tampered-state imports (verdict-3 survivors)
 
