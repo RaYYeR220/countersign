@@ -30,6 +30,10 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux.Handle("/auth/login", methods{http.MethodPost: s.login})
 	mux.Handle("/restaurants", methods{http.MethodGet: s.listRestaurants})
 	mux.Handle("/restaurants/{id}", methods{http.MethodGet: s.getRestaurant})
+	mux.Handle("/restaurants/{id}/policies", methods{
+		http.MethodGet:  s.listPolicies,
+		http.MethodPost: s.authed(s.publishPolicy),
+	})
 	mux.Handle("/availability", methods{http.MethodGet: s.availability})
 	mux.Handle("/reservations", methods{
 		http.MethodGet:  s.authed(s.listReservations),
@@ -40,6 +44,8 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 		http.MethodPatch: s.authed(s.amendReservation),
 	})
 	mux.Handle("/reservations/{reference}/cancel", methods{http.MethodPost: s.authed(s.cancelReservation)})
+	mux.Handle("/reservations/{reference}/history", methods{http.MethodGet: s.reservationHistory})
+	mux.Handle("/reservations/{reference}/decision", methods{http.MethodGet: s.reservationDecision})
 	mux.Handle("/reservation-moves", methods{http.MethodPost: s.authed(s.moveReservations)})
 	notFound := func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))

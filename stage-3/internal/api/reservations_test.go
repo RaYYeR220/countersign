@@ -125,7 +125,8 @@ func TestCreateReservation(t *testing.T) {
 	v := decodeView(t, rec)
 	want := reservationView{ReservationID: v.ReservationID, Reference: v.Reference, RestaurantID: "r_anker", TableID: "t_2",
 		TableIDs: []string{"t_2"}, PartySize: 4, Status: "confirmed", StartsAtLocal: "2026-09-24T19:00", StartsAt: "2026-09-24T19:00:00+02:00",
-		EndsAt: "2026-09-24T20:30:00+02:00", CreatedAt: "2026-09-21T11:04:03+00:00"}
+		EndsAt: "2026-09-24T20:30:00+02:00", CreatedAt: "2026-09-21T11:04:03+00:00",
+		Revision: 1, AcceptedTerms: v.AcceptedTerms}
 	if !reflect.DeepEqual(v, want) {
 		t.Errorf("got  %+v\nwant %+v", v, want)
 	}
@@ -134,7 +135,7 @@ func TestCreateReservation(t *testing.T) {
 	}
 	var keys map[string]any
 	json.Unmarshal(rec.Body.Bytes(), &keys)
-	if len(keys) != 11 {
+	if len(keys) != 13 {
 		t.Errorf("response has %d fields: %s", len(keys), rec.Body)
 	}
 	// Half-open occupancy: 20:30 is free, 20:00 overlaps.
@@ -338,7 +339,7 @@ func TestCancel(t *testing.T) {
 	rec := e.req("POST", "/reservations/"+v.Reference+"/cancel", e.ada, "", "")
 	expect(t, rec, 200, "")
 	got := decodeView(t, rec)
-	v.Status = "cancelled"
+	v.Status, v.Revision = "cancelled", 2
 	if !reflect.DeepEqual(got, v) {
 		t.Errorf("cancelled = %+v, want %+v", got, v)
 	}
