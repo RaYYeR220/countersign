@@ -1,0 +1,2137 @@
+{
+ "stage 1": {
+  "body": {
+   "party_size": 2,
+   "restaurant_id": "r_anker",
+   "starts_at_local": "2026-10-29T19:00",
+   "table_id": "t_2"
+  },
+  "export": {
+   "format_version": 1,
+   "state": {
+    "receipts": {
+     "u_rkpbgf2yflie\u0000POST /reservations\u0000up4-4f1834d78c904262b7dae5cf74e5cc41": {
+      "body": "{\"party_size\":2,\"restaurant_id\":\"r_anker\",\"starts_at_local\":\"2026-10-29T19:00\",\"table_id\":\"t_2\"}",
+      "response": {
+       "created_at": "2026-10-04T23:42:27+00:00",
+       "ends_at": "2026-10-29T20:30:00+01:00",
+       "party_size": 2,
+       "reference": "CUEANTKR",
+       "reservation_id": "res_p7th3ebn6shn",
+       "restaurant_id": "r_anker",
+       "starts_at": "2026-10-29T19:00:00+01:00",
+       "starts_at_local": "2026-10-29T19:00",
+       "status": "confirmed",
+       "table_id": "t_2"
+      },
+      "status": 201
+     }
+    },
+    "reservations": [
+     {
+      "created_at": "2026-01-02T03:04:05Z",
+      "ends_at": "2026-11-05T18:30:00Z",
+      "id": "s_1",
+      "party_size": 2,
+      "reference": "SEED01",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T17:00:00Z",
+      "starts_at_local": "2026-11-05T18:00",
+      "status": "confirmed",
+      "table_id": "t_1",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T20:00:00Z",
+      "id": "s_2",
+      "party_size": 2,
+      "reference": "SEED02",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T18:30:00Z",
+      "starts_at_local": "2026-11-05T19:30",
+      "status": "confirmed",
+      "table_id": "t_1",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T21:30:00Z",
+      "id": "s_3",
+      "party_size": 2,
+      "reference": "SEED03",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T20:00:00Z",
+      "starts_at_local": "2026-11-05T21:00",
+      "status": "confirmed",
+      "table_id": "t_1",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T18:30:00Z",
+      "id": "s_4",
+      "party_size": 2,
+      "reference": "SEED04",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T17:00:00Z",
+      "starts_at_local": "2026-11-05T18:00",
+      "status": "confirmed",
+      "table_id": "t_2",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T20:00:00Z",
+      "id": "s_5",
+      "party_size": 2,
+      "reference": "SEED05",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T18:30:00Z",
+      "starts_at_local": "2026-11-05T19:30",
+      "status": "confirmed",
+      "table_id": "t_2",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T21:30:00Z",
+      "id": "s_6",
+      "party_size": 2,
+      "reference": "SEED06",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T20:00:00Z",
+      "starts_at_local": "2026-11-05T21:00",
+      "status": "confirmed",
+      "table_id": "t_2",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T18:30:00Z",
+      "id": "s_7",
+      "party_size": 2,
+      "reference": "SEED07",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T17:00:00Z",
+      "starts_at_local": "2026-11-05T18:00",
+      "status": "confirmed",
+      "table_id": "t_3",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T20:00:00Z",
+      "id": "s_8",
+      "party_size": 2,
+      "reference": "SEED08",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T18:30:00Z",
+      "starts_at_local": "2026-11-05T19:30",
+      "status": "confirmed",
+      "table_id": "t_3",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-11-05T21:30:00Z",
+      "id": "s_9",
+      "party_size": 2,
+      "reference": "SEED09",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-11-05T20:00:00Z",
+      "starts_at_local": "2026-11-05T21:00",
+      "status": "confirmed",
+      "table_id": "t_3",
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:26Z",
+      "ends_at": "2026-10-30T22:30:00Z",
+      "id": "s_b1",
+      "party_size": 5,
+      "reference": "SEEDB1",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-10-30T21:00:00Z",
+      "starts_at_local": "2026-10-30T22:00",
+      "status": "confirmed",
+      "table_id": "t_3",
+      "user_id": "u_bob"
+     },
+     {
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-10-29T19:30:00Z",
+      "id": "res_p7th3ebn6shn",
+      "party_size": 2,
+      "reference": "CUEANTKR",
+      "restaurant_id": "r_anker",
+      "starts_at": "2026-10-29T18:00:00Z",
+      "starts_at_local": "2026-10-29T19:00",
+      "status": "confirmed",
+      "table_id": "t_2",
+      "user_id": "u_rkpbgf2yflie"
+     }
+    ],
+    "restaurants": [
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_anker",
+      "name": "Zum Anker",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "18:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:30",
+        "opens": "18:00",
+        "weekday": "fri"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 2,
+        "id": "t_1",
+        "label": "1"
+       },
+       {
+        "capacity": 4,
+        "id": "t_2",
+        "label": "2"
+       },
+       {
+        "capacity": 6,
+        "id": "t_3",
+        "label": "3"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_now",
+      "name": "Now Diner",
+      "opening_hours": [
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 30,
+      "slot_minutes": 15,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "n_1",
+        "label": "N1"
+       },
+       {
+        "capacity": 4,
+        "id": "n_2",
+        "label": "N2"
+       }
+      ],
+      "timezone": "Asia/Tokyo"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_ber",
+      "name": "Berlin Nights",
+      "opening_hours": [
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "d_1",
+        "label": "D1"
+       },
+       {
+        "capacity": 4,
+        "id": "d_2",
+        "label": "D2"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_ny",
+      "name": "NY Nights",
+      "opening_hours": [
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "y_1",
+        "label": "Y1"
+       },
+       {
+        "capacity": 4,
+        "id": "y_2",
+        "label": "Y2"
+       }
+      ],
+      "timezone": "America/New_York"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_other",
+      "name": "Other Place",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "18:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:30",
+        "opens": "18:00",
+        "weekday": "fri"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 8,
+        "id": "o_1",
+        "label": "O1"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "id": "r_close",
+      "name": "Early Close",
+      "opening_hours": [
+       {
+        "closes": "03:30",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "c_1",
+        "label": "C1"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     }
+    ],
+    "schema": 1,
+    "tokens": {
+     "NCHGD56VX3NM4IPBON5Q43F2WZ7OG4N6OIKBXABL2IR6S634XXOA": "u_rkpbgf2yflie"
+    },
+    "users": [
+     {
+      "display_name": "Ada",
+      "email": "ada@example.com",
+      "id": "u_ada",
+      "password_hash": "$2a$10$HKaAibBZwgbILDab7jv13.o7SmdZQ1iVVheWkmt9vI7K9q1kl12HK"
+     },
+     {
+      "display_name": "Bob",
+      "email": "bob@example.com",
+      "id": "u_bob",
+      "password_hash": "$2a$10$ZrbYLUfxagegW2FQSpYdb.rXvdY9vUzCUOXXkRHZz5XN5ZZhbshde"
+     },
+     {
+      "display_name": "Legacy",
+      "email": "legacy41@example.com",
+      "id": "u_rkpbgf2yflie",
+      "password_hash": "$2a$10$khm8EMDbSqTrSmhrmPcMZ.OrxnF.ZaTNJxzSq1N9IdzJrvKEJu1h."
+     }
+    ]
+   },
+   "track": "tablekeeper"
+  },
+  "first": {
+   "created_at": "2026-10-04T23:42:27+00:00",
+   "ends_at": "2026-10-29T20:30:00+01:00",
+   "party_size": 2,
+   "reference": "CUEANTKR",
+   "reservation_id": "res_p7th3ebn6shn",
+   "restaurant_id": "r_anker",
+   "starts_at": "2026-10-29T19:00:00+01:00",
+   "starts_at_local": "2026-10-29T19:00",
+   "status": "confirmed",
+   "table_id": "t_2"
+  },
+  "key": "up4-4f1834d78c904262b7dae5cf74e5cc41",
+  "reference": "CUEANTKR",
+  "token": "NCHGD56VX3NM4IPBON5Q43F2WZ7OG4N6OIKBXABL2IR6S634XXOA"
+ },
+ "stage 2": {
+  "body": {
+   "party_size": 2,
+   "restaurant_id": "r_combo",
+   "starts_at_local": "2026-10-29T19:00",
+   "table_id": "c_4"
+  },
+  "export": {
+   "format_version": 1,
+   "state": {
+    "receipts": {
+     "u_335bm6d2drfb\u0000POST /reservations\u0000up4-02d571e7c06e4f669f9cfc3215275cfa": {
+      "body": "{\"party_size\":2,\"restaurant_id\":\"r_combo\",\"starts_at_local\":\"2026-10-29T19:00\",\"table_id\":\"c_4\"}",
+      "response": {
+       "created_at": "2026-10-04T23:42:27+00:00",
+       "ends_at": "2026-10-29T20:30:00+01:00",
+       "party_size": 2,
+       "reference": "UUAKRDFG",
+       "reservation_id": "res_qduwjrgv3blx",
+       "restaurant_id": "r_combo",
+       "starts_at": "2026-10-29T19:00:00+01:00",
+       "starts_at_local": "2026-10-29T19:00",
+       "status": "confirmed",
+       "table_id": "c_4",
+       "table_ids": [
+        "c_4"
+       ]
+      },
+      "status": 201
+     }
+    },
+    "reservations": [
+     {
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-10-29T13:30:00Z",
+      "id": "s_c1",
+      "party_size": 8,
+      "reference": "COMBO1",
+      "restaurant_id": "r_combo",
+      "starts_at": "2026-10-29T12:00:00Z",
+      "starts_at_local": "2026-10-29T13:00",
+      "status": "confirmed",
+      "table_ids": [
+       "c_3",
+       "c_4"
+      ],
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-10-29T19:30:00Z",
+      "id": "s_c2",
+      "party_size": 2,
+      "reference": "CANCL1",
+      "restaurant_id": "r_combo",
+      "starts_at": "2026-10-29T18:00:00Z",
+      "starts_at_local": "2026-10-29T19:00",
+      "status": "cancelled",
+      "table_ids": [
+       "c_1"
+      ],
+      "user_id": "u_ada"
+     },
+     {
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-11-05T12:30:00Z",
+      "id": "s_c3",
+      "party_size": 2,
+      "reference": "SINGL1",
+      "restaurant_id": "r_combo",
+      "starts_at": "2026-11-05T11:00:00Z",
+      "starts_at_local": "2026-11-05T12:00",
+      "status": "confirmed",
+      "table_ids": [
+       "c_1"
+      ],
+      "user_id": "u_bob"
+     },
+     {
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-10-29T19:30:00Z",
+      "id": "res_qduwjrgv3blx",
+      "party_size": 2,
+      "reference": "UUAKRDFG",
+      "restaurant_id": "r_combo",
+      "starts_at": "2026-10-29T18:00:00Z",
+      "starts_at_local": "2026-10-29T19:00",
+      "status": "confirmed",
+      "table_ids": [
+       "c_4"
+      ],
+      "user_id": "u_335bm6d2drfb"
+     }
+    ],
+    "restaurants": [
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [
+       [
+        "c_2",
+        "c_1"
+       ],
+       [
+        "c_2",
+        "c_3"
+       ],
+       [
+        "c_3",
+        "c_4"
+       ]
+      ],
+      "id": "r_combo",
+      "name": "Long Table",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 2,
+        "id": "c_1",
+        "label": "Window"
+       },
+       {
+        "capacity": 4,
+        "id": "c_2",
+        "label": "Booth"
+       },
+       {
+        "capacity": 4,
+        "id": "c_3",
+        "label": "Terrace"
+       },
+       {
+        "capacity": 6,
+        "id": "c_4",
+        "label": "Garden"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [],
+      "id": "r_solo",
+      "name": "Solo",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sun"
+       }
+      ],
+      "reservation_duration_minutes": 90,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "s_1",
+        "label": "Only"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     }
+    ],
+    "schema": 2,
+    "tokens": {
+     "PV7C4ZCTNUKMO6F4MB37A2KIWVW5G35AID3D2H67NFDB2ECHDRKR": "u_335bm6d2drfb"
+    },
+    "users": [
+     {
+      "display_name": "Ada",
+      "email": "ada@example.com",
+      "id": "u_ada",
+      "password_hash": "$2a$10$T1Mu8yBulzggvz1tJw23neX.dAbnHWDydfKtFMitFabIPrJyU808q"
+     },
+     {
+      "display_name": "Bob",
+      "email": "bob@example.com",
+      "id": "u_bob",
+      "password_hash": "$2a$10$FTYfUQTXcsXhFc9cmTWMw.PY.BZt/0q7q8Vt73vDJCah43Ytgo4SS"
+     },
+     {
+      "display_name": "Legacy",
+      "email": "legacy42@example.com",
+      "id": "u_335bm6d2drfb",
+      "password_hash": "$2a$10$wXX9DeUXVe/yLIXtS.oxTup8H/mw5CfUOLlHXWokXNXpHSf7ClSc6"
+     }
+    ]
+   },
+   "track": "tablekeeper"
+  },
+  "first": {
+   "created_at": "2026-10-04T23:42:27+00:00",
+   "ends_at": "2026-10-29T20:30:00+01:00",
+   "party_size": 2,
+   "reference": "UUAKRDFG",
+   "reservation_id": "res_qduwjrgv3blx",
+   "restaurant_id": "r_combo",
+   "starts_at": "2026-10-29T19:00:00+01:00",
+   "starts_at_local": "2026-10-29T19:00",
+   "status": "confirmed",
+   "table_id": "c_4",
+   "table_ids": [
+    "c_4"
+   ]
+  },
+  "key": "up4-02d571e7c06e4f669f9cfc3215275cfa",
+  "reference": "UUAKRDFG",
+  "token": "PV7C4ZCTNUKMO6F4MB37A2KIWVW5G35AID3D2H67NFDB2ECHDRKR"
+ },
+ "stage 3": {
+  "body": {
+   "party_size": 2,
+   "restaurant_id": "r_ser",
+   "starts_at_local": "2026-10-29T19:00",
+   "table_id": "s_2"
+  },
+  "export": {
+   "format_version": 1,
+   "state": {
+    "receipts": {
+     "u_3euahbjahcrs\u0000POST /reservations\u0000up4-84c7a615010a4aa680ad17bbadd3a467": {
+      "body": "{\"party_size\":2,\"restaurant_id\":\"r_ser\",\"starts_at_local\":\"2026-10-29T19:00\",\"table_id\":\"s_2\"}",
+      "response": {
+       "accepted_terms": {
+        "cancellation_cutoff_minutes": 120,
+        "capacities": {
+         "s_1": 2,
+         "s_2": 4
+        },
+        "opening_hours": [
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "mon"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "tue"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "wed"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "thu"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "fri"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "sat"
+         },
+         {
+          "closes": "23:00",
+          "opens": "12:00",
+          "weekday": "sun"
+         }
+        ],
+        "policy_version": 0,
+        "reservation_duration_minutes": 90,
+        "slot_minutes": 30
+       },
+       "created_at": "2026-10-04T23:42:27+00:00",
+       "ends_at": "2026-10-29T20:30:00+01:00",
+       "party_size": 2,
+       "reference": "QJEBD7Y2",
+       "reservation_id": "res_ridiryvnzukm",
+       "restaurant_id": "r_ser",
+       "revision": 1,
+       "starts_at": "2026-10-29T19:00:00+01:00",
+       "starts_at_local": "2026-10-29T19:00",
+       "status": "confirmed",
+       "table_id": "s_2",
+       "table_ids": [
+        "s_2"
+       ]
+      },
+      "status": 201
+     },
+     "u_3euahbjahcrs\u0000POST /series\u00004630a5ced10a470f8897d9d7c251b03f": {
+      "body": "{\"anchor_reference\":\"QJEBD7Y2\",\"count\":3,\"interval_weeks\":2}",
+      "response": {
+       "interval_weeks": 2,
+       "occurrences": [
+        {
+         "exception": false,
+         "index": 0,
+         "reference": "QJEBD7Y2",
+         "reservation": {
+          "accepted_terms": {
+           "cancellation_cutoff_minutes": 120,
+           "capacities": {
+            "s_1": 2,
+            "s_2": 4
+           },
+           "opening_hours": [
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "mon"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "tue"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "wed"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "thu"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "fri"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sat"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sun"
+            }
+           ],
+           "policy_version": 0,
+           "reservation_duration_minutes": 90,
+           "slot_minutes": 30
+          },
+          "created_at": "2026-10-04T23:42:27+00:00",
+          "ends_at": "2026-10-29T20:30:00+01:00",
+          "party_size": 2,
+          "reference": "QJEBD7Y2",
+          "reservation_id": "res_ridiryvnzukm",
+          "restaurant_id": "r_ser",
+          "revision": 1,
+          "starts_at": "2026-10-29T19:00:00+01:00",
+          "starts_at_local": "2026-10-29T19:00",
+          "status": "confirmed",
+          "table_id": "s_2",
+          "table_ids": [
+           "s_2"
+          ]
+         }
+        },
+        {
+         "exception": false,
+         "index": 1,
+         "reference": "ACQ3SBR2",
+         "reservation": {
+          "accepted_terms": {
+           "cancellation_cutoff_minutes": 120,
+           "capacities": {
+            "s_1": 2,
+            "s_2": 4
+           },
+           "opening_hours": [
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "mon"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "tue"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "wed"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "thu"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "fri"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sat"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sun"
+            }
+           ],
+           "policy_version": 0,
+           "reservation_duration_minutes": 90,
+           "slot_minutes": 30
+          },
+          "created_at": "2026-10-04T23:42:27+00:00",
+          "ends_at": "2026-11-12T20:30:00+01:00",
+          "party_size": 2,
+          "reference": "ACQ3SBR2",
+          "reservation_id": "res_hug72vldtcqj",
+          "restaurant_id": "r_ser",
+          "revision": 1,
+          "starts_at": "2026-11-12T19:00:00+01:00",
+          "starts_at_local": "2026-11-12T19:00",
+          "status": "confirmed",
+          "table_id": "s_2",
+          "table_ids": [
+           "s_2"
+          ]
+         }
+        },
+        {
+         "exception": false,
+         "index": 2,
+         "reference": "V6JLL3GO",
+         "reservation": {
+          "accepted_terms": {
+           "cancellation_cutoff_minutes": 120,
+           "capacities": {
+            "s_1": 2,
+            "s_2": 4
+           },
+           "opening_hours": [
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "mon"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "tue"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "wed"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "thu"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "fri"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sat"
+            },
+            {
+             "closes": "23:00",
+             "opens": "12:00",
+             "weekday": "sun"
+            }
+           ],
+           "policy_version": 0,
+           "reservation_duration_minutes": 90,
+           "slot_minutes": 30
+          },
+          "created_at": "2026-10-04T23:42:27+00:00",
+          "ends_at": "2026-11-26T20:30:00+01:00",
+          "party_size": 2,
+          "reference": "V6JLL3GO",
+          "reservation_id": "res_huohycacaca7",
+          "restaurant_id": "r_ser",
+          "revision": 1,
+          "starts_at": "2026-11-26T19:00:00+01:00",
+          "starts_at_local": "2026-11-26T19:00",
+          "status": "confirmed",
+          "table_id": "s_2",
+          "table_ids": [
+           "s_2"
+          ]
+         }
+        }
+       ],
+       "revision": 1,
+       "series_id": "ser_v22wqwd2ncpnjow3"
+      },
+      "status": 201
+     }
+    },
+    "reservations": [
+     {
+      "accepted_terms": {
+       "cancellation_cutoff_minutes": 120,
+       "capacities": {
+        "p_1": 2,
+        "p_2": 4,
+        "p_3": 6
+       },
+       "opening_hours": [
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "mon"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "tue"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "wed"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "thu"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "fri"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sat"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sun"
+        }
+       ],
+       "policy_version": 0,
+       "reservation_duration_minutes": 90,
+       "slot_minutes": 30
+      },
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-11-01T18:30:00Z",
+      "history": [
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "p_1": 2,
+          "p_2": 4,
+          "p_3": 6
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [
+         {
+          "field": "table_id",
+          "from": null,
+          "to": "p_3"
+         },
+         {
+          "field": "starts_at_local",
+          "from": null,
+          "to": "2026-11-01T18:00"
+         },
+         {
+          "field": "party_size",
+          "from": null,
+          "to": 4
+         }
+        ],
+        "event": "created",
+        "revision": 1,
+        "seq": 1
+       }
+      ],
+      "id": "s_p1",
+      "party_size": 4,
+      "reference": "SEEDP1",
+      "restaurant_id": "r_pol",
+      "revision": 1,
+      "series_id": "",
+      "starts_at": "2026-11-01T17:00:00Z",
+      "starts_at_local": "2026-11-01T18:00",
+      "status": "confirmed",
+      "table_ids": [
+       "p_3"
+      ],
+      "user_id": "u_ada"
+     },
+     {
+      "accepted_terms": {
+       "cancellation_cutoff_minutes": 120,
+       "capacities": {
+        "p_1": 2,
+        "p_2": 4,
+        "p_3": 6
+       },
+       "opening_hours": [
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "mon"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "tue"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "wed"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "thu"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "fri"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sat"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sun"
+        }
+       ],
+       "policy_version": 0,
+       "reservation_duration_minutes": 90,
+       "slot_minutes": 30
+      },
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-11-01T18:30:00Z",
+      "history": [
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "p_1": 2,
+          "p_2": 4,
+          "p_3": 6
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [
+         {
+          "field": "table_id",
+          "from": null,
+          "to": "p_1"
+         },
+         {
+          "field": "starts_at_local",
+          "from": null,
+          "to": "2026-11-01T18:00"
+         },
+         {
+          "field": "party_size",
+          "from": null,
+          "to": 2
+         }
+        ],
+        "event": "created",
+        "revision": 1,
+        "seq": 1
+       }
+      ],
+      "id": "s_c1",
+      "party_size": 2,
+      "reference": "SEEDC1",
+      "restaurant_id": "r_pol",
+      "revision": 1,
+      "series_id": "",
+      "starts_at": "2026-11-01T17:00:00Z",
+      "starts_at_local": "2026-11-01T18:00",
+      "status": "cancelled",
+      "table_ids": [
+       "p_1"
+      ],
+      "user_id": "u_ada"
+     },
+     {
+      "accepted_terms": {
+       "cancellation_cutoff_minutes": 120,
+       "capacities": {
+        "s_1": 2,
+        "s_2": 4
+       },
+       "opening_hours": [
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "mon"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "tue"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "wed"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "thu"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "fri"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sat"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sun"
+        }
+       ],
+       "policy_version": 0,
+       "reservation_duration_minutes": 90,
+       "slot_minutes": 30
+      },
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-10-29T19:30:00Z",
+      "history": [
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "s_1": 2,
+          "s_2": 4
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [
+         {
+          "field": "table_id",
+          "from": null,
+          "to": "s_2"
+         },
+         {
+          "field": "starts_at_local",
+          "from": null,
+          "to": "2026-10-29T19:00"
+         },
+         {
+          "field": "party_size",
+          "from": null,
+          "to": 2
+         }
+        ],
+        "event": "created",
+        "revision": 1,
+        "seq": 1
+       }
+      ],
+      "id": "res_ridiryvnzukm",
+      "party_size": 2,
+      "reference": "QJEBD7Y2",
+      "restaurant_id": "r_ser",
+      "revision": 1,
+      "series_id": "ser_v22wqwd2ncpnjow3",
+      "starts_at": "2026-10-29T18:00:00Z",
+      "starts_at_local": "2026-10-29T19:00",
+      "status": "confirmed",
+      "table_ids": [
+       "s_2"
+      ],
+      "user_id": "u_3euahbjahcrs"
+     },
+     {
+      "accepted_terms": {
+       "cancellation_cutoff_minutes": 120,
+       "capacities": {
+        "s_1": 2,
+        "s_2": 4
+       },
+       "opening_hours": [
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "mon"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "tue"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "wed"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "thu"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "fri"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sat"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sun"
+        }
+       ],
+       "policy_version": 0,
+       "reservation_duration_minutes": 90,
+       "slot_minutes": 30
+      },
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-11-12T19:30:00Z",
+      "history": [
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "s_1": 2,
+          "s_2": 4
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [
+         {
+          "field": "table_id",
+          "from": null,
+          "to": "s_2"
+         },
+         {
+          "field": "starts_at_local",
+          "from": null,
+          "to": "2026-11-12T19:00"
+         },
+         {
+          "field": "party_size",
+          "from": null,
+          "to": 2
+         }
+        ],
+        "event": "created",
+        "revision": 1,
+        "seq": 1
+       }
+      ],
+      "id": "res_hug72vldtcqj",
+      "party_size": 2,
+      "reference": "ACQ3SBR2",
+      "restaurant_id": "r_ser",
+      "revision": 1,
+      "series_id": "ser_v22wqwd2ncpnjow3",
+      "starts_at": "2026-11-12T18:00:00Z",
+      "starts_at_local": "2026-11-12T19:00",
+      "status": "confirmed",
+      "table_ids": [
+       "s_2"
+      ],
+      "user_id": "u_3euahbjahcrs"
+     },
+     {
+      "accepted_terms": {
+       "cancellation_cutoff_minutes": 120,
+       "capacities": {
+        "s_1": 2,
+        "s_2": 4
+       },
+       "opening_hours": [
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "mon"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "tue"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "wed"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "thu"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "fri"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sat"
+        },
+        {
+         "closes": "23:00",
+         "opens": "12:00",
+         "weekday": "sun"
+        }
+       ],
+       "policy_version": 0,
+       "reservation_duration_minutes": 90,
+       "slot_minutes": 30
+      },
+      "created_at": "2026-10-04T23:42:27Z",
+      "ends_at": "2026-11-26T19:30:00Z",
+      "history": [
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "s_1": 2,
+          "s_2": 4
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [
+         {
+          "field": "table_id",
+          "from": null,
+          "to": "s_2"
+         },
+         {
+          "field": "starts_at_local",
+          "from": null,
+          "to": "2026-11-26T19:00"
+         },
+         {
+          "field": "party_size",
+          "from": null,
+          "to": 2
+         }
+        ],
+        "event": "created",
+        "revision": 1,
+        "seq": 1
+       },
+       {
+        "accepted_terms": {
+         "cancellation_cutoff_minutes": 120,
+         "capacities": {
+          "s_1": 2,
+          "s_2": 4
+         },
+         "opening_hours": [
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "mon"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "tue"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "wed"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "thu"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "fri"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sat"
+          },
+          {
+           "closes": "23:00",
+           "opens": "12:00",
+           "weekday": "sun"
+          }
+         ],
+         "policy_version": 0,
+         "reservation_duration_minutes": 90,
+         "slot_minutes": 30
+        },
+        "at": "2026-10-04T23:42:27Z",
+        "changes": [],
+        "event": "cancelled",
+        "revision": 2,
+        "seq": 2
+       }
+      ],
+      "id": "res_huohycacaca7",
+      "party_size": 2,
+      "reference": "V6JLL3GO",
+      "restaurant_id": "r_ser",
+      "revision": 2,
+      "series_id": "ser_v22wqwd2ncpnjow3",
+      "starts_at": "2026-11-26T18:00:00Z",
+      "starts_at_local": "2026-11-26T19:00",
+      "status": "cancelled",
+      "table_ids": [
+       "s_2"
+      ],
+      "user_id": "u_3euahbjahcrs"
+     }
+    ],
+    "restaurants": [
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [
+       [
+        "p_1",
+        "p_2"
+       ]
+      ],
+      "id": "r_pol",
+      "manager_user_ids": [
+       "u_mgr"
+      ],
+      "name": "Policy House",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sun"
+       }
+      ],
+      "policies": [],
+      "reservation_duration_minutes": 90,
+      "revision": 0,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 2,
+        "id": "p_1",
+        "label": "Nook"
+       },
+       {
+        "capacity": 4,
+        "id": "p_2",
+        "label": "Bay"
+       },
+       {
+        "capacity": 6,
+        "id": "p_3",
+        "label": "Hall"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [
+       [
+        "s_1",
+        "s_2"
+       ]
+      ],
+      "id": "r_ser",
+      "manager_user_ids": [
+       "u_mgr"
+      ],
+      "name": "Weekly Table",
+      "opening_hours": [
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:00",
+        "opens": "12:00",
+        "weekday": "sun"
+       }
+      ],
+      "policies": [],
+      "reservation_duration_minutes": 90,
+      "revision": 3,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 2,
+        "id": "s_1",
+        "label": "Ess"
+       },
+       {
+        "capacity": 4,
+        "id": "s_2",
+        "label": "Zwei"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [],
+      "id": "r_near3",
+      "manager_user_ids": [
+       "u_mgr"
+      ],
+      "name": "Corner Now",
+      "opening_hours": [
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "23:45",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "policies": [],
+      "reservation_duration_minutes": 30,
+      "revision": 0,
+      "slot_minutes": 15,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "q_1",
+        "label": "Quick"
+       },
+       {
+        "capacity": 4,
+        "id": "q_2",
+        "label": "Quicker"
+       }
+      ],
+      "timezone": "Asia/Tokyo"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [],
+      "id": "r_dst3",
+      "manager_user_ids": [],
+      "name": "Night Owl",
+      "opening_hours": [
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "mon"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "tue"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "wed"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "thu"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "fri"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "sat"
+       },
+       {
+        "closes": "06:00",
+        "opens": "00:00",
+        "weekday": "sun"
+       }
+      ],
+      "policies": [],
+      "reservation_duration_minutes": 90,
+      "revision": 0,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "d_1",
+        "label": "Dawn"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     },
+     {
+      "cancellation_cutoff_minutes": 120,
+      "combinable": [],
+      "id": "r_sat",
+      "manager_user_ids": [],
+      "name": "Saturday Club",
+      "opening_hours": [
+       {
+        "closes": "22:00",
+        "opens": "18:00",
+        "weekday": "sat"
+       }
+      ],
+      "policies": [],
+      "reservation_duration_minutes": 90,
+      "revision": 0,
+      "slot_minutes": 30,
+      "tables": [
+       {
+        "capacity": 4,
+        "id": "z_1",
+        "label": "Zed"
+       }
+      ],
+      "timezone": "Europe/Berlin"
+     }
+    ],
+    "schema": 3,
+    "series": {
+     "ser_v22wqwd2ncpnjow3": {
+      "id": "ser_v22wqwd2ncpnjow3",
+      "interval_weeks": 2,
+      "occurrences": [
+       {
+        "exception": false,
+        "reference": "QJEBD7Y2"
+       },
+       {
+        "exception": false,
+        "reference": "ACQ3SBR2"
+       },
+       {
+        "exception": false,
+        "reference": "V6JLL3GO"
+       }
+      ],
+      "revision": 2,
+      "user_id": "u_3euahbjahcrs"
+     }
+    },
+    "tokens": {
+     "TUHOEFH6DYMQBWNSEUXE2QQD2IH7M5BDLQYCALXES23K6LPV6XQ7": "u_3euahbjahcrs"
+    },
+    "users": [
+     {
+      "display_name": "Ada",
+      "email": "ada@example.com",
+      "id": "u_ada",
+      "password_hash": "$2a$10$Lwl6NaZJZKLSfNqBmT4hyOXTvsEIfWlHoGieLbEwTF1ZTSC.EN6AO"
+     },
+     {
+      "display_name": "Bob",
+      "email": "bob@example.com",
+      "id": "u_bob",
+      "password_hash": "$2a$10$Jy./MySscSQFl1PI/RIOfem8uvn5E9t3juXIg8JjDFbhNSHz9g81K"
+     },
+     {
+      "display_name": "Manager",
+      "email": "mgr@example.com",
+      "id": "u_mgr",
+      "password_hash": "$2a$10$NMH/x.koUMJ1BOj/u2CdgOp8Vm0i9nIhXWnKshgv7TG5eW1VJaC8m"
+     },
+     {
+      "display_name": "Legacy",
+      "email": "legacy43@example.com",
+      "id": "u_3euahbjahcrs",
+      "password_hash": "$2a$10$s3gy11h6hZDw4zVIjJO33exTwejcYJ4dWbZ4uY7YkwbsahDyPqK9m"
+     }
+    ]
+   },
+   "track": "tablekeeper"
+  },
+  "first": {
+   "accepted_terms": {
+    "cancellation_cutoff_minutes": 120,
+    "capacities": {
+     "s_1": 2,
+     "s_2": 4
+    },
+    "opening_hours": [
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "mon"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "tue"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "wed"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "thu"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "fri"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "sat"
+     },
+     {
+      "closes": "23:00",
+      "opens": "12:00",
+      "weekday": "sun"
+     }
+    ],
+    "policy_version": 0,
+    "reservation_duration_minutes": 90,
+    "slot_minutes": 30
+   },
+   "created_at": "2026-10-04T23:42:27+00:00",
+   "ends_at": "2026-10-29T20:30:00+01:00",
+   "party_size": 2,
+   "reference": "QJEBD7Y2",
+   "reservation_id": "res_ridiryvnzukm",
+   "restaurant_id": "r_ser",
+   "revision": 1,
+   "starts_at": "2026-10-29T19:00:00+01:00",
+   "starts_at_local": "2026-10-29T19:00",
+   "status": "confirmed",
+   "table_id": "s_2",
+   "table_ids": [
+    "s_2"
+   ]
+  },
+  "key": "up4-84c7a615010a4aa680ad17bbadd3a467",
+  "reference": "QJEBD7Y2",
+  "token": "TUHOEFH6DYMQBWNSEUXE2QQD2IH7M5BDLQYCALXES23K6LPV6XQ7"
+ }
+}

@@ -1,0 +1,229 @@
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 41,
+ "generated": 9,
+ "evaluated": 9,
+ "killed": 1,
+ "survived": 8,
+ "invalid": 0,
+ "kill_rate": 0.111,
+ "elapsed_s": 295,
+ "baseline_failing": [
+  "oracle:test_C3_28_O14_tampered_stage3_records_are_refused"
+ ],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ],
+ "survivors": [
+  {
+   "id": 3,
+   "file": "internal/state/integrity.go",
+   "line": 40,
+   "op": "LOG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil && !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 0,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "LOG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil && r.Tables == nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 2,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "CB",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min || n >= 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 1,
+   "file": "internal/state/integrity.go",
+   "line": 34,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 4,
+   "file": "internal/api/amend.go",
+   "line": 26,
+   "op": "CB",
+   "orig": "\treturn res.StartsAt.Sub(now) <= time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "mutated": "\treturn res.StartsAt.Sub(now) < time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 5,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "CB",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 || c < o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 7,
+   "file": "internal/state/integrity.go",
+   "line": 176,
+   "op": "LOG",
+   "orig": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||",
+   "mutated": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil &&",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 8,
+   "file": "internal/snapshot/schema3.go",
+   "line": 68,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  }
+ ],
+ "results": [
+  {
+   "id": 3,
+   "file": "internal/state/integrity.go",
+   "line": 40,
+   "op": "LOG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil && !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 0,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "LOG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil && r.Tables == nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 2,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "CB",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min || n >= 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 1,
+   "file": "internal/state/integrity.go",
+   "line": 34,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 4,
+   "file": "internal/api/amend.go",
+   "line": 26,
+   "op": "CB",
+   "orig": "\treturn res.StartsAt.Sub(now) <= time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "mutated": "\treturn res.StartsAt.Sub(now) < time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 5,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "CB",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 || c < o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 7,
+   "file": "internal/state/integrity.go",
+   "line": 176,
+   "op": "LOG",
+   "orig": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||",
+   "mutated": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil &&",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 8,
+   "file": "internal/snapshot/schema3.go",
+   "line": 68,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 6,
+   "file": "internal/api/series.go",
+   "line": 64,
+   "op": "CB",
+   "orig": "\tif n < min || n > max {",
+   "mutated": "\tif n < min || n >= max {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:series/count 12 (maximum) accepted -> 201",
+    "audit:series/interval_weeks 4 (maximum) accepted -> 201"
+   ]
+  }
+ ]
+}
