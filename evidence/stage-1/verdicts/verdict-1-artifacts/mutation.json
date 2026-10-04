@@ -1,0 +1,1810 @@
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 1,
+ "generated": 472,
+ "evaluated": 100,
+ "killed": 74,
+ "survived": 16,
+ "invalid": 10,
+ "kill_rate": 0.822,
+ "elapsed_s": 1498,
+ "baseline_failing": [],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ],
+ "survivors": [
+  {
+   "id": 17,
+   "file": "internal/api/reservations.go",
+   "line": 136,
+   "op": "INV",
+   "orig": "\t\t\tif !a.CreatedAt.Equal(b.CreatedAt) {",
+   "mutated": "\t\t\tif a.CreatedAt.Equal(b.CreatedAt) {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 23,
+   "file": "internal/state/integrity.go",
+   "line": 68,
+   "op": "LOG",
+   "orig": "\t\tif ids[res.ID] || refs[res.Reference] {",
+   "mutated": "\t\tif ids[res.ID] && refs[res.Reference] {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 34,
+   "file": "internal/state/integrity.go",
+   "line": 33,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 36,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "LOG",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" || utf8.RuneCountInString(id) <= MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 41,
+   "file": "internal/api/server.go",
+   "line": 77,
+   "op": "NEG",
+   "orig": "\t\t\t\tif p == http.ErrAbortHandler {",
+   "mutated": "\t\t\t\tif p != http.ErrAbortHandler {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 44,
+   "file": "internal/localtime/localtime.go",
+   "line": 262,
+   "op": "CB",
+   "orig": "\tif slotMinutes <= 0 {",
+   "mutated": "\tif slotMinutes < 0 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 45,
+   "file": "internal/state/integrity.go",
+   "line": 49,
+   "op": "NEG",
+   "orig": "\t\tif err := checkRestaurant(r); err != nil {",
+   "mutated": "\t\tif err := checkRestaurant(r); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 52,
+   "file": "internal/state/integrity.go",
+   "line": 97,
+   "op": "NEG",
+   "orig": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes == \"24:00\"",
+   "mutated": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes != \"24:00\"",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 53,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "CB",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) < MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 54,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 133,
+   "op": "CB",
+   "orig": "\t\treturn first == '-' || (first >= '0' && first <= '9')",
+   "mutated": "\t\treturn first == '-' || (first > '0' && first <= '9')",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 63,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 131,
+   "op": "NEG",
+   "orig": "\t\treturn first == 't' || first == 'f'",
+   "mutated": "\t\treturn first == 't' || first != 'f'",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 71,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "LOG",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 && c <= o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 81,
+   "file": "internal/localtime/localtime.go",
+   "line": 119,
+   "op": "INV",
+   "orig": "\t\tif !start.IsZero() {",
+   "mutated": "\t\tif start.IsZero() {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 82,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "CB",
+   "orig": "\t\tif !validID(t.ID) || t.Capacity < 1 || tables[t.ID] {",
+   "mutated": "\t\tif !validID(t.ID) || t.Capacity <= 1 || tables[t.ID] {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 87,
+   "file": "internal/state/integrity.go",
+   "line": 59,
+   "op": "LOG",
+   "orig": "\t\tif res == nil || !validID(res.ID) || !validID(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "mutated": "\t\tif res == nil && !validID(res.ID) || !validID(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 91,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 131,
+   "op": "NEG",
+   "orig": "\t\treturn first == 't' || first == 'f'",
+   "mutated": "\t\treturn first != 't' || first == 'f'",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  }
+ ],
+ "results": [
+  {
+   "id": 2,
+   "file": "internal/state/fixture.go",
+   "line": 214,
+   "op": "LOG",
+   "orig": "\tclosesOK := clockPattern.MatchString(oh.Closes) || oh.Closes == \"24:00\"",
+   "mutated": "\tclosesOK := clockPattern.MatchString(oh.Closes) && oh.Closes == \"24:00\"",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 1,
+   "file": "internal/state/fixture.go",
+   "line": 182,
+   "op": "NEG",
+   "orig": "\t\tif tb.ID, err = requiredID(t, \"id\", \"tables[]\"); err != nil {",
+   "mutated": "\t\tif tb.ID, err = requiredID(t, \"id\", \"tables[]\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 3,
+   "file": "internal/state/fixture.go",
+   "line": 139,
+   "op": "NEG",
+   "orig": "\tif r.Name, err = optionalString(o, \"name\"); err != nil {",
+   "mutated": "\tif r.Name, err = optionalString(o, \"name\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 0,
+   "file": "internal/state/integrity.go",
+   "line": 97,
+   "op": "LOG",
+   "orig": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes == \"24:00\"",
+   "mutated": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) && h.Closes == \"24:00\"",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 7,
+   "file": "internal/state/fixture.go",
+   "line": 215,
+   "op": "INV",
+   "orig": "\tif !clockPattern.MatchString(oh.Opens) || !closesOK || oh.Closes <= oh.Opens {",
+   "mutated": "\tif clockPattern.MatchString(oh.Opens) || !closesOK || oh.Closes <= oh.Opens {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 4,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 114,
+   "op": "NEG",
+   "orig": "\t\tif !f.IsExported() || name == \"\" || name == \"-\" {",
+   "mutated": "\t\tif !f.IsExported() || name != \"\" || name == \"-\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 8,
+   "file": "internal/localtime/localtime.go",
+   "line": 86,
+   "op": "ARI",
+   "orig": "\t\treturn nil, apperr.Validation(\"unknown timezone: \" + name)",
+   "mutated": "\t\treturn nil, apperr.Validation(\"unknown timezone: \" - name)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/localtime\ninternal/localtime/localtime.go:86:33: invalid operation: operator - not defined on \"unknown timezone: \" (constant of type string)\n"
+  },
+  {
+   "id": 5,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 87,
+   "op": "NEG",
+   "orig": "\t\tif len(member) == 0 || !kindMatches(member[0], v.Field(f.index).Kind()) {",
+   "mutated": "\t\tif len(member) != 0 || !kindMatches(member[0], v.Field(f.index).Kind()) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 6,
+   "file": "internal/api/auth.go",
+   "line": 65,
+   "op": "LOG",
+   "orig": "\treturn ok && local != \"\" && domain != \"\" && !strings.Contains(domain, \"@\") &&",
+   "mutated": "\treturn ok && local != \"\" && domain != \"\" || !strings.Contains(domain, \"@\") &&",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/email ' a@b.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email '' 422",
+    "audit:auth/email '@b' 422",
+    "audit:auth/email 'a b@x.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email 'a@' 422"
+   ]
+  },
+  {
+   "id": 11,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 73,
+   "op": "ARI",
+   "orig": "\treturn apperr.Malformed(name + \" must be \" + want)",
+   "mutated": "\treturn apperr.Malformed(name + \" must be \" - want)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/jsonin\ninternal/jsonin/jsonin.go:73:26: invalid operation: operator - not defined on name + \" must be \" (value of type string)\n"
+  },
+  {
+   "id": 12,
+   "file": "internal/api/reservations.go",
+   "line": 63,
+   "op": "ARI",
+   "orig": "\t\t\t\treturn nil, apperr.Malformed(name + \" must be a string\")",
+   "mutated": "\t\t\t\treturn nil, apperr.Malformed(name - \" must be a string\")",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/api\ninternal/api/reservations.go:63:34: invalid operation: operator - not defined on name (variable of type string)\n"
+  },
+  {
+   "id": 14,
+   "file": "internal/state/fixture.go",
+   "line": 171,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"duplicate opening hours for \" + oh.Weekday + \" in restaurant \" + r.ID)",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"duplicate opening hours for \" + oh.Weekday + \" in restaurant \" - r.ID)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/fixture.go:171:34: invalid operation: operator - not defined on \"duplicate opening hours for \" + oh.Weekday + \" in restaurant \" (value of type string)\n"
+  },
+  {
+   "id": 10,
+   "file": "internal/api/testctl.go",
+   "line": 18,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 9,
+   "file": "internal/localtime/localtime.go",
+   "line": 58,
+   "op": "INV",
+   "orig": "\tif !datePattern.MatchString(s) {",
+   "mutated": "\tif datePattern.MatchString(s) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/availability envelope",
+    "audit:availability/availability unknown restaurant 404",
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:availability/closed day -> slots []",
+    "audit:availability/fri closes 23:30 -> last slot 22:00"
+   ]
+  },
+  {
+   "id": 13,
+   "file": "internal/state/fixture.go",
+   "line": 235,
+   "op": "NEG",
+   "orig": "\t\tif res.UserID, err = requiredID(o, \"user_id\", \"reservations[]\"); err != nil {",
+   "mutated": "\t\tif res.UserID, err = requiredID(o, \"user_id\", \"reservations[]\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/reset rejects fixture: duplicate reference -> 422",
+    "audit:core/reset rejects fixture: duplicate reference: state unchanged",
+    "audit:core/reset rejects fixture: duplicate reservation id -> 422",
+    "audit:core/reset rejects fixture: duplicate reservation id: state unchanged",
+    "audit:core/reset rejects fixture: reservation of unknown restaurant -> 422"
+   ]
+  },
+  {
+   "id": 18,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 88,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"state.\" + f.name + \" is missing or of the wrong type\")",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"state.\" + f.name - \" is missing or of the wrong type\")",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/snapshot\ninternal/snapshot/snapshot.go:88:34: invalid operation: operator - not defined on \"state.\" + f.name (value of type string)\n"
+  },
+  {
+   "id": 15,
+   "file": "internal/api/reservations.go",
+   "line": 98,
+   "op": "CB",
+   "orig": "\t\tif party > table.Capacity {",
+   "mutated": "\t\tif party >= table.Capacity {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/unknown body field ignored",
+    "audit:create/GET /reservations/{ref} same shape and values as create",
+    "audit:create/Idempotency-Key 255 chars 201"
+   ]
+  },
+  {
+   "id": 19,
+   "file": "internal/state/fixture.go",
+   "line": 259,
+   "op": "NEG",
+   "orig": "\t\tif st.User(res.UserID) == nil || r == nil || r.Table(res.TableID) == nil {",
+   "mutated": "\t\tif st.User(res.UserID) == nil || r != nil || r.Table(res.TableID) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 16,
+   "file": "internal/api/reservations.go",
+   "line": 67,
+   "op": "INV",
+   "orig": "\t\t\tif !body.Has(name) {",
+   "mutated": "\t\t\tif body.Has(name) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/JSON body with Content-Type text/plain accepted (R-17)",
+    "audit:core/unknown body field ignored",
+    "audit:create/17:30 before opens 422 outside_opening_hours"
+   ]
+  },
+  {
+   "id": 17,
+   "file": "internal/api/reservations.go",
+   "line": 136,
+   "op": "INV",
+   "orig": "\t\t\tif !a.CreatedAt.Equal(b.CreatedAt) {",
+   "mutated": "\t\t\tif a.CreatedAt.Equal(b.CreatedAt) {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 21,
+   "file": "internal/state/fixture.go",
+   "line": 161,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 23,
+   "file": "internal/state/integrity.go",
+   "line": 68,
+   "op": "LOG",
+   "orig": "\t\tif ids[res.ID] || refs[res.Reference] {",
+   "mutated": "\t\tif ids[res.ID] && refs[res.Reference] {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 20,
+   "file": "internal/api/idempotency.go",
+   "line": 33,
+   "op": "CB",
+   "orig": "\tif utf8.RuneCountInString(key) > maxIdempotencyKeyLength {",
+   "mutated": "\tif utf8.RuneCountInString(key) >= maxIdempotencyKeyLength {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/Idempotency-Key 255 chars 201",
+    "audit:idem/255-char key first use 201",
+    "audit:idem/255-char key replay 200",
+    "oracle:test_B64_B67_format_and_range"
+   ]
+  },
+  {
+   "id": 22,
+   "file": "internal/state/integrity.go",
+   "line": 88,
+   "op": "NEG",
+   "orig": "\tif r == nil || !validID(r.ID) || r.SlotMinutes < 1 || r.ReservationDurationMinutes < 1 ||",
+   "mutated": "\tif r != nil || !validID(r.ID) || r.SlotMinutes < 1 || r.ReservationDurationMinutes < 1 ||",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 27,
+   "file": "internal/state/fixture.go",
+   "line": 121,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 28,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 95,
+   "op": "ARI",
+   "orig": "\t\terr = apperr.Validation(name + \" is required\")",
+   "mutated": "\t\terr = apperr.Validation(name - \" is required\")",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/jsonin\ninternal/jsonin/jsonin.go:95:27: invalid operation: operator - not defined on name (variable of type string)\n"
+  },
+  {
+   "id": 24,
+   "file": "internal/state/fixture.go",
+   "line": 215,
+   "op": "LOG",
+   "orig": "\tif !clockPattern.MatchString(oh.Opens) || !closesOK || oh.Closes <= oh.Opens {",
+   "mutated": "\tif !clockPattern.MatchString(oh.Opens) || !closesOK && oh.Closes <= oh.Opens {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/reset rejects fixture: closes not later than opens -> 422",
+    "audit:core/reset rejects fixture: closes not later than opens: state unchanged",
+    "oracle:test_B48_B49_B50_reset_rejects_bad_hours[<lambda>-B50]"
+   ]
+  },
+  {
+   "id": 30,
+   "file": "internal/state/fixture.go",
+   "line": 151,
+   "op": "NEG",
+   "orig": "\tif r.SlotMinutes, err = intAtLeast(o, \"slot_minutes\", \"restaurants[]\", 1); err != nil {",
+   "mutated": "\tif r.SlotMinutes, err = intAtLeast(o, \"slot_minutes\", \"restaurants[]\", 1); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 26,
+   "file": "internal/state/integrity.go",
+   "line": 80,
+   "op": "NEG",
+   "orig": "\t\tif !users[userID] || rc == nil || rc.Status < 200 || rc.Status > 299 || !json.Valid(rc.Response) {",
+   "mutated": "\t\tif !users[userID] || rc != nil || rc.Status < 200 || rc.Status > 299 || !json.Valid(rc.Response) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 25,
+   "file": "internal/api/respond.go",
+   "line": 59,
+   "op": "INV",
+   "orig": "\tif !errors.As(err, &ae) {",
+   "mutated": "\tif errors.As(err, &ae) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/GET /reservations Basic scheme 401",
+    "audit:auth/GET /reservations bare token 401",
+    "audit:auth/GET /reservations empty bearer 401",
+    "audit:auth/GET /reservations no header 401",
+    "audit:auth/GET /reservations unknown token 401"
+   ]
+  },
+  {
+   "id": 29,
+   "file": "internal/state/integrity.go",
+   "line": 61,
+   "op": "NEG",
+   "orig": "\t\t\t(res.Status != Confirmed && res.Status != Cancelled) {",
+   "mutated": "\t\t\t(res.Status != Confirmed && res.Status == Cancelled) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 31,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 148,
+   "op": "NEG",
+   "orig": "\tif len(trimmed) == 0 || !(trimmed[0] == '-' || (trimmed[0] >= '0' && trimmed[0] <= '9')) {",
+   "mutated": "\tif len(trimmed) != 0 || !(trimmed[0] == '-' || (trimmed[0] >= '0' && trimmed[0] <= '9')) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 34,
+   "file": "internal/state/integrity.go",
+   "line": 33,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 32,
+   "file": "internal/localtime/localtime.go",
+   "line": 193,
+   "op": "ARI",
+   "orig": "\treturn int(s[0]-'0')*600 + int(s[1]-'0')*60 + int(s[3]-'0')*10 + int(s[4]-'0'), true",
+   "mutated": "\treturn int(s[0]-'0')*600 - int(s[1]-'0')*60 + int(s[3]-'0')*10 + int(s[4]-'0'), true",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/fri closes 23:30 -> last slot 22:00",
+    "audit:availability/group ran to completion",
+    "audit:availability/party 1 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 2 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 5 -> ['t_3'] on every slot (empty list still listed)"
+   ]
+  },
+  {
+   "id": 33,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 114,
+   "op": "INV",
+   "orig": "\t\tif !f.IsExported() || name == \"\" || name == \"-\" {",
+   "mutated": "\t\tif f.IsExported() || name == \"\" || name == \"-\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 36,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "LOG",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" || utf8.RuneCountInString(id) <= MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 35,
+   "file": "internal/state/integrity.go",
+   "line": 33,
+   "op": "NEG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants != nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 38,
+   "file": "internal/api/availability.go",
+   "line": 125,
+   "op": "BOOL",
+   "orig": "\treturn false",
+   "mutated": "\treturn true",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:availability/party 1 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 2 -> ['t_1', 't_2', 't_3'] on every slot (empty list still listed)",
+    "audit:availability/party 4 -> tables with capacity>=4 in fixture order",
+    "audit:availability/party 5 -> ['t_3'] on every slot (empty list still listed)"
+   ]
+  },
+  {
+   "id": 37,
+   "file": "internal/api/availability.go",
+   "line": 44,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/availability date='' 422",
+    "audit:availability/availability date='2026-02-30' 422",
+    "audit:availability/availability date='2026-1-5' 422",
+    "audit:availability/availability date='2026-10-01T00:00' 422",
+    "audit:availability/availability date='2026-13-01' 422"
+   ]
+  },
+  {
+   "id": 39,
+   "file": "internal/state/integrity.go",
+   "line": 65,
+   "op": "NEG",
+   "orig": "\t\tif !users[res.UserID] || r == nil || r.Table(res.TableID) == nil {",
+   "mutated": "\t\tif !users[res.UserID] || r != nil || r.Table(res.TableID) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 41,
+   "file": "internal/api/server.go",
+   "line": 77,
+   "op": "NEG",
+   "orig": "\t\t\t\tif p == http.ErrAbortHandler {",
+   "mutated": "\t\t\t\tif p != http.ErrAbortHandler {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 43,
+   "file": "internal/state/fixture.go",
+   "line": 102,
+   "op": "NEG",
+   "orig": "\t\tif st.User(id) != nil || st.UserByEmail(email) != nil {",
+   "mutated": "\t\tif st.User(id) != nil || st.UserByEmail(email) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 40,
+   "file": "internal/api/amend.go",
+   "line": 37,
+   "op": "NEG",
+   "orig": "\t\tif o.Has(name) && o.Kind(name) != jsonin.String {",
+   "mutated": "\t\tif o.Has(name) && o.Kind(name) == jsonin.String {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:dst/PATCH to nonexistent local time 422 invalid_local_time",
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:export/export setup ok",
+    "audit:moves/chain move into a slot vacated by a later item 201"
+   ]
+  },
+  {
+   "id": 44,
+   "file": "internal/localtime/localtime.go",
+   "line": 262,
+   "op": "CB",
+   "orig": "\tif slotMinutes <= 0 {",
+   "mutated": "\tif slotMinutes < 0 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 42,
+   "file": "internal/state/reservations.go",
+   "line": 42,
+   "op": "BOOL",
+   "orig": "\t\t\treturn true",
+   "mutated": "\t\t\treturn false",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/overlap (18:00 ends 19:30 > 19:00) 409",
+    "audit:create/overlap (19:30 vs 19:00-20:30) 409 table_unavailable",
+    "audit:dst/BER fall: 02:00 on d_1 overlaps 02:30 first occurrence 409",
+    "audit:dst/BER spring: 03:30 overlaps 01:30+90min (ends 04:00 CEST) 409",
+    "audit:dst/NY fall: 01:30 on y_2 overlaps 01:00 EDT booking 409"
+   ]
+  },
+  {
+   "id": 45,
+   "file": "internal/state/integrity.go",
+   "line": 49,
+   "op": "NEG",
+   "orig": "\t\tif err := checkRestaurant(r); err != nil {",
+   "mutated": "\t\tif err := checkRestaurant(r); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 46,
+   "file": "internal/localtime/localtime.go",
+   "line": 233,
+   "op": "ARI",
+   "orig": "\tminute := wall.Hour()*60 + wall.Minute()",
+   "mutated": "\tminute := wall.Hour()*60 - wall.Minute()",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/18:01 off grid 422 not_on_slot_grid",
+    "audit:moves/input order: off-grid first beats capacity second",
+    "oracle:test_B139_B140_B141_fall_back_new_york",
+    "oracle:test_B42_B116_slot_grid"
+   ]
+  },
+  {
+   "id": 47,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "INV",
+   "orig": "\t\tif !validID(t.ID) || t.Capacity < 1 || tables[t.ID] {",
+   "mutated": "\t\tif validID(t.ID) || t.Capacity < 1 || tables[t.ID] {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 48,
+   "file": "internal/api/amend.go",
+   "line": 94,
+   "op": "NEG",
+   "orig": "\tif tableID, ok, _ := o.String(\"table_id\"); ok && tableID != res.TableID {",
+   "mutated": "\tif tableID, ok, _ := o.String(\"table_id\"); ok && tableID == res.TableID {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:moves/failed batch changed nothing",
+    "audit:moves/failed batch kept old occupancy (A still holds t_3 at 19:00)",
+    "audit:moves/failed batch key is reusable: same key, same body after blocker cancelled 201",
+    "audit:moves/input order: first item's 404 wins over later not_on_slot_grid"
+   ]
+  },
+  {
+   "id": 49,
+   "file": "internal/api/amend.go",
+   "line": 73,
+   "op": "NEG",
+   "orig": "\tif res.Status == state.Cancelled {",
+   "mutated": "\tif res.Status != state.Cancelled {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:dst/PATCH to nonexistent local time 422 invalid_local_time",
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:export/export setup ok",
+    "audit:moves/8 moves allowed 201"
+   ]
+  },
+  {
+   "id": 52,
+   "file": "internal/state/integrity.go",
+   "line": 97,
+   "op": "NEG",
+   "orig": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes == \"24:00\"",
+   "mutated": "\t\tclosesOK := hhmmPattern.MatchString(h.Closes) || h.Closes != \"24:00\"",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 53,
+   "file": "internal/state/integrity.go",
+   "line": 30,
+   "op": "CB",
+   "orig": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) <= MaxIDLength }",
+   "mutated": "func validID(id string) bool { return id != \"\" && utf8.RuneCountInString(id) < MaxIDLength }",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 50,
+   "file": "internal/state/fixture.go",
+   "line": 259,
+   "op": "LOG",
+   "orig": "\t\tif st.User(res.UserID) == nil || r == nil || r.Table(res.TableID) == nil {",
+   "mutated": "\t\tif st.User(res.UserID) == nil || r == nil && r.Table(res.TableID) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/no-5xx",
+    "audit:core/reset rejects fixture: reservation of unknown restaurant -> 422",
+    "audit:core/reset rejects fixture: reservation on another restaurant's table -> 422",
+    "audit:core/reset rejects fixture: reservation on another restaurant's table: state unchanged"
+   ]
+  },
+  {
+   "id": 51,
+   "file": "internal/api/reservations.go",
+   "line": 229,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:dst/PATCH to nonexistent local time 422 invalid_local_time",
+    "audit:idem/no-5xx",
+    "audit:patch/PATCH bad local format 422 validation_failed",
+    "audit:patch/PATCH cancelled + party_size 0: cancelled first (R-14)",
+    "audit:patch/PATCH cancelled 409 reservation_cancelled"
+   ]
+  },
+  {
+   "id": 54,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 133,
+   "op": "CB",
+   "orig": "\t\treturn first == '-' || (first >= '0' && first <= '9')",
+   "mutated": "\t\treturn first == '-' || (first > '0' && first <= '9')",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 58,
+   "file": "internal/state/fixture.go",
+   "line": 154,
+   "op": "NEG",
+   "orig": "\tif r.ReservationDurationMinutes, err = intAtLeast(o, \"reservation_duration_minutes\", \"restaurants[]\", 1); err != nil {",
+   "mutated": "\tif r.ReservationDurationMinutes, err = intAtLeast(o, \"reservation_duration_minutes\", \"restaurants[]\", 1); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 56,
+   "file": "internal/state/integrity.go",
+   "line": 61,
+   "op": "NEG",
+   "orig": "\t\t\t(res.Status != Confirmed && res.Status != Cancelled) {",
+   "mutated": "\t\t\t(res.Status == Confirmed && res.Status != Cancelled) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 57,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 151,
+   "op": "NEG",
+   "orig": "\treturn json.Unmarshal(trimmed, &f) == nil && f == float64(n)",
+   "mutated": "\treturn json.Unmarshal(trimmed, &f) == nil && f != float64(n)",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 59,
+   "file": "internal/state/fixture.go",
+   "line": 262,
+   "op": "LOG",
+   "orig": "\t\tif ids[res.ID] || st.ReservationByRef(res.Reference) != nil {",
+   "mutated": "\t\tif ids[res.ID] && st.ReservationByRef(res.Reference) != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/reset rejects fixture: duplicate reference -> 422",
+    "audit:core/reset rejects fixture: duplicate reference: state unchanged",
+    "audit:core/reset rejects fixture: duplicate reservation id -> 422",
+    "audit:core/reset rejects fixture: duplicate reservation id: state unchanged"
+   ]
+  },
+  {
+   "id": 60,
+   "file": "internal/api/availability.go",
+   "line": 88,
+   "op": "NEG",
+   "orig": "\tif rest == nil {",
+   "mutated": "\tif rest != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/availability envelope",
+    "audit:availability/availability huge party_size: no 5xx (200 with empty lists or 422)",
+    "audit:availability/availability unknown restaurant 404",
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:availability/closed day -> slots []"
+   ]
+  },
+  {
+   "id": 61,
+   "file": "internal/api/reservations.go",
+   "line": 127,
+   "op": "NEG",
+   "orig": "\t\t\tif res.UserID == user.ID {",
+   "mutated": "\t\t\tif res.UserID != user.ID {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/new user's list is {reservations: []}",
+    "audit:idem/replays created nothing",
+    "audit:reads/GET /reservations: own only, confirmed + cancelled",
+    "audit:reads/cancelled reservation listed as cancelled",
+    "oracle:test_B122_B123_list_reservations"
+   ]
+  },
+  {
+   "id": 63,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 131,
+   "op": "NEG",
+   "orig": "\t\treturn first == 't' || first == 'f'",
+   "mutated": "\t\treturn first == 't' || first != 'f'",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 62,
+   "file": "internal/api/amend.go",
+   "line": 37,
+   "op": "LOG",
+   "orig": "\t\tif o.Has(name) && o.Kind(name) != jsonin.String {",
+   "mutated": "\t\tif o.Has(name) || o.Kind(name) != jsonin.String {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:dst/PATCH to nonexistent local time 422 invalid_local_time",
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:export/export setup ok",
+    "audit:moves/8 moves allowed 201"
+   ]
+  },
+  {
+   "id": 64,
+   "file": "internal/api/availability.go",
+   "line": 121,
+   "op": "NEG",
+   "orig": "\t\tif res.TableID == tableID && localtime.Overlaps(res.StartsAt, res.EndsAt, slot.Start, slot.End) {",
+   "mutated": "\t\tif res.TableID != tableID && localtime.Overlaps(res.StartsAt, res.EndsAt, slot.Start, slot.End) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:cancel/anker table t_2 not offered at 19:00 before cancel",
+    "audit:patch/old interval released (t_2 at 18:00 offered)",
+    "oracle:test_B107_B108_available_tables",
+    "oracle:test_B126_B127_cancel_frees_table"
+   ]
+  },
+  {
+   "id": 65,
+   "file": "internal/api/reservations.go",
+   "line": 83,
+   "op": "NEG",
+   "orig": "\t\tif rest == nil {",
+   "mutated": "\t\tif rest != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/JSON body with Content-Type text/plain accepted (R-17)",
+    "audit:core/unknown body field ignored",
+    "audit:create/17:30 before opens 422 outside_opening_hours"
+   ]
+  },
+  {
+   "id": 66,
+   "file": "internal/api/reservations.go",
+   "line": 91,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:availability/booked 19:00-20:30 hides t_2 only on overlapping slots (half-open)",
+    "audit:cancel/group ran to completion",
+    "audit:create/17:30 before opens 422 outside_opening_hours",
+    "audit:create/18:01 off grid 422 not_on_slot_grid",
+    "audit:create/19:10 off grid 422 not_on_slot_grid"
+   ]
+  },
+  {
+   "id": 69,
+   "file": "internal/state/fixture.go",
+   "line": 191,
+   "op": "NEG",
+   "orig": "\t\tif r.Table(tb.ID) != nil {",
+   "mutated": "\t\tif r.Table(tb.ID) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 67,
+   "file": "internal/api/amend.go",
+   "line": 100,
+   "op": "LOG",
+   "orig": "\tif hasLocal && local != res.StartsAtLocal {",
+   "mutated": "\tif hasLocal || local != res.StartsAtLocal {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:export/export setup ok",
+    "audit:moves/8 moves allowed 201",
+    "audit:moves/chain move into a slot vacated by a later item 201"
+   ]
+  },
+  {
+   "id": 68,
+   "file": "internal/state/fixture.go",
+   "line": 247,
+   "op": "NEG",
+   "orig": "\t\tif res.PartySize, err = intAtLeast(o, \"party_size\", \"reservations[]\", 1); err != nil {",
+   "mutated": "\t\tif res.PartySize, err = intAtLeast(o, \"party_size\", \"reservations[]\", 1); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/reset rejects fixture: duplicate reference -> 422",
+    "audit:core/reset rejects fixture: duplicate reference: state unchanged",
+    "audit:core/reset rejects fixture: duplicate reservation id -> 422",
+    "audit:core/reset rejects fixture: duplicate reservation id: state unchanged",
+    "audit:core/reset rejects fixture: reservation of unknown restaurant -> 422"
+   ]
+  },
+  {
+   "id": 71,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "LOG",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 && c <= o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 70,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 151,
+   "op": "LOG",
+   "orig": "\treturn json.Unmarshal(trimmed, &f) == nil && f == float64(n)",
+   "mutated": "\treturn json.Unmarshal(trimmed, &f) == nil || f == float64(n)",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] import format_version '1': destination unchanged",
+    "audit:export/[same server] import format_version 2 -> 422",
+    "audit:export/[same server] import format_version 2: destination unchanged",
+    "audit:export/[same server] import state garbage: destination unchanged",
+    "audit:export/[same server] import state missing: destination unchanged"
+   ]
+  },
+  {
+   "id": 74,
+   "file": "internal/state/accounts.go",
+   "line": 34,
+   "op": "ARI",
+   "orig": "\ttoken := rand.Text() + rand.Text()",
+   "mutated": "\ttoken := rand.Text() - rand.Text()",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/accounts.go:34:11: invalid operation: operator - not defined on rand.Text() (value of type string)\n"
+  },
+  {
+   "id": 75,
+   "file": "internal/state/reservations.go",
+   "line": 60,
+   "op": "ARI",
+   "orig": "\treturn userID + receiptSep + method + \" \" + path + receiptSep + key",
+   "mutated": "\treturn userID + receiptSep - method + \" \" + path + receiptSep + key",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/reservations.go:60:9: invalid operation: operator - not defined on userID + receiptSep (value of type string)\n"
+  },
+  {
+   "id": 72,
+   "file": "internal/api/reservations.go",
+   "line": 215,
+   "op": "NEG",
+   "orig": "\t\tif res, err = ownReservation(st, user, r.PathValue(\"reference\")); err != nil {",
+   "mutated": "\t\tif res, err = ownReservation(st, user, r.PathValue(\"reference\")); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:dst/PATCH to nonexistent local time 422 invalid_local_time",
+    "audit:patch/PATCH bad local format 422 validation_failed",
+    "audit:patch/PATCH cancelled + party_size 0: cancelled first (R-14)",
+    "audit:patch/PATCH cancelled 409 reservation_cancelled",
+    "audit:patch/PATCH closed day 422 outside_opening_hours"
+   ]
+  },
+  {
+   "id": 73,
+   "file": "internal/state/integrity.go",
+   "line": 39,
+   "op": "NEG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash != \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 76,
+   "file": "internal/api/moves.go",
+   "line": 22,
+   "op": "CB",
+   "orig": "\tif err := json.Unmarshal(body[\"moves\"], &raws); err != nil || len(raws) == 0 || len(raws) > maxMoves {",
+   "mutated": "\tif err := json.Unmarshal(body[\"moves\"], &raws); err != nil || len(raws) == 0 || len(raws) >= maxMoves {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:moves/8 moves allowed 201"
+   ]
+  },
+  {
+   "id": 78,
+   "file": "internal/localtime/localtime.go",
+   "line": 237,
+   "op": "LOG",
+   "orig": "\t\tif minute < w.opens || minute >= w.closes || end.After(w.closesAt) {",
+   "mutated": "\t\tif minute < w.opens && minute >= w.closes || end.After(w.closesAt) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/17:30 before opens 422 outside_opening_hours",
+    "audit:create/R-7: outside_opening_hours before not_on_slot_grid (17:10)",
+    "audit:create/before opens 422 outside_opening_hours",
+    "oracle:test_B117_outside_opening_hours",
+    "oracle:test_B132_B135_patch_validation_like_post"
+   ]
+  },
+  {
+   "id": 77,
+   "file": "internal/api/reservations.go",
+   "line": 158,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:cancel/cancel attempts with bad body left booking confirmed",
+    "audit:cancel/cancel start in the past: still confirmed",
+    "audit:cancel/cancel start within cutoff: still confirmed",
+    "audit:cancel/no-5xx",
+    "audit:core/no-5xx"
+   ]
+  },
+  {
+   "id": 79,
+   "file": "internal/state/reservations.go",
+   "line": 35,
+   "op": "NEG",
+   "orig": "\t\tif res.Status != Confirmed || res.RestaurantID != restaurantID || res.TableID != tableID {",
+   "mutated": "\t\tif res.Status != Confirmed || res.RestaurantID == restaurantID || res.TableID != tableID {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/overlap (18:00 ends 19:30 > 19:00) 409",
+    "audit:create/overlap (19:30 vs 19:00-20:30) 409 table_unavailable",
+    "audit:dst/BER fall: 02:00 on d_1 overlaps 02:30 first occurrence 409",
+    "audit:dst/BER spring: 03:30 overlaps 01:30+90min (ends 04:00 CEST) 409",
+    "audit:dst/NY fall: 01:30 on y_2 overlaps 01:00 EDT booking 409"
+   ]
+  },
+  {
+   "id": 81,
+   "file": "internal/localtime/localtime.go",
+   "line": 119,
+   "op": "INV",
+   "orig": "\t\tif !start.IsZero() {",
+   "mutated": "\t\tif start.IsZero() {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 82,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "CB",
+   "orig": "\t\tif !validID(t.ID) || t.Capacity < 1 || tables[t.ID] {",
+   "mutated": "\t\tif !validID(t.ID) || t.Capacity <= 1 || tables[t.ID] {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 80,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 73,
+   "op": "NEG",
+   "orig": "\tif schema == 0 {",
+   "mutated": "\tif schema != 0 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] batch replay after import 200 original body",
+    "audit:export/[same server] create key with different body still 409",
+    "audit:export/[same server] create replay after import 200 original body",
+    "audit:export/[same server] existing bearer token works; reservations identical",
+    "audit:export/[same server] failed key reusable after import 201"
+   ]
+  },
+  {
+   "id": 85,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 82,
+   "op": "NEG",
+   "orig": "\t\tif err := json.Unmarshal(o[name], &s); err != nil {",
+   "mutated": "\t\tif err := json.Unmarshal(o[name], &s); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 83,
+   "file": "internal/api/moves.go",
+   "line": 69,
+   "op": "NEG",
+   "orig": "\t\t\tif changes[i], err = planChange(st, res, item, s.now()); err != nil {",
+   "mutated": "\t\t\tif changes[i], err = planChange(st, res, item, s.now()); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:moves/cutoff precedes that booking's off-grid error",
+    "audit:moves/cutoff precedes that booking's party_size=0 error",
+    "audit:moves/cutoff precedes that booking's unknown-table error",
+    "audit:moves/failed batch kept old occupancy (A still holds t_3 at 19:00)"
+   ]
+  },
+  {
+   "id": 86,
+   "file": "internal/api/server.go",
+   "line": 53,
+   "op": "NEG",
+   "orig": "\t\tif p := r.URL.Path; p != \"/\" && path.Clean(p) != p {",
+   "mutated": "\t\tif p := r.URL.Path; p != \"/\" && path.Clean(p) == p {",
+   "status": "KILLED",
+   "note": "never healthy",
+   "killed_by": []
+  },
+  {
+   "id": 84,
+   "file": "internal/state/fixture.go",
+   "line": 241,
+   "op": "NEG",
+   "orig": "\t\tif res.TableID, err = requiredID(o, \"table_id\", \"reservations[]\"); err != nil {",
+   "mutated": "\t\tif res.TableID, err = requiredID(o, \"table_id\", \"reservations[]\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/reset rejects fixture: duplicate reference -> 422",
+    "audit:core/reset rejects fixture: duplicate reference: state unchanged",
+    "audit:core/reset rejects fixture: duplicate reservation id -> 422",
+    "audit:core/reset rejects fixture: duplicate reservation id: state unchanged",
+    "audit:core/reset rejects fixture: reservation of unknown restaurant -> 422"
+   ]
+  },
+  {
+   "id": 87,
+   "file": "internal/state/integrity.go",
+   "line": 59,
+   "op": "LOG",
+   "orig": "\t\tif res == nil || !validID(res.ID) || !validID(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "mutated": "\t\tif res == nil && !validID(res.ID) || !validID(res.Reference) || !localtime.ValidLocal(res.StartsAtLocal) ||",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 88,
+   "file": "internal/api/availability.go",
+   "line": 97,
+   "op": "LOG",
+   "orig": "\t\tif res.RestaurantID == rest.ID && res.Status == state.Confirmed {",
+   "mutated": "\t\tif res.RestaurantID == rest.ID || res.Status == state.Confirmed {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:cancel/cancel frees the table immediately",
+    "oracle:test_B126_B127_cancel_frees_table"
+   ]
+  },
+  {
+   "id": 89,
+   "file": "internal/api/amend.go",
+   "line": 51,
+   "op": "LOG",
+   "orig": "\tif err != nil || n < 1 {",
+   "mutated": "\tif err != nil && n < 1 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:create/Idempotency-Key 255 chars 201",
+    "audit:create/party_size=-1 422 validation_failed",
+    "audit:create/party_size=0 422 validation_failed",
+    "audit:moves/input order: first item's 422 wins over later 404",
+    "audit:moves/input order: first item's party_size=0 wins over later unknown reference (R-22c)"
+   ]
+  },
+  {
+   "id": 90,
+   "file": "internal/api/moves.go",
+   "line": 54,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] imported occupancy enforced (t_1 19:00 held by moved booking)",
+    "audit:idem/same key+body on /reservation-moves is not a replay (validated normally: 422)",
+    "audit:moves/cutoff precedes that booking's off-grid error",
+    "audit:moves/cutoff precedes that booking's party_size=0 error",
+    "audit:moves/cutoff precedes that booking's unknown-table error"
+   ]
+  },
+  {
+   "id": 91,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 131,
+   "op": "NEG",
+   "orig": "\t\treturn first == 't' || first == 'f'",
+   "mutated": "\t\treturn first != 't' || first == 'f'",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 92,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 111,
+   "op": "NEG",
+   "orig": "\t\tif perr != nil || math.Abs(f) >= maxExactInt {",
+   "mutated": "\t\tif perr == nil || math.Abs(f) >= maxExactInt {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 95,
+   "file": "internal/state/fixture.go",
+   "line": 192,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"duplicate table id in restaurant \" + r.ID + \": \" + tb.ID)",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"duplicate table id in restaurant \" + r.ID + \": \" - tb.ID)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/fixture.go:192:34: invalid operation: operator - not defined on \"duplicate table id in restaurant \" + r.ID + \": \" (value of type string)\n"
+  },
+  {
+   "id": 96,
+   "file": "internal/state/reservations.go",
+   "line": 60,
+   "op": "ARI",
+   "orig": "\treturn userID + receiptSep + method + \" \" + path + receiptSep + key",
+   "mutated": "\treturn userID - receiptSep + method + \" \" + path + receiptSep + key",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/reservations.go:60:9: invalid operation: operator - not defined on userID (variable of type string)\n"
+  },
+  {
+   "id": 94,
+   "file": "internal/state/fixture.go",
+   "line": 95,
+   "op": "NEG",
+   "orig": "\t\tif err != nil {",
+   "mutated": "\t\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:availability/group ran to completion",
+    "audit:cancel/group ran to completion",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204"
+   ]
+  },
+  {
+   "id": 97,
+   "file": "internal/state/fixture.go",
+   "line": 136,
+   "op": "NEG",
+   "orig": "\tif r.ID, err = requiredID(o, \"id\", \"restaurants[]\"); err != nil {",
+   "mutated": "\tif r.ID, err = requiredID(o, \"id\", \"restaurants[]\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 93,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 57,
+   "op": "LOG",
+   "orig": "\tif track, ok := stringValue(env[\"track\"]); !ok || track != Track {",
+   "mutated": "\tif track, ok := stringValue(env[\"track\"]); !ok && track != Track {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:export/[same server] import format_version '1': destination unchanged",
+    "audit:export/[same server] import format_version 2: destination unchanged",
+    "audit:export/[same server] import state garbage: destination unchanged",
+    "audit:export/[same server] import state missing: destination unchanged",
+    "audit:export/[same server] import state not object: destination unchanged"
+   ]
+  },
+  {
+   "id": 98,
+   "file": "internal/state/model.go",
+   "line": 102,
+   "op": "NEG",
+   "orig": "\tif st.Tokens == nil {",
+   "mutated": "\tif st.Tokens != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/group ran to completion",
+    "audit:auth/no-5xx",
+    "audit:availability/group ran to completion",
+    "audit:availability/no-5xx",
+    "audit:cancel/group ran to completion"
+   ]
+  },
+  {
+   "id": 99,
+   "file": "internal/api/auth.go",
+   "line": 65,
+   "op": "LOG",
+   "orig": "\treturn ok && local != \"\" && domain != \"\" && !strings.Contains(domain, \"@\") &&",
+   "mutated": "\treturn ok && local != \"\" || domain != \"\" && !strings.Contains(domain, \"@\") &&",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:auth/email ' a@b.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email '@b' 422",
+    "audit:auth/email 'a b@' 422",
+    "audit:auth/email 'a b@x.com' 422 (R-4: one @, no whitespace)",
+    "audit:auth/email 'a@' 422"
+   ]
+  },
+  {
+   "id": 55,
+   "file": "internal/state/reservations.go",
+   "line": 23,
+   "op": "NEG",
+   "orig": "\tfor res.Reference == \"\" || st.reservationsByRef[res.Reference] != nil {",
+   "mutated": "\tfor res.Reference == \"\" || st.reservationsByRef[res.Reference] == nil {",
+   "note": "audit produced no report (rc 143)",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": []
+  }
+ ]
+}
