@@ -249,3 +249,19 @@ Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, th
   C1.89 and is a test defect; the test's R-11 assertions within groups pass in every run. For candidate
   1bfe6e2, step 2's two failing cases (F-1 under R-26, F-2 under this ruling) are explained gaps; the Oracle's
   fixes merge at stage close.
+
+## R-28 — Seeded and imported references must match C1.81 (supersedes R-26)
+- Clauses: C1.81, C1.30, C1.12, C1.18, C1.107, C1.109 (holdout escape, verdict 5 F-1)
+- Evidence: the external acceptance run on 1bfe6e2 expects reset to refuse a seeded reservation whose reference
+  is outside `^[A-Z0-9]{6,12}$` (one character; lowercase with digits; > 12 characters with '-'), with 422
+  `validation_failed` and state unchanged. R-26 chose the other reading; it is withdrawn.
+- Decision: every reservation reference — issued, seeded by a fixture, or carried in imported state — matches
+  `^[A-Z0-9]{6,12}$` and is unique across reservations. Reset refuses a fixture with a non-conforming or
+  duplicate reference → 422 `validation_failed`, state unchanged (extends R-8/R-20). Import refuses a state
+  carrying one → 422 `validation_failed`, destination unchanged (R-24). Because reset can no longer create such a
+  reference, every export the service produces remains importable (C1.107).
+- Rationale: C1.81 says "unique across all reservations" in the same sentence as the format, so it reads as a
+  property of every reservation; C1.30 gives seeded bookings the same fields as created ones. Rejected: R-26's
+  opaque-id reading (contradicted by the holdout).
+- Consequence for the Oracle: restore the 'bad ref' / 'abcdef' tamper expectations (422) and invert the R-26
+  positive round-trip test.
