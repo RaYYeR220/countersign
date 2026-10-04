@@ -3307,6 +3307,83 @@ def g_upgrade4(s: S, prev: Client | None, prev2: Client | None, prev3: Client | 
             chk.check(f"[{label}] replan on an imported restaurant works; revision observable", pv.status in (201, 409) and
                       (pv.status == 409 or isinstance((pv.json or {}).get("restaurant_revision"), int)), "201|409", pv.text(200), pv.req, "S4 Upgrade")
 
+def g_s4rulings(s: S, prev: Client | None, prev2: Client | None):
+    """R-75 (fixture integers up to 2^31-1 computed exactly) and R-76 (bookings migrated from stage 1/2, confirmed or
+    cancelled: revision 1, exactly one created entry)."""
+    c, chk, ctx = s.c, s.chk, s.ctx
+    big = 2**31 - 1
+    start = ctx.D(ctx.thu, "19:00")
+
+    def other(**kw):
+        fx = fixture(ctx)
+        r = next(x for x in fx["restaurants"] if x["id"] == "r_other")
+        cap = kw.pop("capacity", None)
+        r.update(kw)
+        if cap is not None:
+            r["tables"] = [{"id": "o_1", "label": "O1", "capacity": cap}]
+        return fx
+
+    s.reset(other(reservation_duration_minutes=big))
+    r = c.req("POST", "/reservations", booking_body("r_other", "o_1", start, 2), token=s.ada, key=uuid.uuid4().hex)
+    chk.expect("R-75 duration 2^31-1: no slot fits -> 422 outside_opening_hours", r, 422, "outside_opening_hours", section="C1.22,C1.74 (R-75)")
+    av = s.avail("r_other", ctx.thu, 2)
+    slots = (av.json or {}).get("slots") if isinstance(av.json, dict) else None
+    chk.check("R-75 duration 2^31-1: availability offers no slot", av.status == 200 and slots == [], "slots []", av.text(300), av.req,
+              "C1.22,C1.74 (R-75)")
+    s.reset(other(cancellation_cutoff_minutes=big))
+    b = s.book(s.ada, "r_other", "o_1", start, 2)
+    r = c.req("POST", f"/reservations/{b['reference']}/cancel", token=s.ada)
+    chk.expect("R-75 cutoff 2^31-1: future booking cannot be cancelled -> 409 cutoff_passed", r, 409, "cutoff_passed", section="C1.23 (R-75)")
+    s.reset(other(capacity=big))
+    r = c.req("POST", "/reservations", booking_body("r_other", "o_1", start, big), token=s.ada, key=uuid.uuid4().hex)
+    chk.expect("R-75 capacity 2^31-1 seats a party of 2^31-1 -> 201", r, 201, section="C1.26 (R-75)")
+    for field in ("reservation_duration_minutes", "cancellation_cutoff_minutes", "slot_minutes", "capacity"):
+        r = c.req("POST", "/_test/reset", other(**{field: big + 1}), timeout=12)
+        chk.expect(f"R-75 {field} 2^31 -> reset 422", r, 422, "validation_failed", section="C1.26 (R-75)")
+    for label, src, fx, rid, tid in (("stage 1", prev, fixture, "r_anker", "t_2"), ("stage 2", prev2, fixture2, "r_combo", "c_4")):
+        if src is None:
+            chk.check(f"R-76 upgrade source {label} given", False, "--prev/--prev2", None, None, "harness")
+            continue
+        sp = S(src, chk, ctx)
+        src.req("POST", "/_test/reset", fx(ctx), timeout=12)
+        tok = sp.signup(email=f"r76{label[-1]}@example.com", password="legacy pass 1", name="Legacy")
+        refs = {}
+        for kind, hhmm in (("confirmed", "19:00"), ("cancelled", "21:00")):
+            rb = src.req("POST", "/reservations", booking_body(rid, tid, ctx.D(ctx.thu, hhmm), 2), token=tok, key=uuid.uuid4().hex)
+            if rb.status != 201:
+                raise RuntimeError(f"R-76 setup {label} {kind}: {rb.status} {rb.text(200)}")
+            refs[kind] = rb.json["reference"]
+        rc = src.req("POST", f"/reservations/{refs['cancelled']}/cancel", token=tok)
+        if rc.status != 200:
+            raise RuntimeError(f"R-76 setup {label} cancel: {rc.status} {rc.text(200)}")
+        r = c.req("POST", "/_test/import", src.req("GET", "/_test/export").json, timeout=12)
+        chk.expect(f"R-76 [{label}] import -> 204", r, 204, section="C3.48 (R-76)")
+        for kind, ref in refs.items():
+            g = c.req("GET", f"/reservations/{ref}", token=tok)
+            j = g.json if isinstance(g.json, dict) else {}
+            h = c.req("GET", f"/reservations/{ref}/history", token=tok)
+            ent = (h.json or {}).get("entries") if h.status == 200 and isinstance(h.json, dict) else None
+            chk.check(f"R-76 [{label}] {kind} booking migrates with revision 1 and exactly one created entry",
+                      j.get("status") == kind and j.get("revision") == 1 and isinstance(ent, list) and len(ent) == 1
+                      and ent[0].get("event") == "created" and ent[0].get("revision") == 1,
+                      f"{kind}, rev 1, [created]", {"res": g.text(200), "history": h.text(300)}, h.req, "C3.28,C3.48,C4.24 (R-76)")
+        bad, seen = [], 0
+        for u in fx(ctx)["users"]:
+            lg = c.req("POST", "/auth/login", {"email": u["email"], "password": u["password"]})
+            if lg.status != 200:
+                continue
+            ut = lg.json["token"]
+            for res in (c.req("GET", "/reservations", token=ut).json or {}).get("reservations", []):
+                seen += 1
+                h = c.req("GET", f"/reservations/{res['reference']}/history", token=ut)
+                ent = (h.json or {}).get("entries") if h.status == 200 and isinstance(h.json, dict) else None
+                if not (res.get("revision") == 1 and isinstance(ent, list) and len(ent) == 1 and ent[0].get("event") == "created"):
+                    bad.append({"ref": res["reference"], "status": res.get("status"), "revision": res.get("revision"),
+                                "events": [e.get("event") for e in ent or []]})
+        chk.check(f"R-76 [{label}] every seeded booking ({seen}, any status) migrates with revision 1 and exactly one created entry",
+                  seen > 0 and not bad, "all rev 1 [created]", bad[:5], None, "C3.28,C3.48,C4.24 (R-76)")
+
+
 SAVE_EXPORTS: dict | None = None
 STATIC_EXPORTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "static-exports.json")
 
@@ -3337,7 +3414,7 @@ def g_staticupgrade(s: S):
 
 GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
           "combo", "comboburst", "upgrade", "explain", "policies", "history", "revision", "series", "s3moves", "s3burst", "upgrade3",
-          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4", "staticupgrade"]
+          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4", "staticupgrade", "s4rulings"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:
@@ -3415,6 +3492,8 @@ def main(argv=None):
                 g_s4burst(s, a.rounds)
             elif g == "upgrade4":
                 g_upgrade4(s, prev, prev2, prev3)
+            elif g == "s4rulings":
+                g_s4rulings(s, prev, prev2)
             else:
                 globals()[f"g_{g}"](s)
         except Exception as e:
