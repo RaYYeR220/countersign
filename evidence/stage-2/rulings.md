@@ -79,3 +79,22 @@ clauses are appended at reconciliation. R-29 … R-38 were issued from entry A b
   and keeps it in memory until a field changes. A resubmission with unchanged fields reuses key and body exactly
   (byte-identical JSON). A network failure or a 5xx keeps the key and shows `booking-uncertain`; a 4xx shows
   `booking-error` (409 also refreshes availability, keeping the form).
+
+## R-39 — Combination cells (supersedes R-33)
+- Clauses: C2.55, C2.28
+- Ambiguity: "combination cells, shown when a declared pair is available for the searched party size" next to
+  "Carries `data-available` like a single cell". R-33 read "available" as "free", which makes `data-available`
+  always true and the second sentence pointless; the Stylist built a cell for every pair in every slot.
+- Decision: in every slot, a combination cell `slot-{t_a}+{t_b}-{HH:MM}` (ids in `combinable` order) is rendered for
+  every declared pair whose summed capacity ≥ the searched party size; it carries `data-available="true"` exactly
+  when the pair is in that slot's `available_options`, else `"false"`. Pairs whose summed capacity is below the
+  party size have no cell. Clicking a `false` combination cell does nothing.
+- Rationale: "available for the searched party size" = able to seat that party; "like a single cell" = true/false by
+  occupancy. Rejected: R-33 (free-only), and a cell for every pair regardless of capacity.
+
+## R-40 — Signed-out actions (supersedes R-31)
+- Clauses: C2.30, C2.34
+- Decision: clicking an available cell while signed out navigates to `/login`; after a successful sign-in the
+  diner returns to `/` with the search and selection restored and the booking form open. Using the lookup screen
+  while signed out navigates to `/login` and returns to `/lookup` after sign-in. (The spec allows `auth-error` or
+  navigation; navigation is the behaviour already built.)
