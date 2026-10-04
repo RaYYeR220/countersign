@@ -168,3 +168,26 @@ func TestImportRejectsWithoutChange(t *testing.T) {
 		t.Errorf("GET import = %d", rec.Code)
 	}
 }
+
+// A key whose first use failed with 4xx stays usable after export/import (C1.111).
+func TestFailedKeyIsFirstUseAfterImport(t *testing.T) {
+	e := newEnv(t)
+	expect(t, e.book(e.ada, "k-fail", booking("t_2", "2026-09-24T19:15", 2)), 422, "not_on_slot_grid")
+	expect(t, e.book(e.ada, "k-fail2", booking("t_2", "2026-09-24T19:00", 99)), 422, "party_exceeds_capacity")
+	exported := do(e.h, "GET", "/_test/export", "")
+	expect(t, exported, 200, "")
+
+	fresh := &env{t: t, h: New(state.NewStore(state.Empty()), e.clock.now), clock: e.clock}
+	if rec := do(fresh.h, "POST", "/_test/import", exported.Body.String()); rec.Code != 204 {
+		t.Fatalf("import = %d %s", rec.Code, rec.Body)
+	}
+	// Different body under the failed key: a first use, not 409.
+	first := fresh.book(e.ada, "k-fail", booking("t_2", "2026-09-24T19:00", 2))
+	expect(t, first, 201, "")
+	// Same failing body under the other key: evaluated afresh, still the ordinary error.
+	expect(t, fresh.book(e.ada, "k-fail2", booking("t_2", "2026-09-24T19:00", 99)), 422, "party_exceeds_capacity")
+	// The new success is now a normal receipt.
+	if again := fresh.book(e.ada, "k-fail", booking("t_2", "2026-09-24T19:00", 2)); again.Code != 200 || again.Body.String() != first.Body.String() {
+		t.Errorf("replay = %d %s", again.Code, again.Body)
+	}
+}
