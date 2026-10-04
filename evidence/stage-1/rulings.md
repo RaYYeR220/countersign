@@ -191,3 +191,20 @@ Q1 → R-1 + R-19. Q2 → R-7 (B default confirmed). Q3 → R-7 (B default confi
 confirmed). Q5 → R-22 (non-string `reference` → 422; `moves` not an array or item not an object → 422).
 Q6 → R-3 (`4.0` is the integer 4). Q7 → R-11 (ties: created_at ascending, then reference). Q8 → R-23
 (absolute, overrides B default). Q9 → R-12 (422, B default confirmed). Q10 → R-20.
+
+## R-24 — Import of an empty or unrecognised state
+- Clauses: C1.109 (Auditor question 8)
+- Decision: `state` must be an object this service recognises (its own schema marker and every required
+  collection); `state: {}`, an unknown schema, or any structurally invalid state → 422 `validation_failed`,
+  destination unchanged. Only an export produced by this service (or, from stage 2 on, by an earlier stage of
+  this team's service) is accepted.
+- Rationale: "an invalid state give[s] 422 … without changing the destination"; an empty object is not a state
+  this service produced. Rejected: treating `{}` as an empty state (it would silently wipe the destination).
+
+## Answers to the Auditor's attack-plan questions
+1. Moves item `party_size: 0` → ordinary amendment error in input order after cancelled/cutoff (R-22 c), not a
+   structural 422. 2. Item `table_id` a number → 400 `malformed_request` (R-22 b). 3. `moves` not an array /
+   item not an object → 422 (R-22 a). 4. `PATCH {}` → 200 unchanged, still requires confirmed and outside cutoff
+   (R-14). 5. PATCH moving a far booking to a start inside the cutoff → allowed; cutoff is measured on the current
+   start (C1.97). 6. Body valid JSON but not an object → 400 `malformed_request` (R-1). 7. Signup without
+   display_name / login without password → 422 (R-19 pass 2). 8. → R-24.
