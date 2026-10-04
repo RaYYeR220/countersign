@@ -1,4 +1,4 @@
-[EVIDENCE] stage=4 wi=oracle-kit sha=<filled at commit>
+[EVIDENCE] stage=4 wi=oracle-kit sha=854c25b
 
 # Evidence — Oracle stage-4 verification kit (planner, closures, apply, series amend, upgrades, O-15)
 
