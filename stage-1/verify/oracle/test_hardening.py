@@ -68,10 +68,12 @@ def test_C1_89_tie_order_live_created_at(c, ada):
     noon = [x for x in lst if x["starts_at"] == f"{FUT_DAY}T15:00:00+02:00"]
     assert [x["reference"] for x in noon] == [x["reference"] for x in made[:3]]
     assert lst[:2] == berlin and lst[2:] == noon
-    inversions = [(a, b) for a, b in zip(made, made[1:]) if b["reference"] < a["reference"]]
-    # when an implementation's references are not monotonic, at least one pair proves created_at wins
+    # R-27: only pairs with equal starts_at are ordered by created_at; across instants starts_at descending wins.
+    # When an implementation's references are not monotonic, such a pair proves created_at beats the reference.
+    inversions = [(a, b) for a, b in zip(made, made[1:])
+                  if a["starts_at"] == b["starts_at"] and b["reference"] < a["reference"]]
     for a, b in inversions:
-        assert lst.index(a) < lst.index(b)
+        assert lst.index(a) < lst.index(b), (a["reference"], b["reference"])
 
 
 # ============================================================ O-2
