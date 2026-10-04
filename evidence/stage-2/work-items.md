@@ -6,11 +6,11 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 
 | WI | owner | title | clauses | depends on | status |
 |----|-------|-------|---------|------------|--------|
-| WI-8 | Builder | Combined tables in the core (fixture, availability options, POST/PATCH/moves with table_ids) | C2.38–C2.54, C2.58, C2.59, C2.39 | – | handed off |
-| WI-9 | Builder | Upgrade from stage-1 exports + ADR-002 (UI serving, schema 2) | C2.1, C2.35–C2.37 | WI-8 | handed off |
-| WI-10 | Stylist | Design direction, app shell, navigation, signup/login, session | C2.3, C2.4, C2.11–C2.20 | – | handed off |
-| WI-11 | Stylist | Search grid, booking form, confirmation, out-of-order + 409 + uncertain recovery, combination cells | C2.5–C2.10, C2.21–C2.33, C2.55–C2.57 | WI-10, WI-8 API | handed off |
-| WI-12 | Stylist | Lookup screen and upgrade survival in the browser | C2.34, C2.36, C2.37 | WI-11, WI-9 | handed off |
+| WI-8 | Builder | Combined tables in the core (fixture, availability options, POST/PATCH/moves with table_ids) | C2.38–C2.54, C2.58, C2.59, C2.39 | – | merged |
+| WI-9 | Builder | Upgrade from stage-1 exports + ADR-002 (UI serving, schema 2) | C2.1, C2.35–C2.37 | WI-8 | merged |
+| WI-10 | Stylist | Design direction, app shell, navigation, signup/login, session | C2.3, C2.4, C2.11–C2.20 | – | merged |
+| WI-11 | Stylist | Search grid, booking form, confirmation, out-of-order + 409 + uncertain recovery, combination cells | C2.5–C2.10, C2.21–C2.33, C2.55–C2.57 | WI-10, WI-8 API | merged |
+| WI-12 | Stylist | Lookup screen and upgrade survival in the browser | C2.34, C2.36, C2.37 | WI-11, WI-9 | merged |
 
 ## Retry budget (rework rounds used of 2)
 | WI | rounds | clean restart | notes |
@@ -24,3 +24,4 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
+| 1 | (this commit) | WI-8/9 (builder 15035d7), WI-10..12 (stylist b2403a1), oracle d565258, auditor head | pending |
