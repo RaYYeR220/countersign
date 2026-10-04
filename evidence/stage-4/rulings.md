@@ -91,3 +91,22 @@ agree. R-61 … R-72 were issued from entry A before reconciliation.
 - Clauses: C4.24
 - Decision: import accepts schema 1–3 (and its own schema 4) states, envelope `format_version: 1`; migrated states
   have no plans and no closures; stage-3 series, histories, revisions and restaurant revisions are kept.
+
+## R-73 — A closure on a table that already has an applied closure
+- Clauses: C4.3, C4.7
+- Decision: allowed. The new closure is planned and applied like any other; it adds another closure record and no
+  error is raised for the overlap with the existing one.
+
+## Answers to the Auditor's stage-4 questions (Q1–Q14)
+Q1 → R-62 (your order). A non-string `table_id` → 400; every `from`/`to` problem, including a wrong JSON type,
+→ 422. A closure on an already-closed table → R-73 (allowed). Q2 → R-61: yes, bookings on every table; ones that
+can stay keep `changed: false`. Q3 → R-63: yes, always 422 when any limit is exceeded, checked before
+no_feasible_plan; exactly 6 tables / 4 pairs / 6 bookings are planned normally. Q4: yes — a rank is the option's
+position in the restaurant's full option list (singles in fixture order, then every declared pair), regardless of
+party size or capacity; unused seats use each booking's own accepted-terms capacities (a pair's sum). Q5: yes and
+yes. Q6: yes and yes. Q7 → R-66 (your order); any JSON object body is accepted and unknown fields are ignored.
+Q8 → R-67: yes; a moved occurrence keeps its exception flag, and its series gets +1 once per application. Q9 → R-68:
+yes; seeded bookings on the closed table that overlap the closure are considered and moved by the plan. Q10 → R-70
+(your order); a wrong JSON type → 422. Q11: '24:00' and '7:00' → 422; scheduled dates per R-71, the anchor
+included. Q12: yes (201 with revisions unchanged; replay 200); yes (one `changed` entry naming starts_at_local, and
+reservation revision +1). Q13: yes. Q14 → R-72: yes; restaurant_revision is first observable through a preview.
