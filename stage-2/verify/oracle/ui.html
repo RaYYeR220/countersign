@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablekeeper (Oracle reference UI)</title>
+<style>
+  :root { --ink:#2b2118; --paper:#fbf7f1; --accent:#b5452c; --muted:#8a7f74; --ok:#2f7d4f; --warn:#b8860b; --line:#e4dbcf; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Georgia, "Times New Roman", serif; color:var(--ink); background:var(--paper); }
+  header { display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; align-items:center; padding:1rem 1.25rem; border-bottom:1px solid var(--line); }
+  header .brand { font-size:1.4rem; font-weight:bold; }
+  nav a { margin-right:1rem; color:var(--accent); }
+  main { max-width: 64rem; margin: 0 auto; padding: 1.25rem; }
+  label { display:block; font-size:.9rem; color:var(--muted); margin:.5rem 0 .2rem; }
+  input, select, button { font: inherit; padding:.5rem .65rem; border:1px solid var(--line); border-radius:.4rem; background:#fff; max-width:100%; }
+  input:focus, select:focus, button:focus { outline: 3px solid #f0b27a; outline-offset: 2px; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); cursor:pointer; }
+  .row { display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end; }
+  .grid { display:grid; gap:.5rem; margin-top:1rem; }
+  .slot { display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; padding:.4rem; border-top:1px solid var(--line); }
+  .slot .time { min-width:4.5rem; font-weight:bold; }
+  .cell { padding:.4rem .6rem; border-radius:.4rem; border:1px solid var(--line); background:#eee; color:var(--muted); }
+  .cell[data-available="true"] { background:#e4f3e8; color:var(--ok); border-color:var(--ok); cursor:pointer; }
+  .cell.selected { outline: 3px solid var(--accent); }
+  .cell.pair { border-style:dashed; }
+  .error { color:var(--accent); background:#fbe9e4; padding:.5rem .75rem; border-radius:.4rem; margin:.5rem 0; }
+  .uncertain { color:var(--warn); background:#fff6dc; padding:.5rem .75rem; border-radius:.4rem; margin:.5rem 0; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:.6rem; padding:1rem; margin-top:1rem; }
+  .ref { font-size:1.6rem; letter-spacing:.1em; font-family: ui-monospace, monospace; }
+  .muted { color:var(--muted); }
+  .loading { color:var(--muted); font-style:italic; }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Tablekeeper</span>
+  <nav><a href="/">Search</a><a href="/lookup">Look up</a><a href="/login">Log in</a><a href="/signup">Sign up</a></nav>
+  <span id="user" style="margin-left:auto"></span>
+</header>
+<main id="main"></main>
+<script>
+(function () {
+  const S = { token: sessionStorage.getItem("tk.token"), name: sessionStorage.getItem("tk.name"), search: null, slots: [], seq: 0, form: null, confirmation: null, lastSearch: null };
+  const setSession = (token, name) => { S.token = token; S.name = name;
+    if (token) { sessionStorage.setItem("tk.token", token); sessionStorage.setItem("tk.name", name); }
+    else { sessionStorage.removeItem("tk.token"); sessionStorage.removeItem("tk.name"); } };
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const el = (tag, attrs, ...kids) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === "testid") e.setAttribute("data-testid", v); else if (k === "onclick") e.onclick = v; else e.setAttribute(k, v);
+    }
+    for (const k of kids) e.append(k);
+    return e;
+  };
+  const api = async (method, path, body, extra) => {
+    const h = { "Content-Type": "application/json; charset=utf-8" };
+    if (S.token) h["Authorization"] = "Bearer " + S.token;
+    Object.assign(h, extra || {});
+    const r = await fetch(path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
+    const text = await r.text();
+    let json = null; try { json = text ? JSON.parse(text) : null; } catch (e) {}
+    return { status: r.status, json };
+  };
+  const uuid = () => crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now();
+
+  function renderHeader() {
+    const u = $("#user"); u.innerHTML = "";
+    if (S.token) {
+      u.append(el("span", { testid: "current-user" }, "Signed in as " + S.name), " ",
+               el("button", { testid: "logout-button", onclick: () => { setSession(null, null); S.form = null; S.confirmation = null; route(); } }, "Log out"));
+    }
+  }
+
+  // ---------------------------------------------------------------- auth screens
+  function authScreen(kind) {
+    const m = $("#main"); m.innerHTML = "";
+    const isSignup = kind === "signup";
+    const p = isSignup ? "signup" : "login";
+    const email = el("input", { testid: p + "-email", id: p + "-email", type: "email", autocomplete: "email" });
+    const pw = el("input", { testid: p + "-password", id: p + "-password", type: "password" });
+    const name = el("input", { testid: "signup-display-name", id: "signup-display-name", type: "text" });
+    const errBox = el("div");
+    const submit = el("button", { testid: p + "-submit", class: "primary", onclick: async () => {
+      errBox.innerHTML = "";
+      const body = isSignup ? { email: email.value, password: pw.value, display_name: name.value } : { email: email.value, password: pw.value };
+      const r = await api("POST", isSignup ? "/auth/signup" : "/auth/login", body);
+      if (r.status === 200 || r.status === 201) { setSession(r.json.token, r.json.display_name); renderHeader(); history.pushState({}, "", "/"); route(); }
+      else errBox.append(el("div", { testid: "auth-error", class: "error" }, (r.json && r.json.error && r.json.error.message) || "Could not sign in"));
+    } }, isSignup ? "Create account" : "Log in");
+    const card = el("div", { class: "card" }, el("h1", {}, isSignup ? "Sign up" : "Log in"));
+    card.append(el("label", { for: p + "-email" }, "Email"), email, el("label", { for: p + "-password" }, "Password"), pw);
+    if (isSignup) card.append(el("label", { for: "signup-display-name" }, "Display name"), name);
+    card.append(el("div", { style: "margin-top:1rem" }, submit), errBox);
+    m.append(card);
+  }
+
+  // ---------------------------------------------------------------- search screen
+  async function searchScreen() {
+    const m = $("#main"); m.innerHTML = "";
+    const rs = await api("GET", "/restaurants");
+    const sel = el("select", { testid: "restaurant-select", id: "restaurant-select" });
+    const restaurants = (rs.json && rs.json.restaurants) || [];
+    for (const r of restaurants) sel.append(el("option", { value: r.id }, r.name));
+    const date = el("input", { testid: "date-input", id: "date-input", type: "text", placeholder: "YYYY-MM-DD", value: S.lastSearch ? S.lastSearch.date : "" });
+    const party = el("input", { testid: "party-size-input", id: "party-size-input", type: "number", min: "1", value: S.lastSearch ? S.lastSearch.party : "2" });
+    if (S.lastSearch) sel.value = S.lastSearch.rid;
+    const results = el("div", { id: "results" });
+    const formBox = el("div", { id: "formbox" });
+    const btn = el("button", { testid: "search-button", class: "primary", onclick: () => runSearch() }, "Search");
+    m.append(el("h1", {}, "Find a table"), el("div", { class: "row" },
+      el("div", {}, el("label", { for: "restaurant-select" }, "Restaurant"), sel),
+      el("div", {}, el("label", { for: "date-input" }, "Date"), date),
+      el("div", {}, el("label", { for: "party-size-input" }, "Party size"), party),
+      el("div", {}, btn)), results, formBox);
+    if (S.form) renderForm();
+    if (S.lastSearch && S.slots.length) renderGrid(S.lastSearch, S.slots);
+
+    async function runSearch() {
+      const q = { rid: sel.value, date: date.value, party: party.value };
+      const seq = ++S.seq;
+      results.innerHTML = ""; results.append(el("div", { class: "loading" }, "Searching…"));
+      const r = await api("GET", `/availability?restaurant_id=${encodeURIComponent(q.rid)}&date=${encodeURIComponent(q.date)}&party_size=${encodeURIComponent(q.party)}`);
+      if (seq !== S.seq) return;            // a later search already finished: ignore this (out-of-order) response
+      S.lastSearch = q; S.lastSearch.name = (restaurants.find(x => x.id === q.rid) || {}).name || q.rid;
+      S.slots = r.status === 200 ? r.json.slots : [];
+      renderGrid(q, S.slots, r);
+    }
+
+    function renderGrid(q, slots, r) {
+      results.innerHTML = "";
+      if (r && r.status !== 200) { results.append(el("div", { class: "error" }, "Search failed: " + ((r.json && r.json.error && r.json.error.code) || r.status))); return; }
+      if (!slots.length) { results.append(el("div", { testid: "no-slots", class: "card" }, "No tables on this day.")); return; }
+      const tables = S.tables[q.rid] || [];
+      const grid = el("div", { testid: "availability-grid", class: "grid" });
+      for (const s of slots) {
+        const hm = s.starts_at_local.slice(11);
+        const row = el("div", { class: "slot" }, el("span", { class: "time" }, hm));
+        for (const t of tables) {
+          const avail = s.available_table_ids.includes(t.id);
+          const c = el("button", { testid: `slot-${t.id}-${hm}`, class: "cell", "data-available": String(avail) }, "Table " + t.label);
+          c.onclick = () => avail && openForm(q, s, [t], c);
+          row.append(c);
+        }
+        for (const o of s.available_options) {
+          if (o.table_ids.length !== 2) continue;
+          const labels = o.table_ids.map(id => (tables.find(t => t.id === id) || { label: id }));
+          const c = el("button", { testid: `slot-${o.table_ids.join("+")}-${hm}`, class: "cell pair", "data-available": "true" },
+                       "Tables " + labels.map(t => t.label).join(" + "));
+          c.onclick = () => openForm(q, s, labels, c);
+          row.append(c);
+        }
+        grid.append(row);
+      }
+      results.append(grid);
+    }
+
+    function openForm(q, s, tablesSel, cell) {
+      if (!S.token) { history.pushState({}, "", "/login"); route(); return; }
+      document.querySelectorAll(".cell.selected").forEach(x => x.classList.remove("selected"));
+      cell.classList.add("selected");
+      S.form = { rid: q.rid, rname: S.lastSearch.name, tables: tablesSel, local: s.starts_at_local, party: String(q.party),
+                 key: uuid(), sentBody: null, uncertain: false, error: null };
+      S.confirmation = null;
+      renderForm();
+    }
+
+    function renderForm() {
+      const f = S.form; formBox.innerHTML = "";
+      if (!f) return;
+      const hm = f.local.slice(11);
+      const labels = f.tables.map(t => t.label);
+      const partyIn = el("input", { testid: "booking-party-size", id: "booking-party-size", type: "number", min: "1", value: f.party });
+      partyIn.oninput = () => { if (partyIn.value !== f.party) { f.party = partyIn.value; f.key = uuid(); f.sentBody = null; } };
+      const msg = el("div");
+      const conf = el("div");
+      const submit = el("button", { testid: "booking-submit", class: "primary", onclick: async () => {
+        const body = { restaurant_id: f.rid, starts_at_local: f.local, party_size: Number(f.party) };
+        if (f.tables.length === 1) body.table_id = f.tables[0].id; else body.table_ids = f.tables.map(t => t.id);
+        const bodyText = JSON.stringify(body);
+        if (f.sentBody !== null && f.sentBody !== bodyText) { f.key = uuid(); }   // a changed body is a new request
+        f.sentBody = bodyText;
+        msg.innerHTML = "";
+        let r;
+        try { r = await api("POST", "/reservations", body, { "Idempotency-Key": f.key }); }
+        catch (e) { f.uncertain = true; msg.append(el("div", { testid: "booking-uncertain", class: "uncertain" }, "We could not confirm whether your booking went through. Please retry.")); return; }
+        if (r.status === 201 || r.status === 200) {
+          f.uncertain = false; msg.innerHTML = "";
+          S.confirmation = r.json; renderConfirmation(conf, r.json, f);
+        } else {
+          msg.append(el("div", { testid: "booking-error", class: "error" }, (r.json && r.json.error && r.json.error.message) || ("Booking failed (" + r.status + ")")));
+          if (r.status === 409 && r.json && r.json.error && r.json.error.code === "table_unavailable") runSearch();
+        }
+      } }, "Book");
+      const card = el("div", { testid: "booking-form", class: "card" },
+        el("h2", {}, "Your booking"),
+        el("div", { testid: "booking-summary" }, `${f.rname}: ${labels.length > 1 ? "Tables " : "Table "}${labels.join(" + ")} at ${hm} on ${f.local.slice(0, 10)}`),
+        el("label", { for: "booking-party-size" }, "Party size"), partyIn, el("div", { style: "margin-top:.75rem" }, submit), msg, conf);
+      formBox.append(card);
+      if (S.confirmation) renderConfirmation(conf, S.confirmation, f);
+    }
+
+    function renderConfirmation(box, o, f) {
+      box.innerHTML = "";
+      const labels = f.tables.map(t => t.label);
+      box.append(el("div", { testid: "confirmation", class: "card" },
+        el("div", { class: "muted" }, "Confirmed. Your reference:"),
+        el("div", { testid: "confirmation-reference", class: "ref" }, o.reference),
+        el("div", { testid: "confirmation-details" }, `${f.rname}, ${labels.length > 1 ? "tables " : "table "}${labels.join(" + ")}, ${o.starts_at_local.slice(11)} on ${o.starts_at_local.slice(0, 10)}`),
+        el("div", { testid: "confirmation-tables" }, labels.join(" + "))));
+    }
+  }
+
+  // ---------------------------------------------------------------- lookup screen
+  function lookupScreen() {
+    const m = $("#main"); m.innerHTML = "";
+    const input = el("input", { testid: "lookup-reference-input", id: "lookup-reference-input", type: "text" });
+    const out = el("div");
+    const show = async (ref) => {
+      out.innerHTML = "";
+      const r = await api("GET", "/reservations/" + encodeURIComponent(ref));
+      if (r.status !== 200) { out.append(el("div", { testid: "reservation-error", class: "error" }, "Reservation not found")); return; }
+      const o = r.json;
+      const rest = await api("GET", "/restaurants/" + encodeURIComponent(o.restaurant_id));
+      const tables = (rest.json && rest.json.tables) || [];
+      const labels = o.table_ids.map(id => (tables.find(t => t.id === id) || { label: id }).label);
+      const card = el("div", { testid: "reservation-detail", class: "card" },
+        el("div", { class: "ref" }, o.reference),
+        el("div", {}, "Status: ", el("span", { testid: "reservation-status" }, o.status)),
+        el("div", { testid: "reservation-tables" }, (labels.length > 1 ? "Tables " : "Table ") + labels.join(" + ")),
+        el("div", { class: "muted" }, o.starts_at_local.replace("T", " ")));
+      if (o.status === "confirmed") card.append(el("div", { style: "margin-top:.75rem" }, el("button", { testid: "reservation-cancel-button", class: "primary", onclick: async () => {
+        const x = await api("POST", "/reservations/" + encodeURIComponent(ref) + "/cancel");
+        if (x.status === 200) show(ref); else out.append(el("div", { testid: "reservation-error", class: "error" }, (x.json && x.json.error && x.json.error.message) || "Could not cancel"));
+      } }, "Cancel reservation")));
+      out.append(card);
+    };
+    m.append(el("h1", {}, "Look up a reservation"), el("label", { for: "lookup-reference-input" }, "Reference"), input, " ",
+             el("button", { testid: "lookup-submit", class: "primary", onclick: () => show(input.value.trim()) }, "Find"), out);
+  }
+
+  // ---------------------------------------------------------------- routing
+  S.tables = {};
+  async function loadTables() {
+    const rs = await api("GET", "/restaurants");
+    for (const r of (rs.json && rs.json.restaurants) || []) {
+      const d = await api("GET", "/restaurants/" + encodeURIComponent(r.id));
+      S.tables[r.id] = (d.json && d.json.tables) || [];
+    }
+  }
+  async function route() {
+    renderHeader();
+    const p = location.pathname;
+    if (p === "/signup") return authScreen("signup");
+    if (p === "/login") return authScreen("login");
+    if (p === "/lookup") return lookupScreen();
+    if (!Object.keys(S.tables).length) await loadTables();
+    return searchScreen();
+  }
+  document.addEventListener("click", e => {
+    const a = e.target.closest("nav a"); if (!a) return;
+    e.preventDefault(); history.pushState({}, "", a.getAttribute("href")); route();
+  });
+  window.addEventListener("popstate", route);
+  route();
+})();
+</script>
+</body>
+</html>

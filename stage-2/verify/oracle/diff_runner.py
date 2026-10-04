@@ -35,7 +35,9 @@ RFC3339 = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?[+-]\d{2}:\d{
 DATES = [FUT_THU, FUT_FRI, FUT_WED, FUT_DAY, FUT_DAY2, PAST_DAY, PAST_THU,
          BERLIN_SPRING, BERLIN_FALL, NY_SPRING, NY_FALL]
 TIMES = [f"{h:02d}:{m:02d}" for h in range(24) for m in (0, 15, 30, 45)]
-RESTAURANTS = {"r_anker": ["t_1", "t_2"], "r_all": ["a_1", "a_2", "a_3"], "r_ny": ["n_1"]}
+RESTAURANTS = {"r_anker": ["t_1", "t_2"], "r_all": ["a_1", "a_2", "a_3"], "r_ny": ["n_1"], "r_trio": ["q_1", "q_2", "q_3"]}
+PAIRS = {"r_anker": [["t_1", "t_2"]], "r_all": [["a_1", "a_2"], ["a_2", "a_3"]], "r_ny": [["n_1", "n_1"]],
+         "r_trio": [["q_1", "q_2"], ["q_2", "q_3"], ["q_1", "q_3"]]}
 FIXTURE_USERS = [("ada@example.com", "correct horse"), ("bob@example.com", "bob secret 1")]
 CAPS = {t["id"]: t["capacity"] for r_ in base_fixture()["restaurants"] for t in r_["tables"]}
 
@@ -178,6 +180,9 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
 
     def local_time(restaurant: str) -> str:
         r = rng.random()
+        if restaurant == "r_trio":
+            return rng.choice([FUT_THU, FUT_FRI, FUT_DAY, PAST_DAY]) + "T" + rng.choice(
+                ["18:00", "18:30", "19:00", "19:30", "20:00", "21:30", "22:00", "19:15"])
         if restaurant == "r_anker":
             if r < 0.25:   # DST nights, restaurant open 00:00-06:00 on Sundays
                 return rng.choice([BERLIN_SPRING, BERLIN_FALL]) + "T" + rng.choice(
@@ -214,6 +219,25 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
             return rng.choice(["nope", "t_1", "a_1", "n_1"])
         return rng.choice(RESTAURANTS[restaurant])
 
+    def table_set(restaurant: str):
+        """Stage 2: a `table_ids` value (pairs, declared and not, reversed, triples, duplicates, odd types)."""
+        r = rng.random()
+        if r < 0.55:
+            pair = list(rng.choice(PAIRS[restaurant]))
+            if rng.random() < 0.3:
+                pair.reverse()
+            return pair
+        if r < 0.75:
+            return [table(restaurant)]
+        if r < 0.82:
+            return RESTAURANTS[restaurant][:3] if len(RESTAURANTS[restaurant]) >= 3 else ["t_1", "t_2", "t_3"]
+        if r < 0.88:
+            t = table(restaurant)
+            return [t, t]
+        if r < 0.92:
+            return []
+        return rng.choice(["t_1", [1], [None], None, {"id": "t_1"}])
+
     def amendment(ref, n_fields_p: float = 0.5) -> dict:
         """Fields for a PATCH/move item, biased to the booking's own restaurant when it is known."""
         rec = record(ref.label) if isinstance(ref, Sym) else None
@@ -222,16 +246,37 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
         for f in ("table_id", "starts_at_local", "party_size"):
             if rng.random() < n_fields_p:
                 if f == "table_id":
-                    body[f] = table(rest)
+                    if rng.random() < 0.5:
+                        body["table_ids"] = table_set(rest)          # stage 2
+                        if rng.random() < 0.06:
+                            body["table_id"] = table(rest)
+                    else:
+                        body[f] = table(rest)
                 elif f == "starts_at_local":
                     body[f] = local_time(rest)
                 else:
-                    tid = body.get("table_id", rec["table_id"] if rec else None)
-                    body[f] = party(CAPS.get(tid))
+                    if isinstance(body.get("table_ids"), list):
+                        ids = body["table_ids"]
+                    elif "table_id" in body:
+                        ids = [body["table_id"]]
+                    else:
+                        ids = rec["table_ids"] if rec else []
+                    cap = sum(CAPS.get(x, 0) for x in ids if isinstance(x, str)) or None
+                    body[f] = party(cap)
         return body
 
     def booking_body(restaurant: Optional[str] = None) -> dict:
         restaurant = restaurant or rng.choice(list(RESTAURANTS))
+        if rng.random() < 0.45:                                   # stage 2: table_ids bodies
+            ids = table_set(restaurant)
+            cap = sum(CAPS.get(x, 0) for x in ids) if isinstance(ids, list) and all(isinstance(x, str) for x in ids) else None
+            body = {"restaurant_id": restaurant, "table_ids": ids,
+                    "starts_at_local": local_time(restaurant), "party_size": party(cap or None)}
+            if rng.random() < 0.04:
+                body["table_id"] = table(restaurant)                # both fields -> 422
+            if rng.random() < 0.03:
+                body.pop(rng.choice(list(body)))
+            return body
         tid = table(restaurant)
         body = {"restaurant_id": restaurant, "table_id": tid,
                 "starts_at_local": local_time(restaurant), "party_size": party(CAPS.get(tid))}

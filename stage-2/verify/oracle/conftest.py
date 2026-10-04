@@ -21,6 +21,11 @@ from fixtures import base_fixture  # noqa: E402
 def pytest_addoption(parser):
     parser.addoption("--base-url", default=os.environ.get("ORACLE_BASE_URL", "http://127.0.0.1:18400"))
     parser.addoption("--second-base-url", default=os.environ.get("ORACLE_SECOND_BASE_URL", ""))
+    parser.addoption("--stage1-base-url", default=os.environ.get("ORACLE_STAGE1_BASE_URL", ""),
+                     help="a running accepted stage-1 service, used to produce a real stage-1 export for the upgrade test")
+    parser.addoption("--stage1-export", default=os.environ.get("ORACLE_STAGE1_EXPORT", ""),
+                     help="path to a saved stage-1 export (used when no --stage1-base-url)")
+    parser.addoption("--ui", action="store_true", default=False, help="run the headless-browser suite too")
 
 
 @pytest.fixture(scope="session")

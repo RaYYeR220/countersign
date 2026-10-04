@@ -1,4 +1,4 @@
-# Oracle verification kit — stage 1
+# Oracle verification kit — stage 2 (stage-1 kit carried forward and widened)
 
 Everything here talks to the service through HTTP only. Nothing in this folder ships in the image.
 
@@ -9,7 +9,11 @@ Everything here talks to the service through HTTP only. Nothing in this folder s
 | `client.py` | Stdlib HTTP client (`Client`, one kept-alive connection per instance) plus `burst()` for barrier-released concurrent requests on fresh connections. Any 5xx fails the test that caused it (C1.46). |
 | `fixtures.py` | Shared fixtures and dates (future dates for mutable bookings, past dates for cutoff cases, the four DST transitions). |
 | `conftest.py` | `--base-url` (or `ORACLE_BASE_URL`), optional `--second-base-url` for the cross-process import test. |
-| `test_acceptance.py` | Acceptance suite; test names carry the master-ledger ids (`C1_<n>`) they cover. `clauses.json` maps the original entry-B ids to C1 ids. |
+| `test_acceptance.py` | Stage-1 acceptance suite (C1.<n>), still binding in stage 2. `clauses.json` maps the original entry-B ids to C1 ids. |
+| `test_hardening.py` | Stage-1 hardening tests O-1..O-8 (tie order, tampered exports, round trips, concurrency, degenerate resets). |
+| `test_stage2_api.py` | Stage-2 HTTP suite: combinable pairs, `table_ids`, `available_options`, the upgrade from a stage-1 export, and the stage-1 leftovers O-9..O-11. Test names carry entry-B ids (`evidence/stage-2/ledger-B.md`) until C2 ids are assigned. |
+| `test_ui.py` | Stage-2 browser suite (Playwright, headless Chromium), enabled with `--ui`: screens, testid contracts, grid vs API, booking/confirmation/lookup flows, out-of-order searches, 409 recovery, lost response + retry, upgrade survival, 375/768/1280 px layout, labels and focus. |
+| `ui.html` | A minimal reference UI served by `serve_model.py` on `/`, `/signup`, `/login`, `/lookup`, so the browser suite is validated end to end before a candidate exists. It is not a product. |
 | `diff_runner.py` | Differential runner: seeded random operation sequences against the model and the service, every response compared, mismatches shrunk to the shortest replaying sequence and saved as JSON for `--replay`. |
 | `op_stats.py` | Prints which (operation, status, code) outcomes the generator reaches on the model, to judge coverage of a seed range. |
 
@@ -17,12 +21,20 @@ Everything here talks to the service through HTTP only. Nothing in this folder s
 
 ```sh
 # against any running service (candidate container, or the model itself)
-python -m pytest stage-1/verify/oracle -q --base-url http://127.0.0.1:18401 -p no:cacheprovider
+python -m pytest stage-2/verify/oracle -q --base-url http://127.0.0.1:18401 -p no:cacheprovider
 # with a second, independent instance for the import-into-fresh-container test (C1.107)
-python -m pytest stage-1/verify/oracle -q --base-url http://127.0.0.1:18401 --second-base-url http://127.0.0.1:18403 -p no:cacheprovider
+python -m pytest stage-2/verify/oracle -q --base-url http://127.0.0.1:18401 --second-base-url http://127.0.0.1:18403 -p no:cacheprovider
+# the upgrade test needs a stage-1 export: point at a running accepted stage-1 image (or --stage1-export <file>)
+python -m pytest stage-2/verify/oracle -q --base-url http://127.0.0.1:18401 --stage1-base-url http://127.0.0.1:18410 -p no:cacheprovider
+# browser suite (headless Chromium via Playwright)
+python -m pytest stage-2/verify/oracle/test_ui.py -q --ui --base-url http://127.0.0.1:18401 -p no:cacheprovider
 # differential run
-python stage-1/verify/oracle/diff_runner.py --base-url http://127.0.0.1:18401 --seed 1 --runs 50 --ops 60
+python stage-2/verify/oracle/diff_runner.py --base-url http://127.0.0.1:18401 --seed 1 --runs 50 --ops 80
 ```
+
+When validating the kit against the model itself, the upgrade source must be the stage-1 *model*
+(`python stage-1/verify/oracle/serve_model.py --port 18411`), because the model only reads its own stage-1 state
+format; against a candidate it is the accepted stage-1 image.
 
 The suite resets the service before every test with `POST /_test/reset`; it leaves state behind on purpose.
 
