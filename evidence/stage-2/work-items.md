@@ -31,5 +31,6 @@ R-1…R-28 (R-26 withdrawn) and stage-2 rulings R-29…. Complete clause text an
 |----|-------|------|---------|--------|
 | WI-13 | Builder | stage-2 verdict-1 escalation Q2; R-42 | C1.18, C1.41, C2.46–C2.53 | evidence 04196be, merged (rework round 1 of 2 on WI-8 validation) |
 | 2 | 090df19 | + WI-13 (04196be), oracle 363c365 (R-41/R-42/R-35 model) | superseded by 3 (differential seed 371951: model defect, R-43) |
-| 3 | (this commit) | + oracle R-43 (f1ec500), Builder WI-14 RUN.md (3f62a89); product otherwise = 090df19 | pending |
-| WI-15 | Builder | stage-2 candidate 2 F-1 (R-43: wrongly typed table_id with both fields) | C2.47, C2.54, C2.58 | handed off (rework round 2 of 2 on WI-8 validation) |
+| 3 | a6497b4 | + oracle R-43 (f1ec500), Builder WI-14 RUN.md (3f62a89); product otherwise = 090df19 | superseded by 4 (contains candidate-2 F-1, R-43 table_id type) |
+| WI-15 | Builder | stage-2 candidate 2 F-1 (R-43: wrongly typed table_id with both fields) | C2.47, C2.54, C2.58 | evidence 7d6bc49, merged (rework round 2 of 2 on WI-8 validation) |
+| 4 | (this commit) | + WI-15 (7d6bc49) | pending |
