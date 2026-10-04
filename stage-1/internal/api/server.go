@@ -26,6 +26,7 @@ func New(store *state.Store, now func() time.Time) http.Handler {
 	mux.Handle("/auth/login", methods{http.MethodPost: s.login})
 	mux.Handle("/restaurants", methods{http.MethodGet: s.listRestaurants})
 	mux.Handle("/restaurants/{id}", methods{http.MethodGet: s.getRestaurant})
+	mux.Handle("/availability", methods{http.MethodGet: s.availability})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, apperr.NotFound("no such endpoint"))
 	})
