@@ -765,6 +765,28 @@ def test_O12_import_refusals(c, ada, bob):
     assert c.import_(exp).status == 204
 
 
+def _known_reservation_values(state) -> set:
+    """Every reservation id and reference in the export, whatever the record fields are called."""
+    from test_hardening import _walk
+    out = set()
+    for _, _, v in _walk(state):
+        if isinstance(v, dict) and "reference" in v and any(k_ in v for k_ in ("user_id", "owner", "owner_id", "user")):
+            for k_ in ("reference", "reservation_id", "id"):
+                if isinstance(v.get(k_), str):
+                    out.add(v[k_])
+    return out
+
+
+def _point_occurrence_elsewhere(occ: dict, state) -> bool:
+    """Set the occurrence field that names its reservation (by value, not by key name) to a nonexistent value."""
+    known = _known_reservation_values(state)
+    for key_, v in occ.items():
+        if isinstance(v, str) and v in known:
+            occ[key_] = "RESNOPE1"
+            return True
+    return False
+
+
 def _stage3_tampers(exp: dict, anchor_ref: str, sibling_ref: str):
     """O-14: tampered stage-3 records (policies, revisions/terms, history, series), located structurally."""
     from test_hardening import _records, _reservation_records, _walk
@@ -845,8 +867,7 @@ def _stage3_tampers(exp: dict, anchor_ref: str, sibling_ref: str):
     # --- series
     for name, fn in (("series revision 0", lambda ser, s: ser.__setitem__("revision", 0)),
                      ("series interval 5", lambda ser, s: ser.__setitem__("interval_weeks", 5)),
-                     ("series occurrence unknown reservation", lambda ser, s: ser["occurrences"][1].__setitem__(
-                         [key_ for key_ in ser["occurrences"][1] if "reservation" in key_ and isinstance(ser["occurrences"][1][key_], str)][0], "res_nope")),
+                     ("series occurrence unknown reservation", lambda ser, s: _point_occurrence_elsewhere(ser["occurrences"][1], s)),
                      ("series index gap", lambda ser, s: ser["occurrences"][1].__setitem__("index", 5)),
                      ("series exception not boolean", lambda ser, s: ser["occurrences"][0].__setitem__("exception", "yes")),
                      ("series occurrence duplicated", lambda ser, s: ser["occurrences"].append(copy.deepcopy(ser["occurrences"][1]))),
@@ -857,7 +878,8 @@ def _stage3_tampers(exp: dict, anchor_ref: str, sibling_ref: str):
         ser = series_of(s)
         if ser is None:
             continue
-        fn(ser, s)
+        if fn(ser, s) is False:
+            continue                                   # selector found nothing applicable in this layout
         yield name, e
     e, s, _, _, sib = fresh()
     sid_key = next((key_ for key_, v in sib.items() if isinstance(v, str) and "series" in key_), None)
