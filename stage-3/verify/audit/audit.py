@@ -2554,6 +2554,8 @@ def g_series(s: S):
     chk.expect("anchor_reference a number -> 400 (R-52)", c.req("POST", "/series", {"anchor_reference": 5, "count": 2, "interval_weeks": 1}, token=s.ada,
                                                                     key=uuid.uuid4().hex), 400, "malformed_request", "S3 Series")
     chk.expect("invalid count beats unknown anchor -> 422 (R-52)", adopt("ZZZZZZ", 1), 422, "validation_failed", "S3 Series")
+    for name, ref_ in (("empty anchor_reference", ""), ("65-character anchor_reference", "A" * 65)):
+        chk.expect(f"{name} -> 422 before 404 (R-60)", adopt(ref_), 422, "validation_failed", "C3.37 (R-60)")
     chk.expect("GET unknown series id -> 404 (R-53)", c.req("GET", "/series/nope", token=s.ada), 404, "not_found", "S3 Series")
     chk.check("series_id is at most 64 characters (R-53)", isinstance(sid, str) and 0 < len(sid) <= 64, "<=64", sid, None, "S3 Series")
     chk.check("series body has exactly the R-53 keys", set(j) == {"series_id", "revision", "interval_weeks", "occurrences"}
@@ -2760,7 +2762,8 @@ def g_upgrade3(s: S, prev: Client | None, prev2: Client | None):
                   e.text(300), e.req, "S3 Upgrade")
         rr = c.req("POST", "/reservations", b, token=tok, key=k)
         chk.check(f"[{label}] original booking retry -> 200 original body", rr.status == 200 and rr.json == r1.json, r1.json, rr.text(300), rr.req, "S3 Upgrade")
-        r = c.req("POST", "/series", {"anchor_reference": ref, "count": 2, "interval_weeks": 1}, token=tok, key=uuid.uuid4().hex)
+        # two-week interval: the stage-1 fixture seeds every table one week after ctx.thu
+        r = c.req("POST", "/series", {"anchor_reference": ref, "count": 2, "interval_weeks": 2}, token=tok, key=uuid.uuid4().hex)
         chk.expect(f"[{label}] adoption works on an imported reservation", r, 201, section="S3 Upgrade")
         r = c.req("GET", f"/restaurants/{rid}/policies")
         chk.check(f"[{label}] imported restaurant has no published policies", r.status == 200 and r.json == {"policies": []}, [], r.text(200), r.req, "S3 Upgrade")
