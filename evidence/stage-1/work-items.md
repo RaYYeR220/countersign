@@ -27,3 +27,5 @@ criteria are carried in each `[HANDOFF]` message (generated from `ledger-A.md` r
 |---|-----|----------|---------|
 | 1 | bd108ef | WI-1..WI-6, oracle suite b7496b1 | REJECT (F-1: differential runner not delivered; no product finding; verdict-1.md on seat/auditor 740c805) |
 | 2 | 4f54736 | + oracle aligned 3f407bf (runner), builder 507019c, stylist 14083c1 | pending |
+| 2 | 4f54736 | superseded by 3 (step 3 red: Oracle model/runner faults A and B; R-25; no product finding) | superseded |
+| 3 | (this commit) | + Oracle diff fix and hardening O-1..O-4 (seat/oracle 3e387ec), auditor verdict-1; product identical to 4f54736 | pending |
