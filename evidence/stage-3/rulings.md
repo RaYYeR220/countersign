@@ -157,3 +157,11 @@ fields, is 422 (booleans too); only a body that is not a JSON object is 400. Q10
 (confirmed). Q15–Q18 → confirmed (R-53). Q19 → R-51/R-55 OVERRULE the B default: seeded and imported bookings
 have exactly one `created` entry and revision 1 whatever their status — a cancelled seed gets no `cancelled` entry.
 Q21–Q24 → confirmed. Q25 → R-59 (`manager_user_ids` is echoed in the detail).
+
+## R-60 — Empty or over-long `anchor_reference` (extends R-52 as R-42 did for moves)
+- Clauses: C3.38, C1.18, C1.41
+- Decision: in `POST /series`, an `anchor_reference` that is the empty string or longer than 64 characters is an
+  invalid value → 422 `validation_failed` in the value pass (together with count/interval_weeks ranges, field order
+  anchor_reference, count, interval_weeks), before the anchor's 404. A non-empty, well-sized reference that matches
+  no booking (including one outside `^[A-Z0-9]{6,12}$`) remains 404.
+- Rationale: consistent with R-42 (empty/over-long ids in bodies are 422 before any 404) and C1.18/C1.41.
