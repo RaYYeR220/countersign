@@ -506,9 +506,7 @@ class Model:
         for s in self._flist(fx, "reservations"):
             self._fobj(s, "reservation")
             rid = self._fstr(s, "id", max_len=ID_MAX)
-            ref = self._fstr(s, "reference")
-            if not REFERENCE_RE.match(ref):
-                raise Err(422, "validation_failed", "reference must be 6..12 of A-Z0-9")
+            ref = self._fstr(s, "reference", max_len=ID_MAX)   # R-26: a fixture reference is an opaque id
             uid = self._fstr(s, "user_id")
             restaurant_id = self._fstr(s, "restaurant_id")
             table_id = self._fstr(s, "table_id")
@@ -607,7 +605,7 @@ class Model:
             for f in ("reservation_id", "reference", "user_id", "restaurant_id", "table_id", "status",
                       "starts_at_local", "start", "end", "created"):
                 need(isinstance(s_.get(f), str) and s_[f] != "")
-            need(len(s_["reservation_id"]) <= ID_MAX and REFERENCE_RE.match(s_["reference"]))
+            need(len(s_["reservation_id"]) <= ID_MAX and len(s_["reference"]) <= ID_MAX)   # R-26: opaque
             need(s_["status"] in ("confirmed", "cancelled") and s_["user_id"] in new.users)
             r = new.restaurants.get(s_["restaurant_id"])
             need(r is not None and any(t["id"] == s_["table_id"] for t in r["tables"]))

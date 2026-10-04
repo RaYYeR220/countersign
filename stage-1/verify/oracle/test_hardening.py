@@ -200,8 +200,8 @@ def _tampers(exp: dict, second_ref: str, idem_key: str = None, token: str = None
         yield "duplicate table id inside one restaurant", e
     # invalid reservation record fields, applied to every copy of the seeded record
     for field, value in (("party_size", -1), ("party_size", "4"), ("status", "weird"), ("starts_at_local", "garbage"),
-                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"), ("reference", "bad ref"),
-                         ("reference", ""), ("reference", "X" * 65), ("reference", "abcdef"),
+                         ("table_id", "zzz"), ("user_id", "u_nobody"), ("restaurant_id", "r_nope"),
+                         ("reference", ""), ("reference", "X" * 65),
                          ("reservation_id", ""), ("reservation_id", "X" * 65), ("id", ""), ("id", "X" * 65)):
         e, seeds, _, _, _ = fresh()
         if all(field in rec for _, _, rec in seeds):
@@ -258,6 +258,32 @@ def test_C1_107_C1_109_tampered_export_is_refused(c, ada, bob):
     assert c.import_(exp.json).status == 204
     assert c.book(ada, key, "r_all", "a_2", f"{FUT_DAY}T13:00", 2).status == 200
     assert _snapshot(c, [ada, bob]) == before
+
+
+def test_C1_107_R26_fixture_style_references_round_trip(c, ada, bob):
+    """R-26: a reference carried through export/import is an opaque id (non-empty, ≤ 64 chars, unique); the
+    service must accept and keep it even when it is not one it would issue itself."""
+    before = c.get("/reservations/SEED01", token=bob).json
+    exp = c.export().json
+    for new_ref in ("abcdef", "r" * 64, "Ref-with.punct_1"):
+        doc = copy.deepcopy(exp)
+        for _, _, rec in _reservation_records(doc["state"], reference="SEED01"):
+            rec["reference"] = new_ref
+        r = c.import_(doc)
+        assert r.status == 204, (new_ref, r)
+        got = c.get(f"/reservations/{new_ref}", token=bob)
+        assert got.status == 200 and got.json["reservation_id"] == "res_seed", (new_ref, got)
+        assert {k_: v for k_, v in got.json.items() if k_ != "reference"} == {k_: v for k_, v in before.items() if k_ != "reference"}
+        err(c.get("/reservations/SEED01", token=bob), 404, "not_found")
+        assert c.get("/reservations", token=bob).json["reservations"][0]["reference"] == new_ref
+    assert c.import_(exp).status == 204
+    assert c.get("/reservations/SEED01", token=bob).json == before
+    # and a reset fixture may seed such a reference directly
+    fx = base_fixture()
+    fx["reservations"][0]["reference"] = "seed-ref_01"
+    assert c.reset(fx).status == 204
+    tok = c.login("bob@example.com", "bob secret 1")
+    assert c.get("/reservations/seed-ref_01", token=tok).json["reservation_id"] == "res_seed"
 
 
 # ============================================================ O-3
