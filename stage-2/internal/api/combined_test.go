@@ -253,3 +253,38 @@ func TestEmptyAndLongIDsAre422(t *testing.T) {
 		t.Errorf("booking changed:\n%s\n%s", before, after)
 	}
 }
+
+// R-43: both table fields → 422 whatever either field's JSON type; one field of a wrong type → 400.
+func TestBothTableFieldsAnyType(t *testing.T) {
+	e := newComboEnv(t)
+	a := e.mustBook(e.ada, "a", "t_3", "2026-09-24T19:00", 2)
+	before := e.snapshot(e.ada)
+	singles := []string{`"t_1"`, `5`, `null`, `{}`, `[]`, `true`, `""`}
+	sets := []string{`["t_1"]`, `"t_1"`, `5`, `null`, `{}`, `[1]`, `[]`}
+	n := 0
+	for _, single := range singles {
+		for _, set := range sets {
+			fields := `"table_id":` + single + `,"table_ids":` + set
+			n++
+			post := `{"restaurant_id":"r_anker",` + fields + `,"starts_at_local":"2026-09-24T21:00","party_size":2}`
+			for name, rec := range map[string]*httptest.ResponseRecorder{
+				"POST":  e.book(e.ada, fmt.Sprintf("both%d", n), post),
+				"PATCH": e.req("PATCH", "/reservations/"+a.Reference, e.ada, "", "{"+fields+"}"),
+				"move":  e.move(e.ada, fmt.Sprintf("bothm%d", n), fmt.Sprintf(`{"moves":[{"reference":%q,%s}]}`, a.Reference, fields)),
+			} {
+				if rec.Code != 422 || errorCode(t, rec) != "validation_failed" {
+					t.Errorf("%s with %s = %d %s", name, fields, rec.Code, rec.Body)
+				}
+			}
+		}
+	}
+	for _, field := range []string{`"table_id":5`, `"table_id":null`, `"table_ids":"t_1"`, `"table_ids":null`, `"table_ids":[1]`} {
+		post := `{"restaurant_id":"r_anker",` + field + `,"starts_at_local":"2026-09-24T21:00","party_size":2}`
+		expect(t, e.book(e.ada, "one-"+field, post), 400, "malformed_request")
+		expect(t, e.req("PATCH", "/reservations/"+a.Reference, e.ada, "", "{"+field+"}"), 400, "malformed_request")
+		expect(t, e.move(e.ada, "onem-"+field, fmt.Sprintf(`{"moves":[{"reference":%q,%s}]}`, a.Reference, field)), 400, "malformed_request")
+	}
+	if after := e.snapshot(e.ada); after != before {
+		t.Errorf("rejected requests changed state:\n%s\n%s", before, after)
+	}
+}
