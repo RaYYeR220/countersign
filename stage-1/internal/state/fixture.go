@@ -232,6 +232,9 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		if res.Reference, err = requiredID(o, "reference", "reservations[]"); err != nil {
 			return err
 		}
+		if !validReference(res.Reference) {
+			return apperr.Validation("reservations[].reference must be 6 to 12 characters of A-Z0-9")
+		}
 		if res.UserID, err = requiredID(o, "user_id", "reservations[]"); err != nil {
 			return err
 		}
