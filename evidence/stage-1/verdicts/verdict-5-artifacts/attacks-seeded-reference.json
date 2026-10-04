@@ -1,0 +1,1086 @@
+{
+ "meta": {
+  "base": "http://auditor-s1-a:8080",
+  "dest": "http://auditor-s1-b:8080",
+  "now": "2026-10-04T15:56:55.296528+00:00",
+  "now_tz": "UTC",
+  "thu": "2026-10-29",
+  "near": "2026-10-04T16:15",
+  "far": "2026-10-04T20:00",
+  "past": "2026-10-03T12:00",
+  "health_A_s": 0.04,
+  "health_B_s": 0.0
+ },
+ "checks": 94,
+ "hard_failures": 8,
+ "soft_failures": 0,
+ "per_group": {
+  "core": {
+   "pass": 86,
+   "fail": 8,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference too short ('x') -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference too short ('x'): state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference lowercase -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference lowercase: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference over 12 chars -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference over 12 chars: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference with a dash -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference with a dash: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  }
+ ],
+ "soft": [],
+ "results": [
+  {
+   "group": "core",
+   "name": "health 200 {status: ok}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.2",
+   "clause": "C1.11"
+  },
+  {
+   "group": "core",
+   "name": "reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "reset 204 has empty body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "repeated reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, lists fixture restaurants",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/{id} fixture shape, public",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/unknown 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/<65 chars> 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.18"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation visible to owner with derived times",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.30"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation hidden from other user",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90"
+  },
+  {
+   "group": "core",
+   "name": "seeded user logs in with fixture password",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.29"
+  },
+  {
+   "group": "core",
+   "name": "unknown query parameter ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.17"
+  },
+  {
+   "group": "core",
+   "name": "unknown body field ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.16"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, in fixture order",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "seeded created_at kept from fixture",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.30 (R-16)"
+  },
+  {
+   "group": "core",
+   "name": "unknown path 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /reservations/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path PATCH /reservations/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /restaurants/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET //restaurants -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /restaurants//r_anker -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /health/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path POST /reservations//cancel -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /reservations/SEED01/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path GET /availability/ -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "R-25 non-exact path POST /auth//login -> 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-25)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405 (PUT /reservations)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "GET /health ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/r_anker ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /availability ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "POST /auth/login ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /_test/export ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "JSON body with Content-Type text/plain accepted (R-17)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.14 (R-17)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: timezone 'Local' (not an IANA name) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: timezone 'Local' (not an IANA name): state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: timezone empty -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: timezone empty: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes equal to opens -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes equal to opens: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: table capacity 0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: table capacity 0: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: slot_minutes 0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: slot_minutes 0: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive): state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference too short ('x') -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference too short ('x'): state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference lowercase -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference lowercase: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference over 12 chars -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference over 12 chars: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference with a dash -> 422",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "validation_failed"
+   },
+   "actual": {
+    "status": 204,
+    "body": ""
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: seeded reference with a dash: state unchanged",
+   "ok": false,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)",
+   "expected": "unchanged",
+   "actual": "changed",
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/reset",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"users\": [{\"id\": \"u_ada\", \"email\": \"ada@example.com\", \"password\": \"correct horse\", \"display_name\": \"Ada\"}, {\"id\": \"u_bob\", \"email\": \"bob@example.com\", \"password\": \"battery staple\", \"display_name\": \"Bob\"}], \"restaurants\": [{\"id\": \"r_anker\", \"name\": \"Zum Anker\", \"timezone\": \"Europe/Berlin\", \"slot_minutes\": 30, \"reservation_duration_minutes\": 90, \"cancellation_cutoff_minutes\": 120, \"opening_hours\": [{\"weekday\": \"thu\", \"opens\": \"18:00\", \"closes\": \"23:00\"}, {\"weekday\": \"fri\", \"opens\": \"18:00\", \"closes\": \"23:30\"}], \"tables\": [{\"id\": \"t_1\", \"label\": \"1\", \"capacity\": 2}, {\"id\": \"t_2\", \"label\": \"2\", \""
+   }
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset accepts closes 24:00 and an off-grid/overlapping seeded booking (seeds trusted)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  }
+ ]
+}

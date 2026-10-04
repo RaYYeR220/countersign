@@ -1,0 +1,7 @@
+building C:\countersign\tmp\aud-s1-v4\stage-1 ...
+  stage 1: fail  (log: C:\countersign\tmp\checks\auditor-s1-v5-holdout\stage-1.log)
+  stage 2: fail  (log: C:\countersign\tmp\checks\auditor-s1-v5-holdout\stage-2.log)
+highest contiguous stage: 0
+claimed stage: 1 on the shipped checks
+report: C:\countersign\tmp\checks\auditor-s1-v5-holdout\report.json
+NOTE: this run only includes a portion of the full tests that are applied before judging; this is meant to provide directional feedback, and ultimately you may not pass the stage with the full set of tests.
