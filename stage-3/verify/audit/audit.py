@@ -4,7 +4,7 @@
 Stdlib only. Runs inside a runner container on the same internal Docker network as the
 candidate, because Docker Desktop does not forward ports of internal networks.
 
-    python audit.py --base http://auditor-s2-a:8080 [--dest http://auditor-s2-b:8080] \
+    python audit.py --base http://auditor-s3-a:8080 [--dest http://auditor-s3-b:8080] \
         [--groups core,auth,...] [--rounds 3] [--out /out/attacks.json]
 
 Every check records: group, name, spec section, request, expected, actual. A "soft" check
@@ -84,6 +84,35 @@ CLAUSE_RULES_S2 = {
     "upgrade": [(r"replay|retry", "C2.36,C1.62 (R-37)"), (r"table_ids", "C2.48 (R-37)"), (r"pairs|available_options", "C2.41,C2.44 (R-37)"),
                 (r".", "C2.35,C2.36,C2.37 (R-37)")],
 }
+CLAUSE_RULES_S3 = {
+    "explain": [(r"exactly the stage-2 fields|without explain", "C3.4 (R-46)"), (r"explain=|repeated explain|beats bad explain|before 404", "C3.3 (R-46)"),
+                (r"every table once", "C3.5,C3.6,C3.7,C3.8"), (r"both false", "C3.2,C3.7"), (r"closed day|no available table", "C3.9"), (r".", "C3.2")],
+    "policies": [(r"manager_user_ids|restaurant detail includes", "C3.18 (R-59)"), (r"without token|non-manager|unknown restaurant|another restaurant only|non-object",
+                                                                              "C3.18,C3.19 (R-47)"),
+                 (r"Idempotency-Key|replay|same key|first use failed|reusable", "C3.19,C1.62 (R-47)"), (r"invalid policy", "C3.23 (R-47)"),
+                 (r"allocate no version", "C3.20,C3.23"), (r"exactly the policy fields|201: supplied|-> version", "C3.20 (R-48)"),
+                 (r"GET policies|listed policies", "C3.24 (R-48)"), (r"restaurant detail still", "C3.25"),
+                 (r"publication leaves|publication adds no history", "C3.29"), (r"^selection|capacity applies|hours apply", "C3.21,C3.22,C3.25"),
+                 (r"pair capacity", "C3.49"), (r"availability follows", "C3.25,C3.4"), (r"explain names policy_version", "C3.26"),
+                 (r"new booking carries|seeded booking", "C3.27,C3.28"), (r"real amendment|amendment validated|failed amendment", "C3.31,C3.33 (R-49)"),
+                 (r"no-op", "C3.32 (R-58)"), (r"cancel still|checks the old accepted cutoff|cutoff-0|made after publication|inside the old", "C3.30,C3.31"),
+                 (r".", "C3.18")],
+    "history": [(r"created entry|seeded booking|cancelled seed", "C3.13,C3.28 (R-51)"), (r"envelope", "C3.10"), (r"replay records nothing", "C3.16"),
+                (r"changed lists|history:", "C3.12,C3.14,C3.15 (R-58)"), (r"at order", "C3.12"), (r"keeps its history", "C3.10,C3.33"),
+                (r"history read by|history of an unknown", "C3.10 (R-56)"), (r"decision", "C3.36 (R-56)"),
+                (r"pair|reversed", "C3.50"), (r"old entries never", "C3.35,C3.29"), (r".", "C3.11")],
+    "revision": [(r"replay keeps", "C3.28"), (r"cancel", "C3.33 (R-50)"), (r".", "C3.34 (R-49)")],
+    "series": [(r"anchor history unchanged|occurrence 0 reservation", "C3.39"), (r"occurrence i on anchor|selects its date's policy", "C3.40"),
+               (r"spring-forward|fall-back", "C3.41"), (r"first failing|outside the selected|collides|created nothing|anchor's history unchanged", "C3.41 (R-52)"),
+               (r"adopt 201|exactly the R-53|series_id", "C3.42 (R-53)"), (r"references distinct", "C3.43"),
+               (r"ordinary reservation list|occupy|created history", "C3.44"), (r"GET", "C3.45 (R-53)"),
+               (r"exception|no-op and failed|cancel", "C3.46"), (r"replay|same key", "C3.47"),
+               (r"count|interval|anchor_reference|missing|no token|Idempotency-Key", "C3.37 (R-52)"), (r".", "C3.38 (R-52)")],
+    "s3moves": [(r"exception|series revision", "C3.51,C3.46 (R-57)"), (r".", "C3.51,C3.52 (R-57)")],
+    "s3burst": [(r"R1 ", "C3.34 (R-49)"), (r"R2 ", "C3.20"), (r"R3 ", "C3.38 (R-52)"), (r"R4 ", "C3.12"), (r"R5 .*publications", "C3.19"),
+                (r"R5 ", "C3.47"), (r".", "C3.1,C1.3")],
+    "upgrade3": [(r"retry", "C3.28,C3.48 (R-55)"), (r".", "C3.48 (R-55)")],
+}
 CLAUSE_RULES = {
     "core": [(r"^health", "C1.11"), (r"R-8|R-20|reset rejects|reset accepts", "C1.12,C1.18,C1.26 (R-8,R-20)"),
              (r"reset", "C1.12,C1.13"), (r"R-25", "C1.32,C1.38 (R-25)"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
@@ -146,9 +175,9 @@ CLAUSE_RULES = {
 
 
 def clause_for(group, name, section):
-    if isinstance(section, str) and section.startswith(("C1.", "C2.")):
+    if isinstance(section, str) and section.startswith(("C1.", "C2.", "C3.")):
         return section
-    for pat, ids in CROSS_RULES + CLAUSE_RULES_S2.get(group, []) + CLAUSE_RULES.get(group, []):
+    for pat, ids in CROSS_RULES + CLAUSE_RULES_S3.get(group, []) + CLAUSE_RULES_S2.get(group, []) + CLAUSE_RULES.get(group, []):
         if re.search(pat, name):
             return ids
     return section or "unmapped"
@@ -1984,10 +2013,763 @@ def g_upgrade(s: S, prev: Client | None, dest: Client | None):
         chk.expect("current-format export (after upgrade) imports into a fresh candidate", r, 204, section="S2 Upgrade")
 
 
+# --------------------------------------------------------------------------- stage 3: policies, history, series
+
+MGR = {"id": "u_mgr", "email": "mgr@example.com", "password": "manager pass", "display_name": "Manager"}
+POL_TABLES = [{"id": "p_1", "label": "Nook", "capacity": 2}, {"id": "p_2", "label": "Bay", "capacity": 4},
+              {"id": "p_3", "label": "Hall", "capacity": 6}]
+
+
+def _hours(o, c):
+    return [{"weekday": w, "opens": o, "closes": c} for w in WEEKDAYS]
+
+
+def fixture3(ctx: Ctx) -> dict:
+    D = ctx.thu
+    return {
+        "users": [ADA, BOB, MGR],
+        "restaurants": [
+            {"id": "r_pol", "name": "Policy House", "timezone": "Europe/Berlin", "slot_minutes": 30, "reservation_duration_minutes": 90,
+             "cancellation_cutoff_minutes": 120, "opening_hours": _hours("12:00", "23:00"), "tables": POL_TABLES,
+             "combinable": [["p_1", "p_2"]], "manager_user_ids": ["u_mgr"]},
+            {"id": "r_ser", "name": "Weekly Table", "timezone": "Europe/Berlin", "slot_minutes": 30, "reservation_duration_minutes": 90,
+             "cancellation_cutoff_minutes": 120, "opening_hours": _hours("12:00", "23:00"),
+             "tables": [{"id": "s_1", "label": "Ess", "capacity": 2}, {"id": "s_2", "label": "Zwei", "capacity": 4}],
+             "combinable": [["s_1", "s_2"]], "manager_user_ids": ["u_mgr"]},
+            {"id": "r_near3", "name": "Corner Now", "timezone": ctx.now_tz, "slot_minutes": 15, "reservation_duration_minutes": 30,
+             "cancellation_cutoff_minutes": 120, "opening_hours": _hours("00:00", "23:45"),
+             "tables": [{"id": "q_1", "label": "Quick", "capacity": 4}, {"id": "q_2", "label": "Quicker", "capacity": 4}],
+             "manager_user_ids": ["u_mgr"]},
+            {"id": "r_dst3", "name": "Night Owl", "timezone": "Europe/Berlin", "slot_minutes": 30, "reservation_duration_minutes": 90,
+             "cancellation_cutoff_minutes": 120, "opening_hours": _hours("00:00", "06:00"),
+             "tables": [{"id": "d_1", "label": "Dawn", "capacity": 4}]},
+            {"id": "r_sat", "name": "Saturday Club", "timezone": "Europe/Berlin", "slot_minutes": 30, "reservation_duration_minutes": 90,
+             "cancellation_cutoff_minutes": 120, "opening_hours": [{"weekday": "sat", "opens": "18:00", "closes": "22:00"}],
+             "tables": [{"id": "z_1", "label": "Zed", "capacity": 4}]},
+        ],
+        "reservations": [
+            {"id": "s_p1", "reference": "SEEDP1", "user_id": "u_ada", "restaurant_id": "r_pol", "table_id": "p_3",
+             "starts_at_local": f"{D + timedelta(days=3)}T18:00", "party_size": 4},
+            {"id": "s_c1", "reference": "SEEDC1", "user_id": "u_ada", "restaurant_id": "r_pol", "table_id": "p_1",
+             "starts_at_local": f"{D + timedelta(days=3)}T18:00", "party_size": 2, "status": "cancelled"},
+        ],
+    }
+
+
+def pol(eff, slot=30, dur=90, cut=120, opens="12:00", closes="23:00", caps=None):
+    return {"effective_from": str(eff), "slot_minutes": slot, "reservation_duration_minutes": dur, "cancellation_cutoff_minutes": cut,
+            "opening_hours": _hours(opens, closes), "capacities": caps or {"p_1": 2, "p_2": 4, "p_3": 6}}
+
+
+def terms_of(version, p):
+    return {"policy_version": version, **{k: p[k] for k in ("slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes",
+                                                              "opening_hours", "capacities")}}
+
+
+T0_POL = {"policy_version": 0, "slot_minutes": 30, "reservation_duration_minutes": 90, "cancellation_cutoff_minutes": 120,
+          "opening_hours": _hours("12:00", "23:00"), "capacities": {"p_1": 2, "p_2": 4, "p_3": 6}}
+
+
+def _norm_terms(t):
+    if not isinstance(t, dict):
+        return t
+    t = dict(t)
+    if isinstance(t.get("opening_hours"), list):
+        t["opening_hours"] = sorted(((h.get("weekday"), h.get("opens"), h.get("closes")) for h in t["opening_hours"] if isinstance(h, dict)))
+    return t
+
+
+def terms_eq(a, b):
+    return _norm_terms(a) == _norm_terms(b)
+
+
+class S3:
+    """Stage-3 helpers on top of S (manager token, publication, history)."""
+
+    def __init__(self, s: S):
+        self.s, self.c, self.chk, self.ctx = s, s.c, s.chk, s.ctx
+
+    def reset(self):
+        r = self.c.req("POST", "/_test/reset", fixture3(self.ctx), timeout=12)
+        if r.status != 204:
+            raise RuntimeError(f"reset fixture3 failed: {r.status} {r.text(300)}")
+        self.s.ada, self.s.bob, self.mgr = self.s.login(ADA), self.s.login(BOB), self.s.login(MGR)
+
+    def publish(self, rid, body, key=None, tok=None):
+        return self.c.req("POST", f"/restaurants/{rid}/policies", body, token=tok or self.mgr, key=key or uuid.uuid4().hex)
+
+    def history(self, ref, tok):
+        return self.c.req("GET", f"/reservations/{ref}/history", token=tok)
+
+    def entries(self, ref, tok):
+        r = self.history(ref, tok)
+        return (r.json or {}).get("entries") if r.status == 200 and isinstance(r.json, dict) else None
+
+    def standard_policies(self):
+        """v1..v4 on r_pol: publication order differs from effective order; v3 ties v1's date; v4 is in the past."""
+        D = self.ctx.thu
+        ps = [pol(D + timedelta(days=7), 30, 120, 60, "12:00", "22:00", {"p_1": 3, "p_2": 4, "p_3": 6}),
+              pol(D + timedelta(days=14), 15, 60, 30, "10:00", "20:00", {"p_1": 2, "p_2": 2, "p_3": 8}),
+              pol(D + timedelta(days=7), 30, 100, 90, "12:00", "23:00", {"p_1": 5, "p_2": 5, "p_3": 5}),
+              pol(D - timedelta(days=60), 30, 90, 120, "12:00", "23:00", {"p_1": 2, "p_2": 3, "p_3": 6})]
+        out = []
+        for p in ps:
+            r = self.publish("r_pol", p)
+            if r.status != 201:
+                raise RuntimeError(f"publish failed: {r.status} {r.text(300)}")
+            out.append(p)
+        return out
+
+
+def g_explain(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    s3.reset()
+    D = ctx.thu
+    s.book(s.ada, "r_pol", "p_2", f"{D}T19:00", 2)
+    s.book(s.bob, "r_pol", "p_1", f"{D}T19:00", 2)
+
+    def av(q):
+        return c.req("GET", "/availability", query=q)
+
+    base = {"restaurant_id": "r_pol", "date": str(D), "party_size": "3"}
+    r = av(base)
+    sl = (r.json or {}).get("slots", []) if r.status == 200 else []
+    chk.check("without explain the response keeps stage 1's shape (no explain field)", r.status == 200 and sl and all("explain" not in x for x in sl),
+              "no explain", [sorted(x) for x in sl[:1]], r.req, "S3 Explanations")
+    r = av({**base, "explain": "true"})
+    sl = (r.json or {}).get("slots", []) if r.status == 200 else []
+    bad = []
+    for x in sl:
+        start = resolve(x["starts_at_local"], "Europe/Berlin")
+        ex = x.get("explain")
+        if not isinstance(ex, list) or [e.get("table_id") for e in ex] != ["p_1", "p_2", "p_3"]:
+            bad.append((x["starts_at_local"], "tables", ex))
+            continue
+        for e in ex:
+            cap = {"p_1": 2, "p_2": 4, "p_3": 6}[e["table_id"]] >= 3
+            busy = e["table_id"] in ("p_1", "p_2") and start < resolve(f"{D}T20:30", "Europe/Berlin") and \
+                start + timedelta(minutes=90) > resolve(f"{D}T19:00", "Europe/Berlin")
+            want = {"table_id": e["table_id"], "policy_version": 0, "available": cap and not busy,
+                    "rules": [{"rule": "capacity", "holds": cap}, {"rule": "no_overlap", "holds": not busy}]}
+            if {k: e.get(k) for k in want} != want:
+                bad.append((x["starts_at_local"], want, e))
+        if [e["table_id"] for e in ex if e.get("available")] != x.get("available_table_ids"):
+            bad.append((x["starts_at_local"], "available ids", x.get("available_table_ids")))
+    chk.check("explain=true: every table once in fixture order, both rules in order, available iff both hold, ids == available_table_ids",
+              bool(sl) and not bad, "consistent explanations", bad[:4], r.req, "S3 Explanations")
+    both_false = next((e for x in sl if x["starts_at_local"].endswith("19:00") for e in x.get("explain", []) if e.get("table_id") == "p_1"), None)
+    chk.check("a table failing both rules reports both false", both_false is not None and [rr.get("holds") for rr in both_false.get("rules", [])] == [False, False],
+              [False, False], both_false, r.req, "S3 Explanations")
+    r = av({**base, "party_size": "7", "explain": "true"})
+    sl = (r.json or {}).get("slots", []) if r.status == 200 else []
+    chk.check("slot with no available table still appears with a full explain", bool(sl) and all(x.get("available_table_ids") == [] and len(x.get("explain") or []) == 3
+              for x in sl), "3 explanations, none available", sl[:1], r.req, "S3 Explanations")
+    r = av({"restaurant_id": "r_sat", "date": str(D), "party_size": "2", "explain": "true"})
+    chk.check("closed day with explain=true still returns slots []", r.status == 200 and (r.json or {}).get("slots") == [], [], r.text(200), r.req, "S3 Explanations")
+    for v in ("false", "1", "", "TRUE", "yes", "True"):
+        chk.expect(f"explain={v!r} -> 422", av({**base, "explain": v}), 422, "validation_failed", "S3 Explanations")
+    chk.expect("invalid explain with unknown restaurant -> 422 before 404 (R-46)", av({**base, "restaurant_id": "nope", "explain": "no"}), 422,
+               "validation_failed", "S3 Explanations")
+    chk.expect("bad party_size beats bad explain (R-46 after R-12)", av({**base, "party_size": "0", "explain": "no"}), 422, "validation_failed", "S3 Explanations")
+    r = c.req("GET", "/availability", query=f"restaurant_id=r_pol&date={D}&party_size=3&explain=true&explain=no")
+    chk.check("repeated explain: first value counts (true, then no -> 200 with explain) (R-46)", r.status == 200
+              and all("explain" in x for x in (r.json or {}).get("slots", [])), 200, r.status, r.req, "S3 Explanations")
+    chk.expect("repeated explain: first value counts (no, then true -> 422) (R-46)",
+               c.req("GET", "/availability", query=f"restaurant_id=r_pol&date={D}&party_size=3&explain=no&explain=true"), 422, "validation_failed",
+               "S3 Explanations")
+    r = av(base)
+    keys = {k for x in (r.json or {}).get("slots", []) for k in x}
+    chk.check("without explain slots carry exactly the stage-2 fields (R-46)", keys == {"starts_at_local", "starts_at", "available_table_ids", "available_options"},
+              ["starts_at_local", "starts_at", "available_table_ids", "available_options"], sorted(keys), r.req, "S3 Explanations")
+
+
+def g_policies(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    for name, val, st_ in (("not an array", "u_mgr", 400), ("member not a string", [5], 400), ("empty id", [""], 422), ("65-char id", ["u" * 65], 422),
+                           ("not a fixture user", ["u_ghost"], 422), ("duplicate id", ["u_mgr", "u_mgr"], 422)):
+        s3.reset()
+        before = c.req("GET", "/_test/export").json
+        fx = fixture3(ctx)
+        fx["restaurants"][0]["manager_user_ids"] = val
+        r = c.req("POST", "/_test/reset", fx, timeout=12)
+        chk.expect(f"reset refuses manager_user_ids {name} -> {st_} (R-59)", r, st_, "malformed_request" if st_ == 400 else "validation_failed", "S3 Policies")
+        chk.check(f"reset refuses manager_user_ids {name}: state unchanged", c.req("GET", "/_test/export").json == before, "unchanged", None, r.req, "S3 Policies")
+    fx = fixture3(ctx)
+    fx["restaurants"][0].pop("manager_user_ids")
+    chk.expect("manager_user_ids is optional (absent -> [])", c.req("POST", "/_test/reset", fx, timeout=12), 204, section="S3 Policies")
+    s3.reset()
+    D = ctx.thu
+    D14 = D + timedelta(days=14)
+    B0 = s.book(s.ada, "r_pol", "p_3", f"{D14}T19:00", 2)
+    B1 = s.book(s.ada, "r_pol", "p_1", f"{D14}T20:30", 1)
+    chk.check("new booking carries revision 1 and accepted_terms = policy 0 snapshot", B0.get("revision") == 1 and terms_eq(B0.get("accepted_terms"), T0_POL),
+              T0_POL, B0.get("accepted_terms"), None, "S3 Policies")
+    g = s.get(s.ada, "SEEDP1")
+    chk.check("seeded booking: revision 1 under policy 0", g.status == 200 and (g.json or {}).get("revision") == 1
+              and terms_eq((g.json or {}).get("accepted_terms"), T0_POL), T0_POL, g.text(300), g.req, "S3 Policies")
+    base = pol(D + timedelta(days=7))
+    # auth
+    chk.expect("publish without token -> 401", c.req("POST", "/restaurants/r_pol/policies", base, key=uuid.uuid4().hex), 401, "unauthenticated", "S3 Policies")
+    chk.expect("publish as a non-manager -> 403", s3.publish("r_pol", base, tok=s.ada), 403, "forbidden", "S3 Policies")
+    chk.expect("publish on an unknown restaurant -> 404", s3.publish("nope", base), 404, "not_found", "S3 Policies")
+    chk.expect("manager of another restaurant only (r_dst3 has none) -> 403", s3.publish("r_dst3", {**base, "capacities": {"d_1": 4}}), 403, "forbidden", "S3 Policies")
+    chk.expect("publish without Idempotency-Key -> 400", c.req("POST", "/restaurants/r_pol/policies", base, token=s3.mgr), 400, "missing_idempotency_key", "S3 Policies")
+    r = c.req("GET", "/restaurants/r_pol/policies")
+    chk.check("GET policies public, empty before publication (policy 0 omitted)", r.status == 200 and r.json == {"policies": []}, {"policies": []},
+              r.text(200), r.req, "S3 Policies")
+    # validation matrix: nothing allocated
+    caps = base["capacities"]
+    bad_values = [
+        ("effective_from not a date", {"effective_from": "2026-02-30"}), ("effective_from short", {"effective_from": "2026-9-1"}),
+        ("effective_from empty", {"effective_from": ""}), ("slot 0", {"slot_minutes": 0}), ("slot 1441", {"slot_minutes": 1441}),
+        ("duration 0", {"reservation_duration_minutes": 0}), ("duration 1441", {"reservation_duration_minutes": 1441}),
+        ("cutoff -1", {"cancellation_cutoff_minutes": -1}), ("cutoff 10081", {"cancellation_cutoff_minutes": 10081}),
+        ("slot 1.5", {"slot_minutes": 1.5}), ("duplicate weekday", {"opening_hours": _hours("12:00", "23:00") + [{"weekday": "mon", "opens": "09:00", "closes": "10:00"}]}),
+        ("closes before opens", {"opening_hours": [{"weekday": "mon", "opens": "20:00", "closes": "18:00"}]}),
+        ("weekday unknown", {"opening_hours": [{"weekday": "funday", "opens": "18:00", "closes": "20:00"}]}),
+        ("opens not HH:MM", {"opening_hours": [{"weekday": "mon", "opens": "6pm", "closes": "23:00"}]}),
+        ("capacities missing a table", {"capacities": {"p_1": 2, "p_2": 4}}), ("capacities extra table", {"capacities": {**caps, "p_9": 2}}),
+        ("capacity 0", {"capacities": {**caps, "p_1": 0}}), ("capacity 101", {"capacities": {**caps, "p_1": 101}}),
+        ("capacity 2.5", {"capacities": {**caps, "p_1": 2.5}})]
+    for f in ("effective_from", "slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes", "opening_hours", "capacities"):
+        b = dict(base); b.pop(f)
+        bad_values.append((f"missing {f}", b))
+    for name, change in bad_values:
+        body = change if name.startswith("missing") else {**base, **change}
+        chk.expect(f"invalid policy: {name} -> 422", s3.publish("r_pol", body), 422, "validation_failed", "S3 Policies")
+    for name, change in (("slot a boolean", {"slot_minutes": True}), ("capacity a boolean", {"capacities": {**caps, "p_1": True}}),
+                         ("opening_hours a string", {"opening_hours": "mon"}), ("capacities a list", {"capacities": [2, 4, 6]}),
+                         ("effective_from a number", {"effective_from": 20260928})):
+        chk.expect(f"invalid policy type: {name} -> 422 (R-47)", s3.publish("r_pol", {**base, **change}), 422, "validation_failed", "S3 Policies")
+    for name, change in (("slot null", {"slot_minutes": None}), ("capacities a string", {"capacities": "p_1"}), ("capacity a string", {"capacities": {**caps, "p_1": "2"}})):
+        chk.expect(f"invalid policy type: {name} -> 422 (R-47)", s3.publish("r_pol", {**base, **change}), 422, "validation_failed", "S3 Policies")
+    chk.expect("non-manager without key -> 400 (key before 403, R-47)", c.req("POST", "/restaurants/r_pol/policies", base, token=s.ada), 400,
+               "missing_idempotency_key", "S3 Policies")
+    chk.expect("non-manager with an invalid policy -> 403 (permission before validation, R-47)", s3.publish("r_pol", {**base, "slot_minutes": 0}, tok=s.ada),
+               403, "forbidden", "S3 Policies")
+    chk.expect("unknown restaurant with an invalid policy -> 404 (R-47)", s3.publish("nope", {**base, "slot_minutes": 0}), 404, "not_found", "S3 Policies")
+    chk.expect("non-object body -> 400", c.req("POST", "/restaurants/r_pol/policies", token=s3.mgr, key=uuid.uuid4().hex, raw="[1]"), 400,
+               "malformed_request", "S3 Policies")
+    chk.expect("GET policies of an unknown restaurant -> 404 (R-48)", c.req("GET", "/restaurants/nope/policies"), 404, "not_found", "S3 Policies")
+    r = c.req("GET", "/restaurants/r_pol/policies")
+    chk.check("failed publications allocate no version", r.status == 200 and r.json == {"policies": []}, [], r.text(200), r.req, "S3 Policies")
+    # idempotency and versions
+    k1 = "pol-" + uuid.uuid4().hex
+    kf = "polf-" + uuid.uuid4().hex
+    chk.expect("failed write first (422) with key kf", s3.publish("r_pol", {**base, "slot_minutes": 0}, key=kf), 422, "validation_failed", "S3 Policies")
+    v1 = pol(D + timedelta(days=7), 30, 120, 60, "12:00", "22:00", {"p_1": 3, "p_2": 4, "p_3": 6})
+    r1 = s3.publish("r_pol", {**v1, "zzz": "ignored"}, key=k1)
+    j = r1.json if isinstance(r1.json, dict) else {}
+    chk.check("publish 201 body is exactly the policy fields + policy_version, unknown field not echoed (R-48)",
+              set(j) == {"effective_from", "slot_minutes", "reservation_duration_minutes", "cancellation_cutoff_minutes", "opening_hours", "capacities",
+                         "policy_version"}, "exact keys", sorted(j), r1.req, "S3 Policies")
+    chk.check("publish 201: supplied policy + policy_version 1 (unknown field ignored)", r1.status == 201 and j.get("policy_version") == 1
+              and all(j.get(k) == v1[k] or (k == "opening_hours" and terms_eq({"opening_hours": j.get(k)}, {"opening_hours": v1[k]})) for k in v1),
+              {**v1, "policy_version": 1}, r1.text(400), r1.req, "S3 Policies")
+    r2 = s3.publish("r_pol", {**v1, "zzz": "ignored"}, key=k1)
+    chk.check("publish replay 200 identical, no new version", r2.status == 200 and r2.json == r1.json, 200, r2.text(200), r2.req, "S3 Policies/§7")
+    chk.expect("publish same key, different body -> 409", s3.publish("r_pol", {**v1, "slot_minutes": 60}, key=k1), 409, "idempotency_key_reuse", "S3 Policies")
+    v2 = pol(D14, 15, 60, 30, "10:00", "20:00", {"p_1": 2, "p_2": 2, "p_3": 8})
+    r = s3.publish("r_pol", v2, key=kf)
+    chk.check("key whose first use failed is reusable -> 201 version 2", r.status == 201 and (r.json or {}).get("policy_version") == 2, 2, r.text(200), r.req, "S3 Policies")
+    v3 = pol(D + timedelta(days=7), 30, 100, 90, "12:00", "23:00", {"p_1": 5, "p_2": 5, "p_3": 5})
+    v4 = pol(D - timedelta(days=60), 30, 90, 120, "12:00", "23:00", {"p_1": 2, "p_2": 3, "p_3": 6})
+    for i, p in ((3, {**v3, "slot_minutes": 30.0}), (4, v4)):      # 30.0 counts as an integer (R-47)
+        r = s3.publish("r_pol", p)
+        chk.check(f"publish -> version {i}", r.status == 201 and (r.json or {}).get("policy_version") == i, i, r.text(200), r.req, "S3 Policies")
+    r = c.req("GET", "/restaurants/r_pol/policies")
+    got = [p.get("policy_version") for p in (r.json or {}).get("policies", [])] if r.status == 200 else None
+    chk.check("GET policies in publication order, versions 1..4, policy 0 omitted", got == [1, 2, 3, 4], [1, 2, 3, 4], got, r.req, "S3 Policies")
+    effs = [p.get("effective_from") for p in (r.json or {}).get("policies", [])]
+    chk.check("listed policies keep their effective_from", effs == [v1["effective_from"], v2["effective_from"], v3["effective_from"], v4["effective_from"]],
+              "as published", effs, r.req, "S3 Policies")
+    r = c.req("GET", "/restaurants/r_pol")
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("restaurant detail includes manager_user_ids and combinable, never policies (R-59)", j.get("manager_user_ids") == ["u_mgr"]
+              and j.get("combinable") == [["p_1", "p_2"]] and "policies" not in j, "fixture shape", sorted(j), r.req, "S3 Policies")
+    chk.check("restaurant detail still returns the original fixture configuration", j.get("slot_minutes") == 30 and j.get("reservation_duration_minutes") == 90
+              and [t.get("capacity") for t in j.get("tables", [])] == [2, 4, 6], "fixture config", r.text(300), r.req, "S3 Policies")
+    # existing bookings untouched
+    for name, B in (("B0", B0), ("B1", B1)):
+        g = s.get(s.ada, B["reference"]).json or {}
+        chk.check(f"publication leaves existing booking {name} unchanged (terms, revision, ends_at)", g.get("revision") == 1 and terms_eq(g.get("accepted_terms"), T0_POL)
+                  and g.get("ends_at") == B.get("ends_at"), "unchanged", g, None, "S3 Policies")
+        e = s3.entries(B["reference"], s.ada)
+        chk.check(f"publication adds no history to {name}", e is not None and len(e) == 1, 1, e, None, "S3 Policies/History")
+    # selection by local start date
+    def bk(tid, local, party):
+        return c.req("POST", "/reservations", booking_body("r_pol", tid, local, party), token=s.bob, key=uuid.uuid4().hex)
+    for name, tid, local, party, ver, p, st in (
+            ("past effective date (v4) applies to D", "p_2", f"{D}T19:00", 3, 4, v4, 201),
+            ("same effective date: greater version (v3) wins", "p_1", f"{D + timedelta(days=7)}T19:00", 5, 3, v3, 201),
+            ("v3 also covers D+10", "p_1", f"{D + timedelta(days=10)}T13:00", 5, 3, v3, 201),
+            ("v2 from D+14: 15-minute grid from 10:00", "p_3", f"{D14}T10:15", 7, 2, v2, 201),
+            ("before v4's effective date -> policy 0 (past booking)", "p_1", f"{D - timedelta(days=90)}T19:00", 2, 0, None, 201)):
+        r = bk(tid, local, party)
+        j = r.json if isinstance(r.json, dict) else {}
+        want = T0_POL if p is None else terms_of(ver, p)
+        dur = want["reservation_duration_minutes"]
+        st0 = resolve(local, "Europe/Berlin")
+        chk.check(f"selection: {name}", r.status == st and terms_eq(j.get("accepted_terms"), want)
+                  and same_instant_and_text(j.get("ends_at"), (st0 + timedelta(minutes=dur)).astimezone(ZoneInfo("Europe/Berlin"))),
+                  {"policy_version": ver, "duration": dur}, {"status": r.status, "terms": (j.get("accepted_terms") or {}).get("policy_version"),
+                                                              "ends_at": j.get("ends_at")}, r.req, "S3 Policies")
+    chk.expect("v4 capacity applies on D: party 4 on p_2 (cap 3) -> 422", bk("p_2", f"{D}T21:00", 4), 422, "party_exceeds_capacity", "S3 Policies")
+    chk.expect("v2 capacity applies from D+14: party 3 on p_2 (cap 2) -> 422", bk("p_2", f"{D14}T12:00", 3), 422, "party_exceeds_capacity", "S3 Policies")
+    chk.expect("v2 hours apply: 20:00 is past closes-duration -> 422", bk("p_2", f"{D14}T19:30", 1), 422, "outside_opening_hours", "S3 Policies")
+    chk.expect("pair capacity is the sum of the selected policy's capacities (v3: 5+5=10)", c.req("POST", "/reservations",
+               body2("r_pol", ["p_1", "p_2"], f"{D + timedelta(days=8)}T19:00", 10), token=s.bob, key=uuid.uuid4().hex), 201, section="S3 Combined history")
+    r = c.req("GET", "/availability", query={"restaurant_id": "r_pol", "date": str(D14), "party_size": 2, "explain": "true"})
+    sl = (r.json or {}).get("slots", []) if r.status == 200 else []
+    want_starts = [f"{D14}T{h:02d}:{m:02d}" for h in range(10, 20) for m in (0, 15, 30, 45) if (h, m) <= (19, 0)]
+    chk.check("availability follows the selected policy (v2: 10:00-19:00 every 15 min)", [x.get("starts_at_local") for x in sl] == want_starts,
+              f"{len(want_starts)} slots", [x.get("starts_at_local") for x in sl][:3] + [len(sl)], r.req, "S3 Policies")
+    chk.check("explain names policy_version 2 for every table", bool(sl) and all(e.get("policy_version") == 2 for x in sl for e in x.get("explain", [])),
+              2, sl[:1], r.req, "S3 Explanations")
+    # amendments under policies
+    r = c.req("PATCH", f"/reservations/{B0['reference']}", {"party_size": 3}, token=s.ada)
+    j = r.json if isinstance(r.json, dict) else {}
+    chk.check("real amendment adopts the resulting date's policy: terms v2, end recomputed, revision 2",
+              r.status == 200 and j.get("revision") == 2 and terms_eq(j.get("accepted_terms"), terms_of(2, v2))
+              and same_instant_and_text(j.get("ends_at"), resolve(f"{D14}T20:00", "Europe/Berlin")), "v2, 20:00, rev 2", r.text(300), r.req, "S3 Policies")
+    snap = s.get(s.ada, B1["reference"]).json
+    r = c.req("PATCH", f"/reservations/{B1['reference']}", {"party_size": 2}, token=s.ada)
+    chk.expect("amendment validated against the new policy: 20:30 outside v2 hours -> 422", r, 422, "outside_opening_hours", "S3 Policies")
+    chk.check("failed amendment changes nothing", s.get(s.ada, B1["reference"]).json == snap, snap, None, r.req, "S3 Policies")
+    r = c.req("PATCH", f"/reservations/{B1['reference']}", {"party_size": 1}, token=s.ada)
+    chk.check("no-op amendment keeps terms (policy 0), end time and revision even where the new policy would refuse it",
+              r.status == 200 and (r.json or {}).get("revision") == 1 and terms_eq((r.json or {}).get("accepted_terms"), T0_POL), "rev 1, v0",
+              r.text(300), r.req, "S3 Policies")
+    chk.check("no-op amendment records no history", len(s3.entries(B1["reference"], s.ada) or []) == 1, 1, s3.entries(B1["reference"], s.ada), None, "S3 History")
+    # cutoff from the accepted terms
+    nt_today = datetime.now(ZoneInfo(ctx.now_tz)).date()
+    N = s.book(s.ada, "r_near3", "q_1", ctx.near, 2)
+    r = s3.publish("r_near3", {**pol(nt_today, 15, 30, 0, "00:00", "23:45"), "capacities": {"q_1": 4, "q_2": 4}})
+    chk.expect("publish a cutoff-0 policy effective today", r, 201, section="S3 Policies")
+    chk.expect("cancel still uses the accepted cutoff (120) -> 409", c.req("POST", f"/reservations/{N['reference']}/cancel", token=s.ada), 409,
+               "cutoff_passed", "S3 Policies")
+    chk.expect("amendment checks the old accepted cutoff first -> 409", c.req("PATCH", f"/reservations/{N['reference']}", {"party_size": 3}, token=s.ada),
+               409, "cutoff_passed", "S3 Policies")
+    N2 = s.book(s.ada, "r_near3", "q_2", ctx.near2, 2)
+    chk.check("a booking made after publication accepts cutoff 0", (N2.get("accepted_terms") or {}).get("cancellation_cutoff_minutes") == 0, 0,
+              N2.get("accepted_terms"), None, "S3 Policies")
+    chk.expect("…and can be cancelled inside the old 120-minute window", c.req("POST", f"/reservations/{N2['reference']}/cancel", token=s.ada), 200,
+               section="S3 Policies")
+
+
+def g_history(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    s3.reset()
+    D = ctx.thu
+    key = "hist-" + uuid.uuid4().hex
+    body = booking_body("r_pol", "p_2", f"{D}T19:00", 2)
+    r1 = c.req("POST", "/reservations", body, token=s.ada, key=key)
+    ref = (r1.json or {}).get("reference")
+    e = s3.entries(ref, s.ada)
+    want = [{"field": "table_id", "from": None, "to": "p_2"}, {"field": "starts_at_local", "from": None, "to": f"{D}T19:00"},
+            {"field": "party_size", "from": None, "to": 2}]
+    chk.check("created entry: seq 1, all three fields from null, revision 1, accepted_terms", e is not None and len(e) == 1 and e[0].get("seq") == 1
+              and e[0].get("event") == "created" and e[0].get("changes") == want and e[0].get("revision") == 1 and terms_eq(e[0].get("accepted_terms"), T0_POL)
+              and bool(RFC3339_OFFSET_RE.match(e[0].get("at") or "")), want, e, None, "S3 History")
+    at0 = parse_rfc(e[0].get("at") or "") if e else None
+    ca = parse_rfc((r1.json or {}).get("created_at") or "")
+    berlin = ZoneInfo("Europe/Berlin")
+    chk.check("created entry 'at' = created_at, written in the restaurant's offset (R-51)", at0 is not None and ca is not None and at0 == ca
+              and at0.utcoffset() == at0.astimezone(berlin).utcoffset(), "same instant, Berlin offset",
+              [e[0].get("at") if e else None, (r1.json or {}).get("created_at")], None, "S3 History")
+    sc = s3.entries("SEEDC1", s.ada) or []
+    chk.check("cancelled seed: exactly one created entry, revision 1, no cancelled entry (R-51)", len(sc) == 1 and sc[0].get("event") == "created"
+              and sc[0].get("revision") == 1 and (s.get(s.ada, "SEEDC1").json or {}).get("revision") == 1, 1, sc, None, "S3 History")
+    se = s3.entries("SEEDP1", s.ada) or []
+    chk.check("seeded booking: exactly one created entry, revision 1, policy-0 terms (R-51)", len(se) == 1 and se[0].get("event") == "created"
+              and se[0].get("revision") == 1 and terms_eq(se[0].get("accepted_terms"), T0_POL), 1, se, None, "S3 History")
+    r = s3.history(ref, s.ada)
+    chk.check("history envelope names the reference", r.status == 200 and (r.json or {}).get("reference") == ref, ref, r.text(200), r.req, "S3 History")
+    c.req("POST", "/reservations", body, token=s.ada, key=key)
+    chk.check("idempotent replay records nothing", len(s3.entries(ref, s.ada) or []) == 1, 1, None, None, "S3 History")
+
+    def patch(b):
+        return c.req("PATCH", f"/reservations/{ref}", b, token=s.ada)
+
+    patch({"table_id": "p_3"})
+    patch({"party_size": 3, "starts_at_local": f"{D}T19:30"})
+    patch({"party_size": 3})                          # no-op
+    patch({"table_ids": ["p_3"]})                     # same set: no-op
+    patch({"party_size": 99})                         # failure
+    c.req("POST", f"/reservations/{ref}/cancel", token=s.ada)
+    c.req("POST", f"/reservations/{ref}/cancel", token=s.ada)
+    e = s3.entries(ref, s.ada) or []
+    got = [(x.get("seq"), x.get("event"), x.get("changes"), x.get("revision")) for x in e]
+    want = [(1, "created", None, 1),
+            (2, "changed", [{"field": "table_id", "from": "p_2", "to": "p_3"}], 2),
+            (3, "changed", [{"field": "starts_at_local", "from": f"{D}T19:00", "to": f"{D}T19:30"}, {"field": "party_size", "from": 2, "to": 3}], 3),
+            (4, "cancelled", [], 4)]
+    ok = len(got) == 4 and all(g[:2] == w[:2] and (w[2] is None or g[2] == w[2]) and g[3] == w[3] for g, w in zip(got, want))
+    chk.check("history: changed lists only changed fields in order; no-op, same-set and failed PATCH record nothing; cancelled empty and last",
+              ok, want, got, None, "S3 History")
+    ats = [parse_rfc(x.get("at") or "") for x in e]
+    chk.check("entries in seq order are also in at order", None not in ats and ats == sorted(ats), "non-decreasing", [x.get("at") for x in e], None, "S3 History")
+    chk.check("cancelled reservation keeps its history; revision 4", s.get(s.ada, ref).json.get("revision") == 4, 4, s.get(s.ada, ref).json.get("revision"), None, "S3 History")
+    # owner only, 404 even without token
+    for name, tok in (("another user", s.bob), ("no token", None), ("the manager", s3.mgr), ("an invalid token", "not-a-token")):
+        chk.expect(f"history read by {name} -> 404", c.req("GET", f"/reservations/{ref}/history", token=tok), 404, "not_found", "S3 History")
+        chk.expect(f"decision read by {name} -> 404", c.req("GET", f"/reservations/{ref}/decision", token=tok), 404, "not_found", "S3 Policies")
+    chk.expect("history of an unknown reference -> 404", c.req("GET", "/reservations/ZZZZZZ/history", token=s.ada), 404, "not_found", "S3 History")
+    r = c.req("GET", f"/reservations/{ref}/decision", token=s.ada)
+    chk.check("decision after cancellation: reference, revision, accepted_terms", r.status == 200 and (r.json or {}).get("reference") == ref
+              and (r.json or {}).get("revision") == 4 and isinstance((r.json or {}).get("accepted_terms"), dict), "rev 4", r.text(300), r.req, "S3 Policies")
+    # pair history
+    rp = c.req("POST", "/reservations", body2("r_pol", ["p_2", "p_1"], f"{D}T13:00", 5), token=s.ada, key=uuid.uuid4().hex)
+    pref = (rp.json or {}).get("reference")
+    e = s3.entries(pref, s.ada) or []
+    chk.check("pair creation: table_ids from null to the pair in declared order, no table_id change", len(e) == 1 and
+              e[0].get("changes", [{}])[0] == {"field": "table_ids", "from": None, "to": ["p_1", "p_2"]}
+              and all(ch.get("field") != "table_id" for ch in e[0].get("changes", [])), "table_ids null -> [p_1,p_2]", e, None, "S3 Combined history")
+    c.req("PATCH", f"/reservations/{pref}", {"table_ids": ["p_2", "p_1"]}, token=s.ada)
+    chk.check("reversed pair is not an amendment (no entry, revision 1)", len(s3.entries(pref, s.ada) or []) == 1
+              and (s.get(s.ada, pref).json or {}).get("revision") == 1, 1, s3.entries(pref, s.ada), None, "S3 Combined history")
+    c.req("PATCH", f"/reservations/{pref}", {"table_id": "p_3"}, token=s.ada)
+    e = s3.entries(pref, s.ada) or []
+    chk.check("pair -> single change uses table_ids with complete before/after lists", len(e) == 2 and
+              e[1].get("changes", [{}])[0] == {"field": "table_ids", "from": ["p_1", "p_2"], "to": ["p_3"]}, "table_ids [p_1,p_2] -> [p_3]", e[1:], None,
+              "S3 Combined history")
+    s3.standard_policies()
+    e2 = s3.entries(pref, s.ada) or []
+    chk.check("old entries never acquire newer terms (publication after the fact)", e2 == e, e, e2, None, "S3 History")
+
+
+def g_revision(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    s3.reset()
+    D = ctx.thu
+    B = s.book(s.ada, "r_pol", "p_2", f"{D}T19:00", 2)
+    ref = B["reference"]
+
+    def patch(b, rf=None, tok=None):
+        return c.req("PATCH", f"/reservations/{rf or ref}", b, token=tok or s.ada)
+
+    r = patch({"party_size": 3, "expected_revision": 1})
+    chk.check("expected_revision equal to current -> real change, revision 2", r.status == 200 and (r.json or {}).get("revision") == 2, 2, r.text(200), r.req,
+              "S3 Revisions")
+    snap = s.get(s.ada, ref).json
+    chk.expect("stale expected_revision -> 409 stale_revision", patch({"party_size": 4, "expected_revision": 1}), 409, "stale_revision", "S3 Revisions")
+    chk.expect("stale beats validation (party 99)", patch({"party_size": 99, "expected_revision": 1}), 409, "stale_revision", "S3 Revisions")
+    chk.check("stale write changed nothing", s.get(s.ada, ref).json == snap, snap, None, None, "S3 Revisions")
+    for v in (0, -1, 1.5, True, "2", None, [2]):
+        chk.expect(f"expected_revision {v!r} -> 422 (R-49)", patch({"party_size": 3, "expected_revision": v}), 422, "validation_failed", "S3 Revisions")
+    chk.expect("another user's booking + invalid expected_revision -> 404 first (R-49)", patch({"expected_revision": 0}, tok=s.bob), 404, "not_found",
+               "S3 Revisions")
+    chk.expect("wrong-type field beats invalid expected_revision -> 400 (R-49)", patch({"table_id": 5, "expected_revision": 0}), 400, "malformed_request",
+               "S3 Revisions")
+    chk.expect("invalid expected_revision beats stale/validation -> 422", patch({"party_size": 99, "expected_revision": "x"}), 422, "validation_failed",
+               "S3 Revisions")
+    r = patch({"expected_revision": 2})
+    chk.check("only a matching expected_revision is a no-op 200 (R-58)", r.status == 200 and (r.json or {}).get("revision") == 2, 2, r.text(200), r.req,
+              "S3 Revisions")
+    r = patch({"party_size": 3, "expected_revision": 2})
+    chk.check("no-op with current expected_revision -> 200, revision unchanged", r.status == 200 and (r.json or {}).get("revision") == 2, 2, r.text(200), r.req, "S3 Revisions")
+    chk.expect("no-op with stale expected_revision -> 409 (R-49)", patch({"party_size": 3, "expected_revision": 1}), 409, "stale_revision", "S3 Revisions")
+    near = s.book(s.ada, "r_near3", "q_1", ctx.near, 2)
+    chk.expect("stale_revision comes before cutoff", patch({"party_size": 3, "expected_revision": 5}, rf=near["reference"]), 409, "stale_revision", "S3 Revisions")
+    chk.expect("current revision inside cutoff -> cutoff_passed", patch({"party_size": 3, "expected_revision": 1}, rf=near["reference"]), 409, "cutoff_passed", "S3 Revisions")
+    r = c.req("POST", f"/reservations/{ref}/cancel", {"expected_revision": 99}, token=s.ada)
+    chk.check("cancel increments revision once (expected_revision ignored, R-50)", r.status == 200 and (r.json or {}).get("revision") == 3, 3, r.text(200), r.req, "S3 Revisions")
+    r = c.req("POST", f"/reservations/{ref}/cancel", token=s.ada)
+    chk.check("repeated cancel does not increment", r.status == 200 and (r.json or {}).get("revision") == 3, 3, r.text(200), r.req, "S3 Revisions")
+    chk.expect("cancelled booking + stale expected_revision -> stale first (R-49)", patch({"party_size": 2, "expected_revision": 1}), 409, "stale_revision",
+               "S3 Revisions")
+    chk.expect("cancelled booking + current expected_revision -> reservation_cancelled (R-49)", patch({"party_size": 2, "expected_revision": 3}), 409,
+               "reservation_cancelled", "S3 Revisions")
+    k = "rev-" + uuid.uuid4().hex
+    r1 = c.req("POST", "/reservations", booking_body("r_pol", "p_3", f"{D}T13:00", 2), token=s.ada, key=k)
+    c.req("PATCH", f"/reservations/{r1.json['reference']}", {"party_size": 4}, token=s.ada)
+    r2 = c.req("POST", "/reservations", booking_body("r_pol", "p_3", f"{D}T13:00", 2), token=s.ada, key=k)
+    chk.check("replay keeps the original revision and terms", r2.status == 200 and r2.json == r1.json and (r2.json or {}).get("revision") == 1, r1.json,
+              r2.text(200), r2.req, "S3 Revisions/§7")
+
+
+def g_series(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    s3.reset()
+    D = ctx.thu
+
+    def adopt(anchor, count=4, interval=1, key=None, tok=None, extra=None):
+        return c.req("POST", "/series", {"anchor_reference": anchor, "count": count, "interval_weeks": interval, **(extra or {})},
+                     token=tok or s.ada, key=key or uuid.uuid4().hex)
+
+    A = s.book(s.ada, "r_ser", "s_2", f"{D}T19:00", 2)
+    a_hist = s3.entries(A["reference"], s.ada)
+    k = "ser-" + uuid.uuid4().hex
+    r = adopt(A["reference"], 4, 1, key=k, extra={"zzz": 1})
+    j = r.json if isinstance(r.json, dict) else {}
+    occ = j.get("occurrences") or []
+    ok = r.status == 201 and isinstance(j.get("series_id"), str) and j.get("revision") == 1 and j.get("interval_weeks") == 1 and len(occ) == 4 \
+        and [o.get("index") for o in occ] == [0, 1, 2, 3] and occ[0].get("reference") == A["reference"] and all(o.get("exception") is False for o in occ)
+    chk.check("adopt 201: series_id, revision 1, 4 occurrences in index order, anchor is occurrence 0", ok, "shape", r.text(500), r.req, "S3 Series")
+    sid = j.get("series_id")
+    refs = [o.get("reference") for o in occ]
+    chk.check("occurrence references distinct", len(set(refs)) == 4, 4, refs, r.req, "S3 Series")
+    chk.check("occurrence 0 reservation equals the unchanged anchor", occ and occ[0].get("reservation") == A, A, occ[0].get("reservation") if occ else None,
+              r.req, "S3 Series")
+    chk.check("anchor history unchanged by adoption", s3.entries(A["reference"], s.ada) == a_hist, a_hist, None, None, "S3 Series")
+    bad = [o for i, o in enumerate(occ[1:], 1) if (o.get("reservation") or {}).get("starts_at_local") != f"{D + timedelta(days=7 * i)}T19:00"
+           or (o.get("reservation") or {}).get("table_id") != "s_2" or (o.get("reservation") or {}).get("party_size") != 2]
+    chk.check("occurrence i on anchor date + 7i days, same clock time, table and party", not bad, "weekly", bad[:2], r.req, "S3 Series")
+    mine = {x.get("reference") for x in s.mine(s.ada)}
+    chk.check("occurrences appear in the ordinary reservation list", set(refs) <= mine, refs, None, None, "S3 Series")
+    t = s.avail_tables("r_ser", D + timedelta(days=7), 2, "19:00")
+    chk.check("occurrences occupy their tables", t is not None and "s_2" not in t, "s_2 absent", t, None, "S3 Series")
+    chk.check("each occurrence has an ordinary created history", all(len(s3.entries(x, s.ada) or []) == 1 for x in refs[1:]), 1, None, None, "S3 Series")
+    g = c.req("GET", f"/series/{sid}", token=s.ada)
+    chk.check("GET /series/{id} owner -> same shape", g.status == 200 and [o.get("reference") for o in (g.json or {}).get("occurrences", [])] == refs, refs,
+              g.text(300), g.req, "S3 Series")
+    chk.expect("GET series by another user -> 404", c.req("GET", f"/series/{sid}", token=s.bob), 404, "not_found", "S3 Series")
+    chk.expect("GET series without token -> 404", c.req("GET", f"/series/{sid}"), 404, "not_found", "S3 Series")
+    rr = adopt(A["reference"], 4, 1, key=k, extra={"zzz": 1})
+    chk.check("series replay 200 identical", rr.status == 200 and rr.json == r.json, 200, rr.text(200), rr.req, "S3 Series/§7")
+    chk.expect("series same key, different body -> 409", adopt(A["reference"], 5, 1, key=k), 409, "idempotency_key_reuse", "S3 Series")
+    chk.expect("adopting the anchor again -> 409 already_in_series", adopt(A["reference"]), 409, "already_in_series", "S3 Series")
+    chk.expect("adopting a generated occurrence -> 409 already_in_series", adopt(refs[1]), 409, "already_in_series", "S3 Series")
+    # validation and anchor errors
+    X = s.book(s.ada, "r_ser", "s_1", f"{D}T13:00", 2)
+    for name, cnt, iv, st_, code in (("count 1", 1, 1, 422, "validation_failed"), ("count 13", 13, 1, 422, "validation_failed"),
+                                     ("count true", True, 1, 422, "validation_failed"), ("count '4'", "4", 1, 422, "validation_failed"),
+                                     ("count null", None, 1, 422, "validation_failed"),
+                                     ("count 2.5", 2.5, 1, 422, "validation_failed"), ("interval 0", 2, 0, 422, "validation_failed"),
+                                     ("interval 5", 2, 5, 422, "validation_failed"), ("interval true", 2, True, 422, "validation_failed"),
+                                     ("interval 1.5", 2, 1.5, 422, "validation_failed")):
+        chk.expect(f"series {name} -> {st_}", adopt(X["reference"], cnt, iv), st_, code, "S3 Series")
+    chk.expect("series missing anchor_reference -> 422", c.req("POST", "/series", {"count": 2, "interval_weeks": 1}, token=s.ada, key=uuid.uuid4().hex), 422,
+               "validation_failed", "S3 Series")
+    chk.expect("series no token -> 401", c.req("POST", "/series", {"anchor_reference": X["reference"], "count": 2, "interval_weeks": 1}, key=uuid.uuid4().hex),
+               401, "unauthenticated", "S3 Series")
+    chk.expect("series without Idempotency-Key -> 400", c.req("POST", "/series", {"anchor_reference": X["reference"], "count": 2, "interval_weeks": 1},
+                                                              token=s.ada), 400, "missing_idempotency_key", "S3 Series")
+    chk.expect("unknown anchor -> 404", adopt("ZZZZZZ"), 404, "not_found", "S3 Series")
+    chk.expect("anchor_reference a number -> 400 (R-52)", c.req("POST", "/series", {"anchor_reference": 5, "count": 2, "interval_weeks": 1}, token=s.ada,
+                                                                    key=uuid.uuid4().hex), 400, "malformed_request", "S3 Series")
+    chk.expect("invalid count beats unknown anchor -> 422 (R-52)", adopt("ZZZZZZ", 1), 422, "validation_failed", "S3 Series")
+    chk.expect("GET unknown series id -> 404 (R-53)", c.req("GET", "/series/nope", token=s.ada), 404, "not_found", "S3 Series")
+    chk.check("series_id is at most 64 characters (R-53)", isinstance(sid, str) and 0 < len(sid) <= 64, "<=64", sid, None, "S3 Series")
+    chk.check("series body has exactly the R-53 keys", set(j) == {"series_id", "revision", "interval_weeks", "occurrences"}
+              and all(set(o) == {"index", "reference", "exception", "reservation"} for o in occ), "exact keys", sorted(j), None, "S3 Series")
+    chk.expect("another user's anchor -> 404", adopt(X["reference"], tok=s.bob), 404, "not_found", "S3 Series")
+    Y = s.book(s.ada, "r_ser", "s_1", f"{D}T21:00", 2)
+    c.req("POST", f"/reservations/{Y['reference']}/cancel", token=s.ada)
+    chk.expect("cancelled anchor -> 409 reservation_cancelled", adopt(Y["reference"]), 409, "reservation_cancelled", "S3 Series")
+    Nr = s.book(s.ada, "r_near3", "q_1", ctx.near, 2)
+    chk.expect("anchor inside its cutoff -> 409 cutoff_passed", adopt(Nr["reference"], 2, 1), 409, "cutoff_passed", "S3 Series")
+    # occupancy failure: atomic, key reusable
+    before = sorted(x.get("reference") for x in s.mine(s.ada))
+    blocker = s.book(s.bob, "r_ser", "s_1", f"{D + timedelta(days=14)}T13:00", 2)
+    kf = "serf-" + uuid.uuid4().hex
+    chk.expect("occurrence 2 collides -> 409 table_unavailable", adopt(X["reference"], 4, 1, key=kf), 409, "table_unavailable", "S3 Series")
+    chk.check("failed adoption created nothing", sorted(x.get("reference") for x in s.mine(s.ada)) == before, len(before), None, None, "S3 Series")
+    chk.check("failed adoption left the anchor's history unchanged", len(s3.entries(X["reference"], s.ada) or []) == 1, 1, None, None, "S3 Series")
+    c.req("POST", f"/reservations/{blocker['reference']}/cancel", token=s.bob)
+    r = adopt(X["reference"], 4, 1, key=kf)
+    chk.expect("same key after the failure is a first use -> 201", r, 201, section="S3 Series")
+    # DST
+    sp = s.book(s.ada, "r_dst3", "d_1", "2027-03-21T02:30", 2)
+    chk.expect("occurrence on spring-forward night (02:30 missing) -> 422 invalid_local_time", adopt(sp["reference"], 2, 1), 422, "invalid_local_time", "S3 Series")
+    fb = s.book(s.ada, "r_dst3", "d_1", "2027-10-24T02:30", 2)
+    r = adopt(fb["reference"], 2, 1)
+    o1 = ((r.json or {}).get("occurrences") or [{}, {}])[1].get("reservation") or {}
+    chk.check("fall-back repeated time resolves to the first occurrence (+02:00)", r.status == 201 and o1.get("starts_at") == "2027-10-31T02:30:00+02:00",
+              "2027-10-31T02:30:00+02:00", o1.get("starts_at"), r.req, "S3 Series")
+    # exception flags and revisions
+    def series():
+        return c.req("GET", f"/series/{sid}", token=s.ada).json or {}
+    c.req("PATCH", f"/reservations/{refs[1]}", {"party_size": 3}, token=s.ada)
+    sj = series()
+    chk.check("real PATCH marks the occurrence exception and increments series revision once", sj.get("revision") == 2
+              and [o.get("exception") for o in sj.get("occurrences", [])] == [False, True, False, False], "rev 2, [F,T,F,F]",
+              {"rev": sj.get("revision"), "ex": [o.get("exception") for o in sj.get("occurrences", [])]}, None, "S3 Series")
+    c.req("PATCH", f"/reservations/{refs[1]}", {"party_size": 3}, token=s.ada)
+    c.req("PATCH", f"/reservations/{refs[2]}", {"party_size": 99}, token=s.ada)
+    chk.check("no-op and failed PATCH change neither flag nor revision", series().get("revision") == 2
+              and [o.get("exception") for o in series().get("occurrences", [])] == [False, True, False, False], 2, series().get("revision"), None, "S3 Series")
+    c.req("POST", f"/reservations/{refs[2]}/cancel", token=s.ada)
+    c.req("POST", f"/reservations/{refs[2]}/cancel", token=s.ada)
+    sj = series()
+    st = [(o.get("reservation") or {}).get("status") for o in sj.get("occurrences", [])]
+    chk.check("cancel increments series revision once, keeps the occurrence, no exception; repeated cancel nothing", sj.get("revision") == 3
+              and st[2] == "cancelled" and [o.get("exception") for o in sj.get("occurrences", [])][2] is False, "rev 3", {"rev": sj.get("revision"), "st": st},
+              None, "S3 Series")
+    c.req("POST", f"/reservations/{refs[0]}/cancel", token=s.ada)
+    st = [(o.get("reservation") or {}).get("status") for o in series().get("occurrences", [])]
+    chk.check("cancelling the anchor does not cancel its siblings", st == ["cancelled", "confirmed", "cancelled", "confirmed"], "siblings confirmed", st, None,
+              "S3 Series")
+    rr = adopt(A["reference"], 4, 1, key=k, extra={"zzz": 1})
+    chk.check("replay after later changes returns the original series response", rr.status == 200 and rr.json == j,
+              "original", rr.text(200), rr.req, "S3 Series")
+    # per-occurrence policy
+    s3.standard_policies()
+    Z = s.book(s.ada, "r_pol", "p_3", f"{D}T13:00", 2)
+    r = adopt(Z["reference"], 3, 1)
+    vers = [((o.get("reservation") or {}).get("accepted_terms") or {}).get("policy_version") for o in (r.json or {}).get("occurrences", [])]
+    ends = [(o.get("reservation") or {}).get("ends_at") for o in (r.json or {}).get("occurrences", [])]
+    chk.check("each occurrence selects its date's policy (v4, v3, v2) incl. duration", r.status == 201 and vers == [4, 3, 2]
+              and ends[1:] == [rfc(resolve(f"{D + timedelta(days=7)}T13:00", "Europe/Berlin") + timedelta(minutes=100)),
+                               rfc(resolve(f"{D + timedelta(days=14)}T13:00", "Europe/Berlin") + timedelta(minutes=60))],
+              [4, 3, 2], {"vers": vers, "ends": ends}, r.req, "S3 Series")
+    W = s.book(s.ada, "r_pol", "p_3", f"{D}T21:00", 6)
+    chk.expect("first failing occurrence decides: occ 1 capacity (v3 cap 5) before occ 2 hours (v2)", adopt(W["reference"], 3, 1), 422,
+               "party_exceeds_capacity", "S3 Series")
+    W2 = s.book(s.ada, "r_pol", "p_2", f"{D}T21:30", 2)
+    chk.expect("occurrence outside the selected policy's hours -> 422", adopt(W2["reference"], 3, 1), 422, "outside_opening_hours", "S3 Series")
+
+
+def g_s3moves(s: S):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s3 = S3(s)
+    s3.reset()
+    D = ctx.thu
+    A = s.book(s.ada, "r_ser", "s_2", f"{D}T19:00", 2)
+    r = c.req("POST", "/series", {"anchor_reference": A["reference"], "count": 3, "interval_weeks": 1}, token=s.ada, key=uuid.uuid4().hex)
+    refs = [o.get("reference") for o in (r.json or {}).get("occurrences", [])]
+    sid = (r.json or {}).get("series_id")
+    if r.status != 201 or len(refs) != 3:
+        chk.check("setup: series adoption", False, 201, r.text(200), r.req, "harness")
+        return
+
+    def mv(moves, key=None):
+        return c.req("POST", "/reservation-moves", {"moves": moves}, token=s.ada, key=key or uuid.uuid4().hex)
+
+    snap = [s.get(s.ada, x).json for x in refs]
+    chk.expect("move item with an invalid expected_revision -> 422 (R-57)", mv([{"reference": refs[1], "table_id": "s_1", "expected_revision": 0}]), 422,
+               "validation_failed", "S3 Moves")
+    chk.expect("move with a stale per-move expected_revision -> 409", mv([{"reference": refs[1], "table_id": "s_1", "expected_revision": 9}]), 409,
+               "stale_revision", "S3 Moves")
+    chk.check("stale batch changed nothing", [s.get(s.ada, x).json for x in refs] == snap, "unchanged", None, None, "S3 Moves")
+    blocker = s.book(s.bob, "r_ser", "s_1", f"{D + timedelta(days=14)}T19:00", 2)
+    chk.expect("batch failing on occupancy -> 409", mv([{"reference": refs[1], "table_id": "s_1"}, {"reference": refs[2], "table_id": "s_1"}]), 409,
+               "table_unavailable", "S3 Moves")
+    sj = c.req("GET", f"/series/{sid}", token=s.ada).json or {}
+    chk.check("failed batch changes no revisions, histories or exception flags", [s.get(s.ada, x).json for x in refs] == snap and sj.get("revision") == 1
+              and not any(o.get("exception") for o in sj.get("occurrences", [])), "unchanged", sj, None, "S3 Moves")
+    c.req("POST", f"/reservations/{blocker['reference']}/cancel", token=s.bob)
+    k = "mvs-" + uuid.uuid4().hex
+    r = mv([{"reference": refs[1], "table_id": "s_1", "expected_revision": 1}, {"reference": refs[2], "table_id": "s_1"}, {"reference": refs[0]}], key=k)
+    chk.expect("batch on two occurrences + a no-op anchor -> 201", r, 201, section="S3 Moves")
+    sj = c.req("GET", f"/series/{sid}", token=s.ada).json or {}
+    chk.check("each affected series revision increases once; changed occurrences become exceptions; no-op anchor untouched",
+              sj.get("revision") == 2 and [o.get("exception") for o in sj.get("occurrences", [])] == [False, True, True], "rev 2, [F,T,T]",
+              {"rev": sj.get("revision"), "ex": [o.get("exception") for o in sj.get("occurrences", [])]}, None, "S3 Moves")
+    revs = [(s.get(s.ada, x).json or {}).get("revision") for x in refs]
+    chk.check("every changed booking gains one revision; the no-op keeps its own", revs == [1, 2, 2], [1, 2, 2], revs, None, "S3 Moves")
+    hist = [len(s3.entries(x, s.ada) or []) for x in refs]
+    chk.check("one changed entry per changed booking, none for the no-op", hist == [1, 2, 2], [1, 2, 2], hist, None, "S3 Moves")
+    r2 = mv([{"reference": refs[1], "table_id": "s_1", "expected_revision": 1}, {"reference": refs[2], "table_id": "s_1"}, {"reference": refs[0]}], key=k)
+    chk.check("batch replay 200 original, changes nothing", r2.status == 200 and r2.json == r.json and
+              (c.req("GET", f"/series/{sid}", token=s.ada).json or {}).get("revision") == 2, 200, r2.text(200), r2.req, "S3 Moves")
+
+
+def g_s3burst(s: S, rounds: int):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    base = c.base
+    s3 = S3(s)
+    for rnd in range(rounds):
+        s3.reset()
+        D = ctx.thu + timedelta(days=7 * (rnd % 3))
+        # R1: same expected_revision, different real changes
+        B = s.book(s.ada, "r_ser", "s_2", f"{D}T13:00", 1)
+        rs = burst.fire([plan_entry(base, "PATCH", f"/reservations/{B['reference']}", {"party_size": 2 + (i % 2), "expected_revision": 1}, s.ada, None)
+                         for i in range(10)])
+        st = statuses(rs)
+        e = s3.entries(B["reference"], s.ada) or []
+        chk.check(f"r{rnd} R1 10 PATCHes sharing expected_revision 1: one 200, nine stale; one changed entry, revision 2",
+                  st == {"200": 1, "409": 9} and len(e) == 2 and (s.get(s.ada, B["reference"]).json or {}).get("revision") == 2,
+                  {"200": 1, "409": 9}, {"st": st, "entries": len(e)}, {"burst": "R1"}, "S3 Revisions")
+        # R2: concurrent publications -> dense versions
+        rs = burst.fire([plan_entry(base, "POST", "/restaurants/r_pol/policies", pol(D + timedelta(days=i)), s3.mgr, f"r2-{rnd}-{i}") for i in range(20)])
+        vers = sorted(json.loads(r.body).get("policy_version") for r in rs if r.status == 201)
+        lst = [p.get("policy_version") for p in (c.req("GET", "/restaurants/r_pol/policies").json or {}).get("policies", [])]
+        chk.check(f"r{rnd} R2 20 concurrent publications: versions exactly 1..20, list in publication order", vers == list(range(1, 21)) and lst == list(range(1, 21)),
+                  list(range(1, 21)), {"vers": vers, "list": lst}, {"burst": "R2"}, "S3 Policies")
+        # R3: concurrent adoption of one anchor
+        A = s.book(s.ada, "r_ser", "s_1", f"{D}T19:00", 2)
+        n_before = len(s.mine(s.ada))
+        rs = burst.fire([plan_entry(base, "POST", "/series", {"anchor_reference": A["reference"], "count": 3, "interval_weeks": 1}, s.ada, f"r3-{rnd}-{i}")
+                         for i in range(10)])
+        st = statuses(rs)
+        codes_ = [json.loads(r.body).get("error", {}).get("code") for r in rs if r.status == 409]
+        chk.check(f"r{rnd} R3 10 concurrent adoptions of one anchor: one 201, nine already_in_series, 2 new bookings",
+                  st == {"201": 1, "409": 9} and set(codes_) == {"already_in_series"} and len(s.mine(s.ada)) == n_before + 2,
+                  {"201": 1, "409": 9}, {"st": st, "new": len(s.mine(s.ada)) - n_before}, {"burst": "R3"}, "S3 Series")
+        # R4: concurrent writes on one booking -> dense history
+        C = s.book(s.ada, "r_ser", "s_2", f"{D}T21:00", 1)
+        plan = [plan_entry(base, "PATCH", f"/reservations/{C['reference']}", {"party_size": 1 + (i % 4)}, s.ada, None) for i in range(15)]
+        plan.append(plan_entry(base, "POST", f"/reservations/{C['reference']}/cancel", None, s.ada, None))
+        burst.fire(plan)
+        e = s3.entries(C["reference"], s.ada) or []
+        seqs = [x.get("seq") for x in e]
+        last_rev = (s.get(s.ada, C["reference"]).json or {}).get("revision")
+        cancel_last = all(x.get("event") != "cancelled" for x in e[:-1])
+        chk.check(f"r{rnd} R4 16 concurrent writes on one booking: seq 1..n dense, revisions follow, nothing after cancelled",
+                  seqs == list(range(1, len(e) + 1)) and [x.get("revision") for x in e] == list(range(1, len(e) + 1)) and last_rev == len(e) and cancel_last,
+                  "dense", {"seqs": seqs, "revs": [x.get("revision") for x in e], "current": last_rev}, {"burst": "R4"}, "S3 History")
+        # R5: concurrent identical replays on the policies and series paths
+        kp = f"r5p-{rnd}-{uuid.uuid4().hex}"
+        bp = pol(D + timedelta(days=40))
+        rs = burst.fire([plan_entry(base, "POST", "/restaurants/r_pol/policies", bp, s3.mgr, kp) for _ in range(15)])
+        st = statuses(rs)
+        bodies = {json.dumps(json.loads(r.body), sort_keys=True) for r in rs if r.status in (200, 201)}
+        lst = [p.get("policy_version") for p in (c.req("GET", "/restaurants/r_pol/policies").json or {}).get("policies", [])]
+        chk.check(f"r{rnd} R5 15 identical keyed publications: one 201, 14 identical 200, one version", st == {"201": 1, "200": 14} and len(bodies) == 1
+                  and len(lst) == 21, {"201": 1, "200": 14, "versions": 21}, {"st": st, "versions": len(lst)}, {"burst": "R5"}, "S3 Policies")
+        E = s.book(s.ada, "r_ser", "s_2", f"{D}T15:00", 2)
+        ks = f"r5s-{rnd}-{uuid.uuid4().hex}"
+        bs = {"anchor_reference": E["reference"], "count": 2, "interval_weeks": 1}
+        rs = burst.fire([plan_entry(base, "POST", "/series", bs, s.ada, ks) for _ in range(15)])
+        st = statuses(rs)
+        bodies = {json.dumps(json.loads(r.body), sort_keys=True) for r in rs if r.status in (200, 201)}
+        chk.check(f"r{rnd} R5 15 identical keyed adoptions: one 201, 14 identical 200", st == {"201": 1, "200": 14} and len(bodies) == 1,
+                  {"201": 1, "200": 14}, st, {"burst": "R5"}, "S3 Series")
+        check_invariant(s, [s.ada, s.bob], f"r{rnd} after stage-3 bursts", "S3 Concurrent")
+
+
+def g_upgrade3(s: S, prev: Client | None, prev2: Client | None):
+    c, chk, ctx = s.c, s.chk, s.ctx
+    for label, src, fx, rid, tid in (("stage 1", prev, fixture, "r_anker", "t_2"), ("stage 2", prev2, fixture2, "r_combo", "c_4")):
+        if src is None:
+            chk.check(f"upgrade source {label} given", False, "--prev/--prev2", None, None, "harness")
+            continue
+        sp = S(src, chk, ctx)
+        r = src.req("POST", "/_test/reset", fx(ctx), timeout=12)
+        tok = sp.signup(email=f"legacy{label[-1]}@example.com", password="legacy pass 1", name="Legacy")
+        k = "up3-" + uuid.uuid4().hex
+        b = booking_body(rid, tid, ctx.D(ctx.thu, "19:00"), 2)
+        r1 = src.req("POST", "/reservations", b, token=tok, key=k)
+        E = src.req("GET", "/_test/export").json
+        r = c.req("POST", "/_test/import", E, timeout=12)
+        chk.expect(f"[{label}] candidate imports the export -> 204", r, 204, section="S3 Upgrade")
+        ref = (r1.json or {}).get("reference")
+        g = c.req("GET", f"/reservations/{ref}", token=tok)
+        j = g.json if isinstance(g.json, dict) else {}
+        chk.check(f"[{label}] old token and lookup work; imported booking has revision 1 under policy 0", g.status == 200 and j.get("revision") == 1
+                  and (j.get("accepted_terms") or {}).get("policy_version") == 0, "rev 1, v0", g.text(300), g.req, "S3 Upgrade")
+        e = c.req("GET", f"/reservations/{ref}/history", token=tok)
+        ent = (e.json or {}).get("entries", []) if e.status == 200 else None
+        chk.check(f"[{label}] imported booking has a history entry", ent is not None and len(ent) >= 1 and ent[0].get("event") == "created", "created",
+                  e.text(300), e.req, "S3 Upgrade")
+        rr = c.req("POST", "/reservations", b, token=tok, key=k)
+        chk.check(f"[{label}] original booking retry -> 200 original body", rr.status == 200 and rr.json == r1.json, r1.json, rr.text(300), rr.req, "S3 Upgrade")
+        r = c.req("POST", "/series", {"anchor_reference": ref, "count": 2, "interval_weeks": 1}, token=tok, key=uuid.uuid4().hex)
+        chk.expect(f"[{label}] adoption works on an imported reservation", r, 201, section="S3 Upgrade")
+        r = c.req("GET", f"/restaurants/{rid}/policies")
+        chk.check(f"[{label}] imported restaurant has no published policies", r.status == 200 and r.json == {"policies": []}, [], r.text(200), r.req, "S3 Upgrade")
+
+
 # --------------------------------------------------------------------------- main
 
 GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
-          "combo", "comboburst", "upgrade"]
+          "combo", "comboburst", "upgrade", "explain", "policies", "history", "revision", "series", "s3moves", "s3burst", "upgrade3"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:
@@ -2012,6 +2794,7 @@ def main(argv=None):
     p.add_argument("--base", required=True)
     p.add_argument("--dest", help="second, fresh candidate container for export/import")
     p.add_argument("--prev", help="previous-stage service (accepted image) for the upgrade group")
+    p.add_argument("--prev2", help="second previous-stage service (stage 2) for upgrade3")
     p.add_argument("--groups", default=",".join(GROUPS))
     p.add_argument("--rounds", type=int, default=3)
     p.add_argument("--out")
@@ -2022,9 +2805,10 @@ def main(argv=None):
     c = Client(a.base, chk, "A")
     dest = Client(a.dest, chk, "B") if a.dest else None
     prev = Client(a.prev, chk, "P") if a.prev else None
+    prev2 = Client(a.prev2, chk, "Q") if a.prev2 else None
     meta = {"base": a.base, "dest": a.dest, "prev": a.prev, "now": ctx.now.isoformat(), "now_tz": ctx.now_tz, "thu": str(ctx.thu),
             "near": ctx.near, "far": ctx.far, "past": ctx.past}
-    for label, cl in (("A", c), ("B", dest), ("P", prev)):
+    for label, cl in (("A", c), ("B", dest), ("P", prev), ("Q", prev2)):
         if cl is not None:
             meta[f"health_{label}_s"] = wait_health(cl, a.wait)
             if meta[f"health_{label}_s"] is None:
@@ -2047,6 +2831,10 @@ def main(argv=None):
                 g_comboburst(s, a.rounds)
             elif g == "upgrade":
                 g_upgrade(s, prev, dest)
+            elif g == "s3burst":
+                g_s3burst(s, a.rounds)
+            elif g == "upgrade3":
+                g_upgrade3(s, prev, prev2)
             else:
                 globals()[f"g_{g}"](s)
         except Exception as e:

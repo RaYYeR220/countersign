@@ -2,7 +2,7 @@
 """Race proofs (battery step 6): disable one concurrency/atomicity guard in a scratch copy, show the
 relevant attacks fail; run the unmodified copy, show they pass.
 
-    python race.py --src <clean-clone>/stage-2 --work C:/countersign/tmp/aud-race-<k> --guard "store write lock" \
+    python race.py --src <clean-clone>/stage-3 --work C:/countersign/tmp/aud-race-<k> --guard "store write lock" \
         --edit "internal/state/store.go::s.mu.Lock()::/*race*/" [--edit ...] --groups burst --rounds 3 --out race-1.json
 
 `--edit FILE::OLD::NEW` replaces every literal occurrence of OLD in FILE (at least one must exist).

@@ -9,10 +9,10 @@
 # against a fresh reset of A. JUnit: <out-dir>/oracle.xml and <out-dir>/oracle-ui.xml.
 set -u
 IMG="$1"; CLONE="$2"; OUT="$3"; shift 3
-NET=auditor-s2-oracle-net
-A=auditor-s2-oa
-B=auditor-s2-ob
-S1=auditor-s2-os1
+NET=auditor-s3-oracle-net
+A=auditor-s3-oa
+B=auditor-s3-ob
+S1=auditor-s3-os1
 PREV_IMG="${PREV_IMG:-}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 export MSYS_NO_PATHCONV=1
@@ -40,12 +40,12 @@ fi
 WAIT="until wget -qO- http://$A:8080/health >/dev/null 2>&1 && wget -qO- http://$B:8080/health >/dev/null 2>&1; do sleep 0.2; done;"
 docker run --rm --network "$NET" -v "$(win "$CLONE"):/repo:ro" -v "$(win "$OUT"):/out" -w /tmp \
   -e PYTHONDONTWRITEBYTECODE=1 auditor-runner-py \
-  sh -c "$WAIT python -m pytest /repo/stage-2/verify/oracle -q -p no:cacheprovider -rfE \
+  sh -c "$WAIT python -m pytest /repo/stage-3/verify/oracle -q -p no:cacheprovider -rfE \
          --base-url http://$A:8080 --second-base-url http://$B:8080 $S1_ARG --junitxml=/out/oracle.xml $*"
 rc1=$?
 docker run --rm --network "$NET" --shm-size 1g -v "$(win "$CLONE"):/repo:ro" -v "$(win "$OUT"):/out" -w /tmp \
   -e PYTHONDONTWRITEBYTECODE=1 auditor-ui-runner \
-  sh -c "python -m pytest /repo/stage-2/verify/oracle/test_ui.py -q --ui -p no:cacheprovider -rfE \
+  sh -c "python -m pytest /repo/stage-3/verify/oracle/test_ui.py -q --ui -p no:cacheprovider -rfE \
          --base-url http://$A:8080 --junitxml=/out/oracle-ui.xml $*"
 rc2=$?
 [ $rc1 -eq 0 ] && [ $rc2 -eq 0 ]
