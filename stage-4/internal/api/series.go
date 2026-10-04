@@ -269,7 +269,6 @@ func (s *Server) amendSeries(w http.ResponseWriter, r *http.Request, user *state
 
 		now := s.now()
 		var changes []*change
-		var rest *state.Restaurant
 		for i := int(from); i < len(series.Occurrences); i++ {
 			o := series.Occurrences[i]
 			res := st.ReservationByRef(o.Reference)
@@ -284,7 +283,7 @@ func (s *Server) amendSeries(w http.ResponseWriter, r *http.Request, user *state
 			if withinCutoff(res, now) {
 				return nil, cutoffPassed()
 			}
-			rest = st.Restaurant(res.RestaurantID)
+			rest := st.Restaurant(res.RestaurantID)
 			loc, err := localtime.Location(rest.Timezone)
 			if err != nil {
 				return nil, err
@@ -303,17 +302,9 @@ func (s *Server) amendSeries(w http.ResponseWriter, r *http.Request, user *state
 		if conflicts(st, changes) {
 			return nil, apperr.TableUnavailable()
 		}
-		for _, c := range changes {
-			res := c.res
-			diff := []state.FieldChange{{Field: "starts_at_local", From: res.StartsAtLocal, To: c.local}}
-			res.StartsAtLocal, res.StartsAt, res.EndsAt, res.Terms = c.local, c.start, c.end, c.terms
-			res.Revision++
-			res.Record(now, state.EventChanged, diff)
-		}
-		if len(changes) > 0 {
-			series.Revision++
-			rest.Revision++
-		}
+		// The shared PATCH apply: one changed entry and revision per occurrence, the series and the
+		// restaurant revision once; series amendments mark no exceptions.
+		apply(st, changes, now, false)
 		return viewSeries(st, series), nil
 	})
 }
