@@ -9,7 +9,7 @@ import argparse, json, os, sys, uuid
 sys.path.insert(0, os.environ.get("BURST_DIR", "/aud/factory/tools"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import burst  # noqa: E402
-from audit import Checker, Client, Ctx, S, fixture, booking_body  # noqa: E402
+from audit import Checker, Client, Ctx, S, booking_body  # noqa: E402
 
 ap = argparse.ArgumentParser(); ap.add_argument("--base", required=True); ap.add_argument("--rounds", type=int, default=5)
 a = ap.parse_args()

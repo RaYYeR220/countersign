@@ -1,0 +1,605 @@
+{
+ "meta": {
+  "base": "http://auditor-s1-a:8080",
+  "dest": "http://auditor-s1-b:8080",
+  "now": "2026-10-04T14:41:11.763283+00:00",
+  "now_tz": "UTC",
+  "thu": "2026-10-29",
+  "near": "2026-10-04T15:00",
+  "far": "2026-10-04T18:45",
+  "past": "2026-10-03T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 72,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "core": {
+   "pass": 72,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "core",
+   "name": "health 200 {status: ok}",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.2",
+   "clause": "C1.11"
+  },
+  {
+   "group": "core",
+   "name": "reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "reset 204 has empty body",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "repeated reset 204",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.3",
+   "clause": "C1.12,C1.13"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, lists fixture restaurants",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/{id} fixture shape, public",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/unknown 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.70"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/<65 chars> 404",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.18"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation visible to owner with derived times",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.30"
+  },
+  {
+   "group": "core",
+   "name": "seeded reservation hidden from other user",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a78",
+   "clause": "C1.90"
+  },
+  {
+   "group": "core",
+   "name": "seeded user logs in with fixture password",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a74",
+   "clause": "C1.29"
+  },
+  {
+   "group": "core",
+   "name": "unknown query parameter ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.17"
+  },
+  {
+   "group": "core",
+   "name": "unknown body field ignored",
+   "ok": true,
+   "soft": false,
+   "section": "\u00a73.4",
+   "clause": "C1.16"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants public, in fixture order",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.68,C1.69 (R-11)"
+  },
+  {
+   "group": "core",
+   "name": "seeded created_at kept from fixture",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.30 (R-16)"
+  },
+  {
+   "group": "core",
+   "name": "unknown path 404",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "known path, wrong method 405 (PUT /reservations)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.32,C1.38 (R-9)"
+  },
+  {
+   "group": "core",
+   "name": "GET /health ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /restaurants/r_anker ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /availability ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "POST /auth/login ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "GET /_test/export ignores Authorization: Bearer junk",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.53,C1.68 (R-10)"
+  },
+  {
+   "group": "core",
+   "name": "JSON body with Content-Type text/plain accepted (R-17)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.14 (R-17)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unparseable: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: user id 65 chars: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: unknown timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: opens not HH:MM: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: weekday not mon..sun: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes not later than opens: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes equal to opens -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: closes equal to opens: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: table capacity 0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: table capacity 0: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: slot_minutes 0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: slot_minutes 0: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate weekday: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate user id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive) -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate email (case-insensitive): state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate restaurant id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate table id in a restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reservation id: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: duplicate reference: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown user: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation of unknown restaurant: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: reservation on another restaurant's table: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: capacity wrong type: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list -> 400",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurants not a list: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone -> 422",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset rejects fixture: restaurant missing timezone: state unchanged",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  },
+  {
+   "group": "core",
+   "name": "reset accepts closes 24:00 and an off-grid/overlapping seeded booking (seeds trusted)",
+   "ok": true,
+   "soft": false,
+   "section": null,
+   "clause": "C1.12,C1.18,C1.26 (R-8,R-20)"
+  }
+ ]
+}

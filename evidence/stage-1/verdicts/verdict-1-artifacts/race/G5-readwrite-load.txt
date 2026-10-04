@@ -1,0 +1,7 @@
+Race-detector proof for G5 (Store.Read shared lock), targeted read/write load.
+Binaries: go build -race (golang:1.26) from C:/countersign/tmp/aud-racedet/{with,without} (without = RLock/RUnlock removed in internal/state/store.go Store.Read).
+Server: docker run --network auditor-s1-racenet --cpus 2 --memory 2g -e PORT=8080 -e GORACE="halt_on_error=0 log_path=/out/race" golang:1.26 /out/tk-race
+Load:   docker run --network auditor-s1-racenet auditor-runner-py python /aud/stage-1/verify/audit/readwrite_load.py --base http://auditor-s1-race-srv:8080 --rounds 5
+without: 5 rounds {'200': 30, '201': 11, '409': 19} each; WARNING: DATA RACE reports = 13
+         first: tablekeeper/internal/state.(*State).AddReservation() reservations.go:27 / api.(*Server).createReservation.func1() reservations.go:115
+with:    5 rounds {'200': 30, '201': 11, '409': 19} each; WARNING: DATA RACE reports = 0

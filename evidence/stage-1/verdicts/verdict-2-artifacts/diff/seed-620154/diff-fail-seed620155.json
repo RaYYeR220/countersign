@@ -1,0 +1,87 @@
+{
+ "seed": 620155,
+ "base_url": "http://auditor-s1-diff:8080",
+ "ops": [
+  {
+   "op": "reset",
+   "fixture": "base"
+  },
+  {
+   "op": "signup",
+   "label": "s2",
+   "email": "user2@example.com",
+   "password": "password-2",
+   "display_name": "User 2"
+  },
+  {
+   "op": "create",
+   "label": "b14",
+   "token": {
+    "$sym": [
+     "token",
+     "s2"
+    ]
+   },
+   "key": "k14",
+   "body": {
+    "restaurant_id": "r_anker",
+    "table_id": "t_1",
+    "starts_at_local": "2027-09-23T18:00",
+    "party_size": 2
+   },
+   "raw": false
+  },
+  {
+   "op": "export",
+   "label": "e2"
+  },
+  {
+   "op": "reset",
+   "fixture": "base"
+  },
+  {
+   "op": "signup",
+   "label": "s3",
+   "email": "user3@example.com",
+   "password": "password-3",
+   "display_name": "User 3"
+  },
+  {
+   "op": "create",
+   "label": "b36",
+   "token": {
+    "$sym": [
+     "token",
+     "s3"
+    ]
+   },
+   "key": "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+   "body": {
+    "restaurant_id": "r_ny",
+    "table_id": "n_1",
+    "starts_at_local": "2026-11-01T00:00",
+    "party_size": 4
+   },
+   "raw": false
+  },
+  {
+   "op": "import",
+   "label": "e2"
+  },
+  {
+   "op": "get",
+   "token": {
+    "$sym": [
+     "token",
+     "s2"
+    ]
+   },
+   "reference": {
+    "$sym": [
+     "ref",
+     "b36"
+    ]
+   }
+  }
+ ]
+}

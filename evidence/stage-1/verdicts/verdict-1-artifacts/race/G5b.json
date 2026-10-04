@@ -1,0 +1,53 @@
+{
+ "guard": "G5b Store.Read shared lock (state/store.go), 5 burst rounds x 3",
+ "edits": [
+  {
+   "file": "internal/state/store.go",
+   "old": "func (s *Store) Read(fn func(*State)) {\n\ts.mu.RLock()\n\tdefer s.mu.RUnlock()",
+   "new": "func (s *Store) Read(fn func(*State)) {",
+   "occurrences": 1
+  }
+ ],
+ "groups": "burst",
+ "rounds": 5,
+ "red_without": false,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   },
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   },
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}

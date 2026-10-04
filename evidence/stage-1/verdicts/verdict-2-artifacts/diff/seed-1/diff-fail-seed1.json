@@ -1,0 +1,97 @@
+{
+ "seed": 1,
+ "base_url": "http://auditor-s1-diff:8080",
+ "ops": [
+  {
+   "op": "reset",
+   "fixture": "base"
+  },
+  {
+   "op": "login",
+   "label": "l1",
+   "email": "ada@example.com",
+   "password": "correct horse"
+  },
+  {
+   "op": "export",
+   "label": "e1"
+  },
+  {
+   "op": "create",
+   "label": "b35",
+   "token": {
+    "$sym": [
+     "token",
+     "l1"
+    ]
+   },
+   "key": "k35",
+   "body": {
+    "restaurant_id": "r_all",
+    "table_id": "a_2",
+    "starts_at_local": "2027-06-16T11:00",
+    "party_size": 4
+   },
+   "raw": false
+  },
+  {
+   "op": "import",
+   "label": "e1"
+  },
+  {
+   "op": "create",
+   "label": "b54",
+   "token": {
+    "$sym": [
+     "token",
+     "l1"
+    ]
+   },
+   "key": "k37",
+   "body": {
+    "restaurant_id": "r_ny",
+    "table_id": "n_1",
+    "starts_at_local": "2020-06-15T21:30",
+    "party_size": 2
+   },
+   "raw": false
+  },
+  {
+   "op": "moves",
+   "token": {
+    "$sym": [
+     "token",
+     "l1"
+    ]
+   },
+   "key": "m57",
+   "body": {
+    "moves": [
+     {
+      "reference": {
+       "$sym": [
+        "ref",
+        "b35"
+       ]
+      },
+      "starts_at_local": "2027-06-15T19:00"
+     },
+     {
+      "reference": {
+       "$sym": [
+        "ref",
+        "b44"
+       ]
+      },
+      "table_id": "n_1",
+      "starts_at_local": "2026-11-01T04:30"
+     },
+     {
+      "reference": "SEED01",
+      "table_id": "n_1"
+     }
+    ]
+   }
+  }
+ ]
+}
