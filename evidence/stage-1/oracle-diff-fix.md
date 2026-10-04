@@ -1,4 +1,4 @@
-[EVIDENCE] stage=1 wi=oracle-diff-fix sha=<filled at commit>
+[EVIDENCE] stage=1 wi=oracle-diff-fix sha=995058b
 
 # Evidence — differential runner classes A and B on candidate 2 (model/runner side)
 
