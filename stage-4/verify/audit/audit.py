@@ -3287,6 +3287,8 @@ def g_upgrade4(s: S, prev: Client | None, prev2: Client | None, prev3: Client | 
             if len(occ) == 3:
                 src.req("POST", f"/reservations/{occ[2]}/cancel", token=tok)
         E = src.req("GET", "/_test/export").json
+        if SAVE_EXPORTS is not None:
+            SAVE_EXPORTS[label] = {"export": E, "token": tok, "reference": ref, "key": k, "body": b, "first": r1.json}
         r = c.req("POST", "/_test/import", E, timeout=12)
         chk.expect(f"[{label}] candidate imports the export -> 204", r, 204, section="S4 Upgrade")
         g = c.req("GET", f"/reservations/{ref}", token=tok)
@@ -3305,11 +3307,37 @@ def g_upgrade4(s: S, prev: Client | None, prev2: Client | None, prev3: Client | 
             chk.check(f"[{label}] replan on an imported restaurant works; revision observable", pv.status in (201, 409) and
                       (pv.status == 409 or isinstance((pv.json or {}).get("restaurant_revision"), int)), "201|409", pv.text(200), pv.req, "S4 Upgrade")
 
+SAVE_EXPORTS: dict | None = None
+STATIC_EXPORTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "static-exports.json")
+
+
+def g_staticupgrade(s: S):
+    """Upgrade from exports captured once from the accepted stage-1/2/3 images (fixtures/static-exports.json, made with
+    --save-exports), so runs without the previous-stage images (mutation, race proofs) still cover the schema 1-3 migrations."""
+    c, chk = s.c, s.chk
+    with open(STATIC_EXPORTS, encoding="utf-8") as f:
+        saved = json.load(f)
+    for label in ("stage 1", "stage 2", "stage 3"):
+        d = saved.get(label)
+        if not d:
+            chk.check(f"static export {label} present", False, "present", None, None, "harness")
+            continue
+        r = c.req("POST", "/_test/import", d["export"], timeout=12)
+        chk.expect(f"[static {label}] candidate imports the export -> 204", r, 204, section="S4 Upgrade")
+        g = c.req("GET", f"/reservations/{d['reference']}", token=d["token"])
+        chk.expect(f"[static {label}] old token and lookup work", g, 200, section="S4 Upgrade")
+        rr = c.req("POST", "/reservations", d["body"], token=d["token"], key=d["key"])
+        chk.check(f"[static {label}] original retry -> 200 original body", rr.status == 200 and rr.json == d["first"], d["first"],
+                  rr.text(200), rr.req, "S4 Upgrade")
+        e = c.req("GET", "/_test/export")
+        ri = c.req("POST", "/_test/import", e.json, timeout=12) if e.status == 200 else e
+        chk.expect(f"[static {label}] the upgraded state re-exports and re-imports -> 204", ri, 204, section="S4 Upgrade")
+
 # --------------------------------------------------------------------------- main
 
 GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
           "combo", "comboburst", "upgrade", "explain", "policies", "history", "revision", "series", "s3moves", "s3burst", "upgrade3",
-          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4"]
+          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4", "staticupgrade"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:
@@ -3340,7 +3368,11 @@ def main(argv=None):
     p.add_argument("--rounds", type=int, default=3)
     p.add_argument("--out")
     p.add_argument("--wait", type=float, default=60.0)
+    p.add_argument("--save-exports", help="write the upgrade4 source exports (+ token, reference, original request) to this JSON file")
     a = p.parse_args(argv)
+    global SAVE_EXPORTS
+    if a.save_exports:
+        SAVE_EXPORTS = {}
     chk = Checker()
     ctx = Ctx()
     c = Client(a.base, chk, "A")
@@ -3388,6 +3420,9 @@ def main(argv=None):
         except Exception as e:
             errors.append({"group": g, "error": repr(e), "trace": traceback.format_exc()[-1500:]})
             chk.check("group ran to completion", False, "no exception", repr(e), None, "harness")
+    if a.save_exports:
+        with open(a.save_exports, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(SAVE_EXPORTS, f, indent=1, sort_keys=True)
     hard = [r for r in chk.results if not r["ok"] and not r["soft"]]
     soft = [r for r in chk.results if not r["ok"] and r["soft"]]
     per = {}
