@@ -68,6 +68,22 @@ class Checker:
 # First matching pattern wins; a check whose section is already a "C1." id keeps it.
 CROSS_RULES = [(r"^no-5xx", "C1.46"), (r"^per-request-timeout", "C1.8"), (r"^error-envelope", "C1.32"),
                (r"^content-type-json", "C1.14"), (r"group ran to completion", "harness"), (r"^setup", "harness")]
+CLAUSE_RULES_S2 = {
+    "combo": [(r"reset refuses fixture|reset accepts combinable", "C2.40,C2.43 (R-34)"), (r"^POST order:", "C2.47,C2.49,C2.50,C2.52,C2.53 (R-35)"),
+              (r"available_options", "C2.44,C2.45"), (r"available_table_ids unchanged", "C2.44"), (r"without combinable", "C2.40,C2.44 (R-34)"),
+              (r"^seeded", "C2.43 (R-34)"), (r"declared combinable order", "C2.48 (R-35)"),
+              (r"^POST table_ids pair 201|^GET pair|^list entry", "C2.46,C2.48"), (r"occupies both|released at end", "C2.38,C2.45"),
+              (r"^single on|pair sharing one", "C2.51"), (r"reverse order", "C2.40 (R-35)"),
+              (r"table_ids with one member|table_id still accepted", "C2.39,C2.47,C2.48"), (r"^PATCH|after PATCH|old pair released", "C2.54 (R-36)"),
+              (r"cancel frees", "C2.54"), (r"^moves|table_ids batch", "C2.58 (R-36)"), (r"not declared|undeclared", "C2.41,C2.49"),
+              (r"three tables|four tables", "C2.50"), (r"duplicate", "C2.53 (R-35)"), (r"both table_id|both, consistent", "C2.47"),
+              (r"summed capacity", "C2.42,C2.52"), (r"neither", "C2.46 (R-35)"), (r"a string|null|numbers", "C2.46,C1.34 (R-35)"),
+              (r"empty", "C2.46 (R-35)"), (r"unknown table|another restaurant's", "C2.46,C1.88 (R-35)"),
+              (r"replay|other order", "C2.46,C1.62,C1.63 (R-35)"), (r"import|export", "C2.38,C1.107"), (r".", "C2.38,C2.59")],
+    "comboburst": [(r"K3 ", "C2.58,C2.59"), (r".", "C2.51,C2.59")],
+    "upgrade": [(r"replay|retry", "C2.36,C1.62 (R-37)"), (r"table_ids", "C2.48 (R-37)"), (r"pairs|available_options", "C2.41,C2.44 (R-37)"),
+                (r".", "C2.35,C2.36,C2.37 (R-37)")],
+}
 CLAUSE_RULES = {
     "core": [(r"^health", "C1.11"), (r"R-8|R-20|reset rejects|reset accepts", "C1.12,C1.18,C1.26 (R-8,R-20)"),
              (r"reset", "C1.12,C1.13"), (r"R-25", "C1.32,C1.38 (R-25)"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
@@ -130,9 +146,9 @@ CLAUSE_RULES = {
 
 
 def clause_for(group, name, section):
-    if isinstance(section, str) and section.startswith("C1."):
+    if isinstance(section, str) and section.startswith(("C1.", "C2.")):
         return section
-    for pat, ids in CROSS_RULES + CLAUSE_RULES.get(group, []):
+    for pat, ids in CROSS_RULES + CLAUSE_RULES_S2.get(group, []) + CLAUSE_RULES.get(group, []):
         if re.search(pat, name):
             return ids
     return section or "unmapped"
