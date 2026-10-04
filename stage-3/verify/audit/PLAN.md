@@ -1,76 +1,28 @@
-# Stage 2 — Auditor attack plan (online booking UI and combined tables)
+# Stage 3 — Auditor attack plan (policies, history, recurring reservations)
 
-Written from `stage-2.md` plus the still-binding stage-1 contract (C1.1–C1.134, R-1…R-28). Stage-2 clause ids
-(C2.n) are attached once the master ledger is reconciled; until then checks carry spec section names ("S2 …").
+Written from `stage-3.md` plus the binding stage-1/2 contracts (C1, C2) and rulings R-1…R-59. Stage-3 clause ids
+(C3.n) are attached after reconciliation; until then checks carry section names ("S3 …") and the ruling they enforce.
 
 ## Files
-| file | purpose |
-|---|---|
-| `audit.py` | HTTP battery: all stage-1 groups (regression, unchanged fixture without `combinable`) + `combo`, `comboburst`, `upgrade` |
-| `run_attacks.sh` | candidates A (target) and B (fresh import destination) on an `--internal` network, 2 CPU / 2 GiB; `PREV_IMG=<accepted stage-1 image>` adds P for the upgrade |
-| `ui_audit.py` | step 7: headless Chromium (Playwright 1.55) against the candidate; screenshots of every named state |
-| `run_ui.sh`, `Dockerfile.ui` | browser runner `auditor-ui-runner` on the candidate's internal network (`PREV_IMG` optional) |
-| `run_oracle.sh`, `run_diff.sh` | steps 2–3 (Oracle suite incl. browser tests; differential runner) |
-| `mutate.py`, `race.py`, `race_detect.sh`, `readwrite_load.py` | steps 5–6, containerised (stage-1 lesson: host-native runs give false kills) |
+`audit.py` (HTTP battery: all stage-1/2 groups as regression + `explain`, `policies`, `history`, `revision`, `series`,
+`s3moves`, `s3burst`, `upgrade3`), `run_attacks.sh` (`PREV_IMG` = accepted stage-1 image c0f2b7b, `PREV2_IMG` = accepted
+stage-2 image aa63cd2), `ui_audit.py`/`run_ui.sh` (stage-2 browser regression), `run_oracle.sh`, `run_diff.sh`, `mutate.py`,
+`race.py`, `race_detect.sh` (all containerised).
 
-Previous-stage image for the upgrade: the accepted stage-1 build of c0f2b7b (`auditor-s1-c5`; rebuilt from a clean
-clone of c0f2b7b `stage-1/` if absent).
-
-## HTTP attacks added for stage 2
-| group | attacks | spec |
+## Stage-3 HTTP attacks
+| group | attacks | rulings |
 |---|---|---|
-| combo | reset with `combinable`, seeded `table_ids` and `status: cancelled`; `available_options` (singles in fixture order, then pairs in `combinable` order with ids in `combinable` order, capacity = sum, every member free) over 7 party/slot cases, incl. a pair declared out of fixture order, cancelled seeds not blocking, half-open release; `available_table_ids` unchanged; restaurant without `combinable` → singles only; POST pair → `table_ids`, no `table_id`, GET/list identical; member singles and sharing pairs → 409; reversed pair order accepted; `table_ids` of one → `table_id` present; `table_id` still accepted; error matrix (undeclared/non-transitive pair, 3 and 4 tables → `combination_not_allowed`; duplicate ids, both fields, neither → `validation_failed`; summed capacity exceeded → `party_exceeds_capacity`; string/null → 400; empty/numbers/unknown member soft pending rulings); idempotent replay of a pair; PATCH single→pair→single with release, every failure leaves the booking unchanged; cancel frees every member; moves with `table_ids` (swap single↔pair, results sharing a table → 409 and nothing changes, undeclared pair, both fields, wrong type); export→import into a fresh container keeps pairs and options | Model, API, UI (moves), Combined tables |
-| comboburst | per round: K1 48 bids that all share `c_2` (two pairs + single) → exactly one 201; K2 two disjoint pairs, 20 bids each → exactly two 201; K3 8 single-item moves onto one pair → one 201, one booking moved; K4 8 PATCHes onto pairs sharing `c_3` → one 200; invariant over every member table | Concurrent bookings and amendments |
-| upgrade | on the accepted stage-1 service: signup, keyed bookings, a batch, a failed key, a cancel, and a booking whose response is "lost"; export → candidate import: old tokens, identical reservations (+ `table_ids`), lookup, replays with original bodies (booking and batch), the lost booking's retry → original reference, reuse 409, failed key reusable, password login, new `table_ids` booking, no pairs on upgraded restaurants, options singles-only, idempotent re-import, current-format re-export into a fresh candidate | Existing clients after an upgrade, §7, §10 |
+| explain | stage-2 shape without explain (exact keys); every table once in fixture order, both rules in order, available ⇔ both hold, ids == available_table_ids; both-false table; full explain on a slot with no table; closed day `[]`; 6 invalid values → 422; invalid explain before the 404 and after party_size; repeated explain = first value | R-46 |
+| policies | manager_user_ids reset validation (6 refused fixtures, state unchanged; optional); 401/403/404/missing key; R-47 order (key before 403, 403 before validation, 404 before validation); 25 invalid policies → 422 incl. wrong JSON types, null, closes ≤ opens, duplicate weekday, capacities not exact / out of range; no version allocated by failures; exact 201 keys, unknown field not echoed; replay 200 / reuse 409 / failed key reusable; `30.0` integral; GET public, publication order, policy 0 omitted, unknown restaurant 404; detail unchanged (+ manager_user_ids, combinable); existing bookings and histories untouched by publication; selection by local start date (past effective date, same-date tie → greater version, before every policy → policy 0); capacities, grid, hours and duration of the selected policy (incl. pair sum); availability + explain policy_version; real amendment adopts the resulting date's policy (terms, ends_at, revision); failed amendment unchanged; no-op keeps policy-0 terms where the new policy would refuse; cutoff from the accepted terms vs a later cutoff-0 policy | R-47, R-48, R-49, R-59 |
+| history | created entry (all three fields from null, revision 1, terms, `at` = created_at in the restaurant offset); seeded booking one created entry; replay records nothing; changed lists only changed fields in order; no-op, same-set and failed PATCH record nothing; cancelled empty and last; repeated cancel nothing; seq and at order; owner-only 404 incl. no token / invalid token / manager; decision shape after cancel; pair creation `table_ids`, reversed pair not an amendment, pair→single full lists; old entries never acquire newer terms | R-51, R-56, R-58 |
+| revision | expected_revision current → change; stale → 409 before validation and cutoff; 7 invalid values → 422; R-49 order (400 types → 404 → 422 → stale → cancelled → cutoff); matching expected_revision alone is a no-op; stale on a no-op → 409; cancel +1, repeat +0, ignores expected_revision; replay keeps original revision and terms | R-49, R-50, R-58 |
+| series | 201 shape (exact keys, id ≤ 64), anchor = occurrence 0 unchanged (response, history), weekly dates, same table/party, distinct refs, listed, occupying, own histories; GET owner-only 404s; replay 200 / reuse 409 / replay after changes = original; already_in_series for the anchor and a generated occurrence; 9 invalid count/interval → 422; anchor_reference number → 400; missing → 422; invalid count before 404; unknown / foreign anchor 404; cancelled 409; anchor inside cutoff 409; occupancy failure 409 with nothing created and key reusable; spring-forward occurrence → invalid_local_time; fall-back → first occurrence; per-occurrence policy (v4, v3, v2 incl. duration); first failing occurrence decides (capacity at 1 before hours at 2); exception flag + series revision on real PATCH only; cancel +1 without exception; anchor cancel leaves siblings | R-52, R-53 |
+| s3moves | invalid per-item expected_revision 422; stale 409; occupancy failure changes nothing (revisions, histories, flags); success: changed occurrences become exceptions, series +1 once, each changed booking +1 and one entry, no-op item untouched; replay changes nothing | R-57 |
+| s3burst | per round: R1 10 PATCHes sharing expected_revision → one real change; R2 20 concurrent publications → versions exactly 1..20; R3 10 concurrent adoptions of one anchor → one 201, nine already_in_series; R4 16 concurrent writes on one booking → dense seq, revisions follow, nothing after cancelled; R5 identical keyed publications and adoptions → one 201 + identical 200s, one version; global overlap invariant | R-49, R-54 |
+| upgrade3 | exports from the accepted stage-1 and stage-2 images → candidate: old token + lookup, revision 1 under policy 0, created history, original retry body, adoption of an imported booking, no policies | R-55 |
 
-## Browser checks (battery step 7, `ui_audit.py`)
-| check | what |
-|---|---|
-| u_routes | `/`, `/signup`, `/login`, `/lookup` → 200 `text/html`; search controls present; `restaurant-select` option values are ids |
-| u_auth | signup signs in; `current-user` (with display name) on every route; `logout-button`; `auth-error` only on error (taken email, wrong password) |
-| u_grid | every `slot-{table}-{HH:MM}` cell exists with `data-available` mirroring `available_table_ids` for the searched party; every available declared pair has a `slot-{a}+{b}-{HH:MM}` cell (ids in `combinable` order); closed day → `no-slots` and no cells |
-| u_click_rules | unavailable cell → nothing; available cell signed out → `auth-error` or `/login` |
-| u_booking | single and pair: form opens, `booking-summary` names every table and the time, party pre-filled; confirmation (`confirmation-reference` exactly a reference, details, `confirmation-tables`); reservation exists server-side; form stays; unchanged resubmit → same reference, same key+body, no new booking; changed field → new key |
-| u_conflict | another client takes the table after the form opens → `booking-error`, no confirmation, form and inputs kept, cell refreshed to false |
-| u_lost_after / u_lost_before | response aborted after (and before) the server commits → non-empty `booking-uncertain`, no error/confirmation; unchanged retry reuses key and body → original reference, uncertainty removed, exactly one booking |
-| u_out_of_order | search A held, search B answered, A released → grid still B (cell values and full grid match B) |
-| u_lookup | detail, status exactly `confirmed`/`cancelled`, `reservation-tables`, cancel removes the button and really cancels; unknown → `reservation-error`; refused cancel (inside cutoff) → `reservation-error` |
-| u_states_distinct | available ≠ unavailable computed style; selected cell marked; loading marker (soft); screenshots of available/unavailable/selected/loading/empty/success/refused/uncertain/error |
-| u_keyboard | Tab reaches search controls and `booking-submit`; Enter on a cell opens the form; visible focus; every visible input labelled |
-| u_layout | no horizontal page scroll at 375, 768, 1280 px on every route, with the grid and with the form |
-| u_import | with `--prev`: candidate imports a stage-1 export, legacy user signs in, legacy reference works on `/lookup`; then a lost booking, export/import between requests, no reload: still signed in, retry keeps key+body and shows the original reference |
+Browser regression: the stage-2 `ui_audit.py` (116 checks) against the stage-3 candidate (grid follows stage-2 rules).
 
-## Other steps
-- Step 1: RUN.md literally, internal network, 2 CPU / 2 GiB, health ≤ 60 s, no egress; UI assets must load with no egress (u_routes run on the internal network; any CDN/font fetch fails there).
-- Step 5: mutation over `internal/…` incl. the new combination and UI-serving code, Oracle suite (HTTP + browser) as killer.
-- Step 6: race proofs for every guard, incl. any new one for combination occupancy.
-- Step 8: holdout `harness_win.py run --track tablekeeper --stage 2 --mode isolated` only after 1–7 are green.
-
-## Clause mapping (master ledger, main 6c768ee)
-Every HTTP check maps to C2.n / C1.n via `CLAUSE_RULES_S2` in `audit.py`; every browser check names its C2 clauses and
-ruling (R-29 absent-not-hidden, R-32 HH:MM + ISO date, R-38 key/body reuse, R-39 combination cells, R-40 signed-out
-navigation, R-30/R-37 upgrade).
-
-## Self-test status
-- HTTP: stage-1 groups unchanged (pass on the stage-1 build); `combo` 78/78 and `comboburst` 30/30 (5 rounds) on an
-  interim Builder build (seat/builder 91230e1, WI-8 only); `upgrade` mechanics verified stage-1→stage-1 (14/18; the 4
-  failures are stage-2 features) and red on 91230e1 because WI-9 is not there yet.
-- Browser: runner and harness mechanics verified (Chromium launches on the internal network); the checks themselves are
-  validated against the first build that serves the UI.
-
-## Rulings applied
-R-34 and R-35 (stage-2 rulings, main 4ddffa4): the six open points below are now hard checks — `[]` → 422; non-string/null members → 400; unknown or foreign table → 404 before the undeclared-pair 422; full R-34 error order (7 precedence checks); pair responses in declared `combinable` order; reordered pair under the same key → 409; 10 refused reset fixtures (unknown table in a pair, pair of one/three, self-pair, duplicate pair either order, seed naming an undeclared pair, seed with both/neither table fields, unknown seed status), each with state unchanged. Upgrade: two-part reading confirmed.
-
-## Former open points (answered by R-34/R-35)
-1. `table_ids: []` — 422 `validation_failed`?  2. `table_ids` with non-string members — 400?  3. a pair naming an unknown
-   table or a table of another restaurant — 404 `not_found` or 422 `combination_not_allowed`?  4. response order of a
-   pair's `table_ids` — request order, `combinable` order, or any?  5. same key with the pair listed in the other order —
-   a different body (409) or the same request?  6. reset fixture validation for `combinable` (unknown table, a pair of one
-   or three, a table paired with itself, duplicate pairs) and for seeded `table_ids` naming an undeclared pair.
-
-### Dry run on the Stylist branch d066ce9 (WI-8 + WI-9 + UI; not a candidate, not a verdict)
-- HTTP battery incl. upgrade from the stage-1 image: 718 checks, 0 failures.
-- Browser: after fixing three harness bugs (stale session in the login helper; 22:00 cells beyond the last 21:30 slot;
-  a 25-press Tab budget too small for a 140-cell grid), the only failures are against rulings issued after that build:
-  R-39 (cells for pairs below the party size at party 7), R-40 (signed-out lookup does not navigate to /login), R-32
-  (summary/details show "Thu, 29 Oct 2026 · 19:00" without the ISO date).
+## Self-test
+Stylist branch (seat/stylist, WI-19 explain): core + create + combo + explain = 345 checks, 0 failures. Policies,
+history, revision, series, moves and upgrade groups are validated on the first build that implements WI-17/18/20.
