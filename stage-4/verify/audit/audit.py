@@ -2921,14 +2921,24 @@ def g_replan(s: S):
     for name, f_, t_ in (("from == to", frm, frm), ("from after to", to, frm), ("no offset", f"{D}T18:00:00", to), ("Z offset form", frm, to.replace("+01:00", "Z")),
                          ("not a time", "tonight", to), ("date only", str(D), to), ("empty from", "", to)):
         exp_st = 201 if name == "Z offset form" else 422
-        chk.expect(f"replan interval {name} -> {exp_st}", s4.preview("r_rep", "a_3", f_, t_), exp_st, None if exp_st == 201 else "validation_failed",
-                   "S4 Replans", soft=name == "Z offset form")
+        chk.expect(f"replan interval {name} -> {exp_st} (R-62)", s4.preview("r_rep", "a_3", f_, t_), exp_st, None if exp_st == 201 else "validation_failed",
+                   "S4 Replans")
     for name, body in (("missing table_id", {"from": frm, "to": to}), ("missing from", {"table_id": "a_3", "to": to}), ("missing to", {"table_id": "a_3", "from": frm})):
         chk.expect(f"replan {name} -> 422", c.req("POST", "/restaurants/r_rep/replans", body, token=s4.mgr, key=uuid.uuid4().hex), 422, "validation_failed",
                    "S4 Replans")
-    for name, body in (("table_id a number", {"table_id": 3, "from": frm, "to": to}), ("from a number", {"table_id": "a_3", "from": 5, "to": to})):
-        chk.expect(f"replan {name} -> 400|422 (Q1)", c.req("POST", "/restaurants/r_rep/replans", body, token=s4.mgr, key=uuid.uuid4().hex), (400, 422),
-                   None, "S4 Replans")
+    for name, body, st_, code in (("table_id a number", {"table_id": 3, "from": frm, "to": to}, 400, "malformed_request"),
+                                  ("from a number", {"table_id": "a_3", "from": 5, "to": to}, 422, "validation_failed"),
+                                  ("table_id empty", {"table_id": "", "from": frm, "to": to}, 422, "validation_failed"),
+                                  ("table_id 65 chars", {"table_id": "t" * 65, "from": frm, "to": to}, 422, "validation_failed"),
+                                  ("bad interval beats unknown table", {"table_id": "zz", "from": to, "to": frm}, 422, "validation_failed")):
+        chk.expect(f"replan {name} -> {st_} (R-62)", c.req("POST", "/restaurants/r_rep/replans", body, token=s4.mgr, key=uuid.uuid4().hex), st_, code,
+                   "S4 Replans")
+    chk.expect("non-manager with an invalid body -> 403 (R-62)", c.req("POST", "/restaurants/r_rep/replans", {"table_id": 3}, token=s.ada, key=uuid.uuid4().hex),
+               403, "forbidden", "S4 Replans")
+    r0 = s4.preview("r_rep", "a_5", iso(f"{D}T13:00"), iso(f"{D}T14:00"))
+    j0 = r0.json if isinstance(r0.json, dict) else {}
+    chk.check("preview with no considered bookings is feasible: empty assignments, 0, 0 (R-62)", r0.status == 201 and j0.get("assignments") == []
+              and j0.get("moved_count") == 0 and j0.get("unused_seats") == 0, "empty plan", r0.text(200), r0.req, "S4 Replans")
     # preview vs brute force
     k = "rp-" + uuid.uuid4().hex
     r = s4.preview("r_rep", "a_3", frm, to, key=k)
@@ -2940,6 +2950,14 @@ def g_replan(s: S):
     chk.check("preview shape: plan_id, restaurant_revision, closure echo", isinstance(j.get("plan_id"), str) and isinstance(j.get("restaurant_revision"), int)
               and (j.get("closure") or {}).get("table_id") == "a_3" and parse_rfc((j.get("closure") or {}).get("from") or "") == parse_rfc(frm)
               and parse_rfc((j.get("closure") or {}).get("to") or "") == parse_rfc(to), "shape", r.text(300), r.req, "S4 Replans")
+    chk.check("preview body has exactly the R-65 keys; plan_id <= 64", set(j) == {"plan_id", "restaurant_revision", "closure", "assignments", "moved_count",
+              "unused_seats"} and 0 < len(j.get("plan_id") or "") <= 64 and all(set(a) == {"reference", "table_ids", "changed"} for a in j.get("assignments", [])),
+              "exact keys", sorted(j), r.req, "S4 Replans")
+    chk.check("closure from/to written in the restaurant offset, whole seconds, never Z (R-65)", (j.get("closure") or {}).get("from") == frm
+              and (j.get("closure") or {}).get("to") == to, [frm, to], j.get("closure"), r.req, "S4 Replans")
+    rz = s4.preview("r_rep", "a_3", frm, to.replace("+01:00", "Z").replace("T22:00:00Z", "T21:00:00Z"))
+    chk.check("a Z instant is echoed in the restaurant offset (R-65)", rz.status == 201 and (rz.json or {}).get("closure", {}).get("to") == to, to,
+              (rz.json or {}).get("closure"), rz.req, "S4 Replans")
     chk.check("restaurant_revision counts the 5 successful bookings since reset", j.get("restaurant_revision") == 5, 5, j.get("restaurant_revision"), r.req,
               "S4 Replans")
     plan_id = j.get("plan_id")
@@ -2996,6 +3014,10 @@ def g_replan(s: S):
             chk.check(f"moved {a['reference']}: one reassigned entry with plan_id and a table_ids change", len(e) == hist0[a["reference"]] + 1
                       and last.get("event") == "reassigned" and last.get("plan_id") == pid
                       and [ch.get("field") for ch in last.get("changes", [])] == ["table_ids"], "reassigned", last, None, "S4 Apply")
+            ch = (last.get("changes") or [{}])[0]
+            chk.check(f"moved {a['reference']}: reassigned from/to are the full old and new sets; entry revision and terms (R-67)",
+                      ch.get("from") == (old.get("table_ids") or [old.get("table_id")]) and ch.get("to") == a["table_ids"] and last.get("revision") == old["revision"] + 1
+                      and last.get("accepted_terms") == old.get("accepted_terms"), {"from": old.get("table_ids"), "to": a["table_ids"]}, ch, None, "S4 Apply")
         else:
             chk.check(f"unmoved {a['reference']} gains nothing", g == old and len(e) == hist0[a["reference"]], "unchanged", g, None, "S4 Apply")
     chk.expect("same plan, second key -> 409 plan_already_applied", s4.apply("r_rep", pid), 409, "plan_already_applied", "S4 Apply")
@@ -3017,6 +3039,10 @@ def g_replan(s: S):
                                                                          key=uuid.uuid4().hex), 409, "table_unavailable", "S4 Closures")
     chk.expect("amend onto the closed table -> 409", c.req("PATCH", f"/reservations/{f1['reference']}", {"table_id": "a_3", "starts_at_local": L("20:30")},
                                                            token=s.ada), 409, "table_unavailable", "S4 Closures")
+    r3 = s4.preview("r_rep", "a_3", iso(L("19:00")), iso(L("21:00")))
+    exp3 = _expected_plan(s4, [s.ada, s.bob], "r_rep", "a_3", iso(L("19:00")), iso(L("21:00")), REP_TABLES, REP_PAIRS, closures=[("a_3", parse_rfc(frm), parse_rfc(to))])
+    chk.check("a closure on an already-closed table is planned normally (R-73)", (r3.status == 409 and exp3 is None) or (exp3 is not None and _plan_matches(r3, exp3)[0]),
+              exp3, r3.text(300), r3.req, "S4 Replans")
     r = s4.preview("r_rep", "a_4", frm, to)
     chk.check("restaurant_revision after the plan is 7 (once for the whole plan)", (r.json or {}).get("restaurant_revision") == 7, 7, r.text(200), r.req, "S4 Replans")
     exp2 = _expected_plan(s4, [s.ada, s.bob], "r_rep", "a_4", frm, to, REP_TABLES, REP_PAIRS, closures=[("a_3", parse_rfc(frm), parse_rfc(to))])
@@ -3025,6 +3051,33 @@ def g_replan(s: S):
     else:
         ok, got = _plan_matches(r, exp2)
         chk.check("second preview honours the applied closure (brute force)", ok, exp2, got, r.req, "S4 Replans")
+
+
+def g_limits(s: S):
+    """R-63: 422 planning_limit for > 6 tables, > 4 pairs or > 6 considered bookings; exactly at the limits it plans."""
+    chk, ctx = s.chk, s.ctx
+    s4 = S4(s)
+    D = ctx.thu
+    frm, to = iso(f"{D}T18:00"), iso(f"{D}T22:00")
+    t7 = [{"id": f"y_{i}", "label": f"Y{i}", "capacity": 4} for i in range(1, 8)]
+    s4.reset4(tables=t7, pairs=[])
+    chk.expect("7 tables -> 422 planning_limit (R-63)", s4.preview("r_rep", "y_1", frm, to), 422, "planning_limit", "S4 Replans")
+    t6 = t7[:6]
+    p5 = [["y_1", "y_2"], ["y_3", "y_4"], ["y_5", "y_6"], ["y_1", "y_3"], ["y_2", "y_4"]]
+    s4.reset4(tables=t6, pairs=p5)
+    chk.expect("5 declared pairs -> 422 planning_limit (R-63)", s4.preview("r_rep", "y_1", frm, to), 422, "planning_limit", "S4 Replans")
+    s4.reset4(tables=t6, pairs=p5[:4])
+    for i, t in enumerate(["y_1", "y_2", "y_3", "y_4", "y_5", "y_6"]):
+        s.book(s.ada, "r_rep", t, f"{D}T{['18:00', '18:30', '19:00', '19:30', '20:00', '20:30'][i]}", 2)
+    r = s4.preview("r_rep", "y_1", frm, to)
+    exp = _expected_plan(s4, [s.ada, s.bob], "r_rep", "y_1", frm, to, t6, p5[:4])
+    if exp is None:
+        chk.expect("exactly 6 tables / 4 pairs / 6 considered: planned (409 no_feasible_plan per brute force)", r, 409, "no_feasible_plan", "S4 Replans")
+    else:
+        ok, got = _plan_matches(r, exp)
+        chk.check("exactly 6 tables / 4 pairs / 6 considered: optimal plan (R-63)", ok, exp, got, r.req, "S4 Replans")
+    s.book(s.bob, "r_rep", "y_6", f"{D}T18:00", 2)
+    chk.expect("7 considered bookings -> 422 planning_limit (R-63)", s4.preview("r_rep", "y_1", frm, to), 422, "planning_limit", "S4 Replans")
 
 
 def g_optimal(s: S, rounds: int):
@@ -3111,6 +3164,9 @@ def g_samend(s: S):
     c.req("POST", f"/reservations/{refs[3]}/cancel", token=s.ada)                       # cancelled, series rev 3
     snap = {x: s.get(s.ada, x).json for x in refs}
     hist = {x: len(s4.entries(x, s.ada) or []) for x in refs}
+    def rrev():
+        return (s4.preview("r_ser", "s_1", iso(f"{D}T12:00"), iso(f"{D}T12:30")).json or {}).get("restaurant_revision")
+    rev_before = rrev()
     k = "am-" + uuid.uuid4().hex
     r = amend({"expected_revision": 3, "from_index": 1, "local_time": "20:00", "zzz": 1}, key=k)
     j = r.json if isinstance(r.json, dict) else {}
@@ -3129,10 +3185,12 @@ def g_samend(s: S):
                   "changed", e[-1:] if e else None, None, "S4 Amend")
     for i in (0, 2, 3):
         chk.check(f"occurrence {i} unchanged", s.get(s.ada, refs[i]).json == snap[refs[i]], "unchanged", None, None, "S4 Amend")
+    chk.check("a changing amend increments the restaurant revision once (R-69)", rev_before is not None and rrev() == rev_before + 1, (rev_before or 0) + 1,
+              rrev(), None, "S4 Amend")
     rr = amend({"expected_revision": 3, "from_index": 1, "local_time": "20:00", "zzz": 1}, key=k)
     chk.check("amend replay -> 200 original", rr.status == 200 and rr.json == r.json, 200, rr.text(200), rr.req, "S4 Amend")
     r = amend({"expected_revision": 4, "from_index": 1, "local_time": "20:00"})
-    chk.check("all-no-op amend succeeds without changing revisions", r.status in (200, 201) and (r.json or {}).get("revision") == 4, 4, r.text(200), r.req, "S4 Amend")
+    chk.check("all-no-op amend -> 201 without changing revisions (R-71)", r.status == 201 and (r.json or {}).get("revision") == 4, 4, r.text(200), r.req, "S4 Amend")
     # failure atomicity: occupancy on a later occurrence
     snap = {x: s.get(s.ada, x).json for x in refs}
     blocker = s.book(s.bob, "r_ser", "s_2", f"{D + timedelta(days=28)}T21:30", 2)
@@ -3246,7 +3304,7 @@ def g_upgrade4(s: S, prev: Client | None, prev2: Client | None, prev3: Client | 
 
 GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
           "combo", "comboburst", "upgrade", "explain", "policies", "history", "revision", "series", "s3moves", "s3burst", "upgrade3",
-          "replan", "optimal", "samend", "s4burst", "upgrade4"]
+          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:
