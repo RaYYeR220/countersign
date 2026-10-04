@@ -114,13 +114,9 @@ func (s *Server) createSeries(w http.ResponseWriter, r *http.Request, user *stat
 			return nil, cutoffPassed()
 		}
 		rest := st.Restaurant(anchor.RestaurantID)
-		loc, err := localtime.Location(rest.Timezone)
-		if err != nil {
-			return nil, err
-		}
 
-		// Plan every occurrence before writing anything.
-		planned, err := planOccurrences(st, rest, loc, anchor, count, weeks)
+		// Check every occurrence before writing anything.
+		planned, err := planOccurrences(st, rest, anchor, count, weeks)
 		if err != nil {
 			return nil, err
 		}
@@ -132,13 +128,10 @@ func (s *Server) createSeries(w http.ResponseWriter, r *http.Request, user *stat
 			IntervalWeeks: weeks,
 			Occurrences:   []state.Occurrence{{Reference: anchor.Reference}},
 		}
-		createdAt := state.Stamp(now)
 		anchor.SeriesID = series.ID
-		for _, res := range planned {
-			res.CreatedAt = createdAt
+		for _, p := range planned {
+			res := st.InsertReservation(user.ID, rest, slices.Clone(anchor.TableIDs), p.local, anchor.PartySize, p.policy, p.start, p.end, now)
 			res.SeriesID = series.ID
-			st.AddReservation(res)
-			res.Record(res.CreatedAt, state.EventCreated, res.CreatedChanges())
 			series.Occurrences = append(series.Occurrences, state.Occurrence{Reference: res.Reference})
 		}
 		st.Series[series.ID] = series
@@ -147,47 +140,35 @@ func (s *Server) createSeries(w http.ResponseWriter, r *http.Request, user *stat
 	})
 }
 
-// planOccurrences builds occurrences 1 … count−1 of anchor: the same local clock time on the
-// anchor's date plus i × weeks × 7 days, each under its own date's policy, with the ordinary booking
-// checks in R-7 order. Occupancy counts existing confirmed bookings and earlier planned occurrences.
-func planOccurrences(st *state.State, rest *state.Restaurant, loc *time.Location, anchor *state.Reservation, count, weeks int) ([]*state.Reservation, error) {
-	anchorDate, err := time.Parse("2006-01-02", localDate(anchor.StartsAtLocal))
+// plannedOccurrence is a generated occurrence that passed every check and awaits insertion.
+type plannedOccurrence struct {
+	local      string
+	policy     state.Policy
+	start, end time.Time
+}
+
+// planOccurrences checks occurrences 1 … count−1 of anchor: the same local clock time on the
+// anchor's date plus i × weeks × 7 days, each through the shared booking chain under its own date's
+// policy (R-7 order). Occupancy counts existing confirmed bookings and earlier planned occurrences.
+func planOccurrences(st *state.State, rest *state.Restaurant, anchor *state.Reservation, count, weeks int) ([]plannedOccurrence, error) {
+	anchorDate, err := time.Parse("2006-01-02", state.LocalDate(anchor.StartsAtLocal))
 	if err != nil {
 		return nil, apperr.Validation("anchor has an invalid start")
 	}
 	clock := anchor.StartsAtLocal[len("2006-01-02T"):]
-	var planned []*state.Reservation
+	var planned []plannedOccurrence
 	for i := 1; i < count; i++ {
-		date := anchorDate.AddDate(0, 0, i*weeks*7).Format("2006-01-02")
-		local := date + "T" + clock
-		pol := rest.PolicyFor(date)
-		start, err := localtime.CheckStart(loc, pol.OpeningHours, pol.SlotMinutes, pol.ReservationDurationMinutes, local)
+		local := anchorDate.AddDate(0, 0, i*weeks*7).Format("2006-01-02") + "T" + clock
+		pol, start, end, err := st.CheckBooking(rest, anchor.TableIDs, local, anchor.PartySize, nil)
 		if err != nil {
 			return nil, err
 		}
-		if anchor.PartySize > pol.Capacity(anchor.TableIDs) {
-			return nil, partyExceedsCapacity()
-		}
-		end := localtime.End(start, pol.ReservationDurationMinutes)
-		if st.TableBusy(rest.ID, anchor.TableIDs, start, end, nil) {
-			return nil, tableUnavailable()
-		}
 		for _, other := range planned {
-			if localtime.Overlaps(other.StartsAt, other.EndsAt, start, end) {
-				return nil, tableUnavailable()
+			if localtime.Overlaps(other.start, other.end, start, end) {
+				return nil, apperr.TableUnavailable()
 			}
 		}
-		planned = append(planned, &state.Reservation{
-			UserID:        anchor.UserID,
-			RestaurantID:  rest.ID,
-			TableIDs:      slices.Clone(anchor.TableIDs),
-			PartySize:     anchor.PartySize,
-			StartsAtLocal: local,
-			StartsAt:      start,
-			EndsAt:        end,
-			Revision:      1,
-			Terms:         pol.Terms,
-		})
+		planned = append(planned, plannedOccurrence{local, pol, start, end})
 	}
 	return planned, nil
 }
