@@ -479,7 +479,6 @@ async def stage1_upgrade(pw, base, base1, width):
 
 async def replan_step(pw, base, width):
     """C4.2/C4.15: a manager closes t_2 and applies a replan; the grid, a new confirmation and lookup reflect it."""
-    from zoneinfo import ZoneInfo
     reset(base)
     browser = await pw.chromium.launch()
     ctx = await browser.new_context(viewport={"width": width, "height": 900})
@@ -496,8 +495,8 @@ async def replan_step(pw, base, width):
     ref = (await page.get_by_test_id("confirmation-reference").inner_text()).strip()
 
     # The manager closes t_2 for the evening and applies the optimal plan.
-    off = dt.datetime.fromisoformat(f"{D}T12:00").replace(tzinfo=ZoneInfo("Europe/Berlin")).strftime("%z")
-    off = off[:3] + ":" + off[3:]
+    # The restaurant's UTC offset on that date, as the service itself reports it.
+    off = http(base, "GET", f"/availability?restaurant_id=r_anker&date={D}&party_size=2")[1]["slots"][0]["starts_at"][-6:]
     mgr = token_for(base, "mgr@example.com")
     st, plan = http(base, "POST", "/restaurants/r_anker/replans",
                     {"table_id": "t_2", "from": f"{D}T18:00:00{off}", "to": f"{D}T23:00:00{off}"}, mgr, f"plan-{width}")

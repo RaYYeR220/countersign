@@ -44,3 +44,35 @@ stage-4 lost-booking retry. Both containers were stopped.
   manager previews and applies a t_2 closure, then the grid is compared with the API with every t_2 cell false,
   and lookup shows the new tables, with screenshots 27 and 28). It waits for the Builder's replan endpoints
   (WI-23), which are not on any branch yet. I will run it and post the WI-26 evidence then.
+
+---
+
+# Addendum — WI-26 complete (after the Builder's replans landed on main cb0f43b)
+
+- Code: `availability.go` (main cb0f43b, line 135) treats an applied closure as busy:
+  `free(id) = !rest.Closed(id, slot.Start, slot.End) && !tableBusy(...)`. A closed table and every pair
+  containing it leave available_table_ids and available_options, and explain reports `no_overlap: false` (R-68).
+- UI: a cell unavailable for reasons other than capacity now reads "Taken" instead of "Booked". A closure is not
+  a booking, and the API doesn't say which applies, so the label claims neither. "Unavailable" was tried first
+  but broke mid-word at 375 px.
+- `evidence/design/stage-4/ui_check.py --replan` adds a replanned-restaurant scenario at every width:
+  1. Ada books t_2 at 19:00 in the browser.
+  2. The manager previews a t_2 closure 18:00–23:00 through the API (offset taken from the service), and the
+     plan moves Ada off t_2. The manager applies it (201).
+  3. A fresh search's grid equals GET /availability cell by cell (R-39). Every `slot-t_2-*` and every pair cell
+     containing t_2 is false.
+  4. Clicking a closed cell opens no form.
+  5. Lookup shows the booking confirmed on its new table. Screenshots 27 (grid) and 28 (lookup).
+
+## Commands (all exit 0)
+- `git merge main` (cb0f43b); `cd stage-4 && go vet ./...`; the api test binary passes the full suite; the other
+  packages are ok.
+- `docker build -t stylist-tk4:wi26c stage-4`
+- Stage-4 on :18214 and accepted stage-1 on :18212:
+  `ui_check.py --base :18214 --stage1 :18212 --replan` → **270/270** checks pass at 375, 768 and 1280 px. That
+  is the stage-2 browser regression plus the stage-1 → stage-4 upgrade retry plus the replanned restaurant.
+  84 screenshots are in evidence/design/stage-4/. Both containers were stopped.
+
+## Known gaps
+- none. An open confirmation card is not refreshed after a plan is applied (no polling, per the S5 ruling).
+  Lookup and availability show the post-plan state.
