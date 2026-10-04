@@ -1,0 +1,49 @@
+{
+ "guard": "G1 Store.Write exclusive lock (state/store.go)",
+ "edits": [
+  {
+   "file": "internal/state/store.go",
+   "old": "func (s *Store) Write(fn func(*State)) {\n\ts.mu.Lock()\n\tdefer s.mu.Unlock()",
+   "new": "func (s *Store) Write(fn func(*State)) {",
+   "occurrences": 1
+  }
+ ],
+ "groups": "burst,s3burst",
+ "rounds": 2,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:burst/group ran to completion",
+     "audit:burst/no-5xx",
+     "audit:burst/r1 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+     "audit:burst/r1 B4 exactly one booking created",
+     "audit:burst/r1 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+     "audit:s3burst/group ran to completion",
+     "audit:s3burst/no-5xx"
+    ],
+    "n": 7,
+    "note": "crashed",
+    "crashed": true
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}

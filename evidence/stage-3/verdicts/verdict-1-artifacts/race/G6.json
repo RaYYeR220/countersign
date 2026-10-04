@@ -1,0 +1,49 @@
+{
+ "guard": "G6 occupancy covers every member of a table set (state/reservations.go TableBusy)",
+ "edits": [
+  {
+   "file": "internal/state/reservations.go",
+   "old": "!SharesTable(res.TableIDs, tableIDs)",
+   "new": "!SharesTable(res.TableIDs[:1], tableIDs[:1])",
+   "occurrences": 1
+  }
+ ],
+ "groups": "combo,comboburst",
+ "rounds": 2,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:combo/combo group: no overlapping confirmed bookings",
+     "audit:combo/single on the other member -> 409",
+     "audit:combo/table_id still accepted: response carries table_ids [t]",
+     "audit:comboburst/r0 K4 8 PATCHes onto pairs sharing c_3: exactly one 200",
+     "audit:comboburst/r0 after combination bursts: no overlapping confirmed bookings",
+     "audit:comboburst/r1 K4 8 PATCHes onto pairs sharing c_3: exactly one 200",
+     "audit:comboburst/r1 after combination bursts: no overlapping confirmed bookings"
+    ],
+    "n": 7,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}

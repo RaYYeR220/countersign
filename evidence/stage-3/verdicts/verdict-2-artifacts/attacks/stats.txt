@@ -1,0 +1,2 @@
+auditor-s3-a cpu=0.00% mem=7.609MiB / 2GiB
+auditor-s3-b cpu=0.00% mem=6.199MiB / 2GiB

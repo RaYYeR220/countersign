@@ -1,0 +1,52 @@
+{
+ "guard": "G4 batch moves: check every resulting booking before applying any (api/moves.go)",
+ "edits": [
+  {
+   "file": "internal/api/moves.go",
+   "old": "\t\tif conflicts(st, changes) {",
+   "new": "\t\tapply(st, changes[:1], now)\n\t\tif conflicts(st, changes) {",
+   "occurrences": 1
+  }
+ ],
+ "groups": "moves,s3moves",
+ "rounds": 1,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:moves/failed batch changed nothing",
+     "audit:moves/failed batch kept old occupancy (A still holds t_3 at 19:00)",
+     "audit:moves/no-op moves 201 returning unchanged bookings in input order",
+     "audit:moves/unchanged after internal overlap",
+     "audit:s3moves/batch on two occurrences + a no-op anchor -> 201",
+     "audit:s3moves/batch replay 200 original, changes nothing",
+     "audit:s3moves/each affected series revision increases once; changed occurrences become exceptions; no-op anchor untouched",
+     "audit:s3moves/every changed booking gains one revision; the no-op keeps its own",
+     "audit:s3moves/failed batch changes no revisions, histories or exception flags",
+     "audit:s3moves/one changed entry per changed booking, none for the no-op"
+    ],
+    "n": 10,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}

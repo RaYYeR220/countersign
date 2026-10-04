@@ -1,0 +1,46 @@
+788 mutants generated
+baseline: 0 failing checks (excluded from kill criteria)
+[103s] #0 internal/jsonin/jsonin.go:167 NEG -> KILLED  (killed 1, survived 0)
+[121s] #4 internal/state/fixture.go:195 NEG -> KILLED  (killed 2, survived 0)
+[137s] #2 internal/state/integrity.go:93 CB -> SURVIVED  (killed 2, survived 1)
+[237s] #3 internal/state/integrity.go:87 NEG -> KILLED  (killed 3, survived 1)
+[245s] #1 internal/api/tables.go:27 NEG -> KILLED  (killed 4, survived 1)
+[355s] #6 internal/state/integrity.go:65 LOG -> KILLED  (killed 5, survived 1)
+[382s] #5 internal/api/idempotency.go:60 NEG -> KILLED  (killed 6, survived 1)
+[500s] #8 internal/state/integrity.go:71 LOG -> KILLED  (killed 7, survived 1)
+[516s] #7 internal/api/reservations.go:163 NEG -> KILLED  (killed 8, survived 1)
+[579s] #11 internal/state/fixture.go:149 NEG -> KILLED  (killed 9, survived 1)
+[618s] #9 internal/api/series.go:81 NEG -> KILLED  (killed 10, survived 1)
+[649s] #10 internal/state/tables.go:13 NEG -> KILLED  (killed 11, survived 1)
+[784s] #12 internal/state/integrity.go:154 CB -> KILLED  (killed 12, survived 1)
+[792s] #16 internal/state/fixture.go:104 ARI -> INVALID  (killed 12, survived 1)
+[846s] #13 internal/state/integrity.go:121 NEG -> KILLED  (killed 13, survived 1)
+[880s] #14 internal/api/amend.go:209 NEG -> KILLED  (killed 14, survived 1)
+[911s] #15 internal/state/integrity.go:65 LOG -> KILLED  (killed 15, survived 1)
+[918s] #17 internal/state/integrity.go:152 CB -> SURVIVED  (killed 15, survived 2)
+[964s] #18 internal/state/fixture.go:146 NEG -> KILLED  (killed 16, survived 2)
+[989s] #19 internal/jsonin/jsonin.go:167 NEG -> KILLED  (killed 17, survived 2)
+[1088s] #22 internal/state/integrity.go:141 LOG -> SURVIVED  (killed 17, survived 3)
+[1114s] #23 internal/snapshot/snapshot.go:158 LOG -> SURVIVED  (killed 17, survived 4)
+[1163s] #21 internal/api/amend.go:187 INV -> KILLED  (killed 18, survived 4)
+[1164s] #20 internal/api/series.go:77 NEG -> KILLED  (killed 19, survived 4)
+[1207s] #24 internal/state/integrity.go:195 LOG -> SURVIVED  (killed 19, survived 5)
+[1332s] #25 internal/api/auth.go:71 LOG -> KILLED  (killed 20, survived 5)
+[1366s] #26 internal/api/auth.go:71 NEG -> KILLED  (killed 21, survived 5)
+[1380s] #27 internal/api/policies.go:42 NEG -> KILLED  (killed 22, survived 5)
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 33,
+ "generated": 788,
+ "evaluated": 28,
+ "killed": 22,
+ "survived": 5,
+ "invalid": 1,
+ "kill_rate": 0.815,
+ "elapsed_s": 1381,
+ "baseline_failing": [],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ]
+}

@@ -1,0 +1,43 @@
+787 mutants generated
+baseline: 2 failing checks (excluded from kill criteria)
+[230s] #1 internal/snapshot/snapshot.go:158 NEG -> KILLED  (killed 1, survived 0)
+[231s] #3 internal/jsonin/jsonin.go:157 LOG -> KILLED  (killed 2, survived 0)
+[234s] #0 internal/state/fixture.go:237 NEG -> KILLED  (killed 3, survived 0)
+[258s] #2 internal/api/auth.go:31 NEG -> KILLED  (killed 4, survived 0)
+[272s] #5 internal/state/fixture.go:195 NEG -> KILLED  (killed 5, survived 0)
+[385s] #4 internal/api/auth.go:71 NEG -> KILLED  (killed 6, survived 0)
+[396s] #6 internal/state/policyparse.go:20 LOG -> KILLED  (killed 7, survived 0)
+[410s] #7 internal/snapshot/snapshot.go:131 LOG -> KILLED  (killed 8, survived 0)
+[418s] #8 internal/api/tables.go:42 NEG -> KILLED  (killed 9, survived 0)
+[420s] #12 internal/state/fixture.go:196 ARI -> INVALID  (killed 9, survived 0)
+[500s] #10 internal/state/integrity.go:93 LOG -> SURVIVED  (killed 9, survived 1)
+[567s] #13 internal/state/integrity.go:195 CB -> SURVIVED  (killed 9, survived 2)
+[746s] #11 internal/state/fixture.go:103 LOG -> KILLED  (killed 10, survived 2)
+[841s] #9 internal/api/idempotency.go:48 NEG -> KILLED  (killed 11, survived 2)
+[903s] #14 internal/snapshot/snapshot.go:131 NEG -> KILLED  (killed 12, survived 2)
+[925s] #16 internal/state/fixture.go:259 NEG -> KILLED  (killed 13, survived 2)
+[1022s] #15 internal/localtime/localtime.go:190 INV -> KILLED  (killed 14, survived 2)
+[1102s] #18 internal/state/integrity.go:153 CB -> SURVIVED  (killed 14, survived 3)
+[1205s] #20 internal/api/reservations.go:144 CB -> SURVIVED  (killed 14, survived 4)
+[1240s] #17 internal/api/moves.go:22 CB -> KILLED  (killed 15, survived 4)
+[1284s] #21 internal/state/integrity.go:202 NEG -> SURVIVED  (killed 15, survived 5)
+[1874s] #19 internal/api/series.go:179 NEG -> KILLED  (killed 16, survived 5)
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 31,
+ "generated": 787,
+ "evaluated": 22,
+ "killed": 16,
+ "survived": 5,
+ "invalid": 1,
+ "kill_rate": 0.762,
+ "elapsed_s": 1875,
+ "baseline_failing": [
+  "audit:series/65-character anchor_reference -> 422 before 404 (R-60)",
+  "audit:series/empty anchor_reference -> 422 before 404 (R-60)"
+ ],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ]
+}
