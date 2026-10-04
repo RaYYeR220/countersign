@@ -21,7 +21,7 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 ## Candidates
 | # | sha | contents | verdict |
 |---|-----|----------|---------|
-| 1 | 06cdcd6 | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head + WI-27 RUN.md (d2b6859) | superseded by 2 (R-74 history import finding → WI-28) |
+| 1 | 06cdcd6 | WI-23/24 (builder 7bbe4d4), WI-25/26 (stylist a30b404), oracle 38fda84, auditor head + WI-27 RUN.md (d2b6859) | REJECT (verdict 1: F-1 R-74 → WI-28); superseded by 2 |
 | WI-27 | Builder | RUN.md for stage 4 | C1.6 | merged |
 | WI-28 | Builder | stage-4 candidate 1: import accepts a history whose first entry is not created; R-74 | C1.109, C3.13, C3.28 | evidence 69fd2b3, merged (rework round 1 of 2 on WI-24 import validation) |
 | 2 | (this commit) | + WI-28 (69fd2b3) | pending |
