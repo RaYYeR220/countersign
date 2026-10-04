@@ -21,6 +21,7 @@ import random
 import re
 import sys
 import time
+import datetime as _dtmod
 from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -157,6 +158,9 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
         return execute(op, probe)
 
     series_labels: list[str] = []
+    plan_labels: list = []
+    apply_keys: list[str] = []
+    amend_keys: list[str] = []
 
     def policy_body(restaurant: str) -> dict:
         caps = {t: CAPS[t] for t in RESTAURANTS[restaurant]}
@@ -368,6 +372,41 @@ def gen_sequence(rng: random.Random, n_ops: int) -> list[dict]:
             t = tok()
             emit({"op": "get_series", "token": t if rng.random() > 0.1 else Sym("token", "none"),
                   "series": Sym("series", rng.choice(series_labels)) if series_labels and rng.random() > 0.1 else "nope"})
+        elif r < 0.35:
+            t = tok()
+            rest = rng.choice(list(RESTAURANTS))
+            tbl = rng.choice(RESTAURANTS[rest] + ["zzz"])
+            day = rng.choice([FUT_THU, FUT_FRI, FUT_DAY, PAST_DAY])
+            frm_h, to_h = sorted(rng.sample(range(10, 24), 2))
+            frm = f"{day}T{frm_h:02d}:00:00+02:00"
+            to = f"{day}T{to_h:02d}:00:00+02:00"
+            x = rng.random()
+            if x < 0.05:
+                frm, to = to, frm
+            elif x < 0.08:
+                to = to.replace("+02:00", "Z")
+            st, out = emit({"op": "preview", "label": f"pl{i}", "token": t, "restaurant_id": rest, "key": f"rk{i}",
+                            "body": {"table_id": tbl, "from": frm, "to": to}})
+            if st == 201:
+                plan_labels.append((f"pl{i}", rest))
+        elif r < 0.38 and plan_labels:
+            t = tok()
+            lab, rest = rng.choice(plan_labels)
+            key = f"ak{i}"
+            if rng.random() < 0.2 and apply_keys:
+                key = rng.choice(apply_keys)
+            emit({"op": "apply", "token": t, "restaurant_id": rest if rng.random() > 0.05 else "r_ny", "plan": Sym("plan", lab), "key": key})
+            apply_keys.append(key)
+        elif r < 0.42 and series_labels:
+            t = tok()
+            lab = rng.choice(series_labels)
+            body = {"expected_revision": rng.choice([1, 1, 2, 3, 0, True]), "from_index": rng.choice([0, 0, 1, 2, 5, -1]),
+                    "local_time": rng.choice(["19:00", "20:00", "21:30", "18:00", "8:00", "25:00", "20:00:00"])}
+            key = f"mk{i}"
+            if rng.random() < 0.15 and amend_keys:
+                key = rng.choice(amend_keys)
+            emit({"op": "amend", "token": t, "series": Sym("series", lab), "key": key, "body": body})
+            amend_keys.append(key)
         elif r < 0.40:
             t = tok()
             body = booking_body()
@@ -525,6 +564,18 @@ def execute(op: dict, t: Target) -> tuple[int, Any]:
         return st, out
     if kind == "get_series":
         return t.raw_call("GET", f"/series/{t.resolve(op['series'])}", "", hdr, None)
+    if kind == "preview":
+        hdr["Idempotency-Key"] = op["key"]
+        st, out = t.raw_call("POST", f"/restaurants/{op['restaurant_id']}/replans", "", hdr, op["body"])
+        if st == 201 and isinstance(out, dict):
+            t.bind("plan", op["label"], out.get("plan_id"))
+        return st, out
+    if kind == "apply":
+        hdr["Idempotency-Key"] = op["key"]
+        return t.raw_call("POST", f"/restaurants/{op['restaurant_id']}/replans/{t.resolve(op['plan'])}/apply", "", hdr, {})
+    if kind == "amend":
+        hdr["Idempotency-Key"] = op["key"]
+        return t.raw_call("POST", f"/series/{t.resolve(op['series'])}/amend", "", hdr, op["body"])
     if kind == "export":
         st, out = t.raw_call("GET", "/_test/export", "", {}, None)
         if st == 200:
@@ -573,7 +624,26 @@ def normalise(status: int, body: Any, t: Target, op: dict) -> Any:
     if op["op"] == "decision" and isinstance(body, dict) and "reference" in body:
         rl = t.label_of("ref", body.get("reference"))
         return {"status": status, "body": {**body, "reference": f"<ref:{rl}>" if rl else body.get("reference")}}
-    if op["op"] in ("series", "get_series") and isinstance(body, dict) and "occurrences" in body:
+    if op["op"] == "preview" and isinstance(body, dict) and "plan_id" in body:
+        lab = t.label_of("plan", body.get("plan_id"))
+        b = dict(body)
+        b["plan_id"] = f"<plan:{lab}>" if lab else b["plan_id"]
+        b["assignments"] = [{**a, "reference": f"<ref:{t.label_of('ref', a.get('reference'))}>" if t.label_of("ref", a.get("reference")) else a.get("reference")}
+                            for a in b.get("assignments", [])]
+        if isinstance(b.get("closure"), dict):
+            cl = dict(b["closure"])
+            for f in ("from", "to"):
+                try:
+                    cl[f] = _dtmod.datetime.fromisoformat(cl[f]).astimezone(_dtmod.timezone.utc).isoformat()
+                except (TypeError, ValueError):
+                    pass
+            b["closure"] = cl
+        return {"status": status, "body": b}
+    if op["op"] == "apply" and isinstance(body, dict) and "plan_id" in body:
+        lab = t.label_of("plan", body.get("plan_id"))
+        return {"status": status, "body": {**body, "plan_id": f"<plan:{lab}>" if lab else body["plan_id"],
+                                           "reservations": [res(x) if isinstance(x, dict) else x for x in body.get("reservations", [])]}}
+    if op["op"] in ("series", "get_series", "amend") and isinstance(body, dict) and "occurrences" in body:
         lab = t.label_of("series", body.get("series_id"))
         occs = []
         for o in body["occurrences"]:
