@@ -97,6 +97,7 @@
         const pending = JSON.parse(localStorage.getItem(PENDING) || "null"); localStorage.removeItem(PENDING);
         history.pushState({}, "", pending && pending.path ? pending.path : "/");
         if (pending && pending.search) { S.lastSearch = pending.search; S.pendingSelection = pending.selection || null; }
+        if (pending && pending.lookup) S.pendingLookup = pending.lookup;
         route();
       }
       else errBox.append(el("div", { testid: "auth-error", class: "error" }, (r.json && r.json.error && r.json.error.message) || "Could not sign in"));
@@ -244,14 +245,14 @@
   // ---------------------------------------------------------------- lookup screen
   function lookupScreen() {
     const m = $("#main"); m.innerHTML = "";
-    if (!S.token) {                                                // R-40: lookup needs a session
-      localStorage.setItem(PENDING, JSON.stringify({ path: "/lookup" }));
-      history.pushState({}, "", "/login"); return authScreen("login");
-    }
     const input = el("input", { testid: "lookup-reference-input", id: "lookup-reference-input", type: "text" });
     const out = el("div");
     const show = async (ref) => {
       out.innerHTML = "";
+      if (!S.token) {                                              // R-41: submitting while signed out -> /login, then back
+        localStorage.setItem(PENDING, JSON.stringify({ path: "/lookup", lookup: ref }));
+        history.pushState({}, "", "/login"); return authScreen("login");
+      }
       const r = await api("GET", "/reservations/" + encodeURIComponent(ref));
       if (r.status !== 200) { out.append(el("div", { testid: "reservation-error", class: "error" }, "Reservation not found")); return; }
       const o = r.json;
@@ -271,6 +272,7 @@
     };
     m.append(el("h1", {}, "Look up a reservation"), el("label", { for: "lookup-reference-input" }, "Reference"), input, " ",
              el("button", { testid: "lookup-submit", class: "primary", onclick: () => show(input.value.trim()) }, "Find"), out);
+    if (S.pendingLookup) { const ref = S.pendingLookup; S.pendingLookup = null; input.value = ref; show(ref); }
   }
 
   // ---------------------------------------------------------------- routing
