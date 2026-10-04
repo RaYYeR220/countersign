@@ -2904,8 +2904,8 @@ def g_replan(s: S):
     b2 = s.book(s.bob, "r_rep", "a_4", L("19:00"), 3)
     b3 = s.book(s.ada, "r_rep", "a_1", L("20:00"), 2)
     b4 = s.book(s.bob, "r_rep", "a_3", L("20:30"), 2)
-    f1 = s.book(s.ada, "r_rep", "a_2", L("22:00"), 2)        # outside the closure: fixed
-    frm, to = iso(L("18:00")), iso(L("22:00"))
+    f1 = s.book(s.ada, "r_rep", "a_2", L("21:30"), 2)        # starts at the closure's end: fixed, and blocks a_2 for b4
+    frm, to = iso(L("18:00")), iso(L("21:30"))
     snap = {r: s.get(s.ada if r in (b1["reference"], b3["reference"], f1["reference"]) else s.bob, r).json for r in
             (b1["reference"], b2["reference"], b3["reference"], b4["reference"], f1["reference"])}
     hist0 = {r: len(s4.entries(r, s.ada if r in (b1["reference"], b3["reference"], f1["reference"]) else s.bob) or []) for r in snap}
@@ -2955,7 +2955,7 @@ def g_replan(s: S):
               "exact keys", sorted(j), r.req, "S4 Replans")
     chk.check("closure from/to written in the restaurant offset, whole seconds, never Z (R-65)", (j.get("closure") or {}).get("from") == frm
               and (j.get("closure") or {}).get("to") == to, [frm, to], j.get("closure"), r.req, "S4 Replans")
-    rz = s4.preview("r_rep", "a_3", frm, to.replace("+01:00", "Z").replace("T22:00:00Z", "T21:00:00Z"))
+    rz = s4.preview("r_rep", "a_3", frm, rfc(parse_rfc(to).astimezone(timezone.utc)).replace("+00:00", "Z"))
     chk.check("a Z instant is echoed in the restaurant offset (R-65)", rz.status == 201 and (rz.json or {}).get("closure", {}).get("to") == to, to,
               (rz.json or {}).get("closure"), rz.req, "S4 Replans")
     chk.check("restaurant_revision counts the 5 successful bookings since reset", j.get("restaurant_revision") == 5, 5, j.get("restaurant_revision"), r.req,

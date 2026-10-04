@@ -26,10 +26,11 @@ from datetime import timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from audit import (Checker, Client, Ctx, S, body2, booking_body, fixture, fixture2)  # noqa: E402
+from audit import (Checker, Client, Ctx, S, S4, body2, booking_body, fixture, fixture2, iso)  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
 REF_RE = re.compile(r"^[A-Z0-9]{6,12}$")
+ADA_EMAIL, ADA_PW = "ada@example.com", "correct horse"
 TIMEOUT = 6000
 
 
@@ -578,6 +579,38 @@ class UI:
         self.check("every visible input has a label", not unlabeled, [], unlabeled, "C2.11,C2.12,C2.14,C2.15")
         self.t(page, "logout-button").first.click()
 
+    def u_replan(self, page):
+        """Stage 4: screens reflect an applied plan — closed cells unavailable, lookup shows the new tables (C4.2)."""
+        s = S(self.api, self.chk, self.ctx)
+        s4 = S4(s)
+        s4.reset4()
+        D = self.ctx.thu
+        b1 = s.book(s.ada, "r_rep", "a_3", f"{D}T18:00", 4)
+        frm, to = iso(f"{D}T18:00"), iso(f"{D}T21:30")
+        pv = s4.preview("r_rep", "a_3", frm, to)
+        ap = s4.apply("r_rep", (pv.json or {}).get("plan_id"))
+        self.check("replan applied for the UI scenario", ap.status == 201, 201, ap.status, "harness")
+        new = (s.get(s.ada, b1["reference"]).json or {}).get("table_ids") or []
+        labels = {"a_1": "Alder", "a_2": "Birch", "a_3": "Cedar", "a_4": "Damson", "a_5": "Elm"}
+        self.ui_login(page, ADA_EMAIL, ADA_PW)
+        page.goto(self.a.base + "/")
+        self.search(page, "r_rep", D, 2)
+        self.visible(page, "availability-grid")
+        vals = {h: (page.get_by_test_id(f"slot-a_3-{h}").get_attribute("data-available") if page.get_by_test_id(f"slot-a_3-{h}").count() else None)
+                for h in ("17:00", "19:00", "21:00", "12:00")}
+        self.check("closed table shows unavailable cells during the closure, available outside", vals["17:00"] == "false" and vals["19:00"] == "false"
+                   and vals["21:00"] == "false" and vals["12:00"] == "true", {"17:00": "false", "19:00": "false", "21:00": "false", "12:00": "true"}, vals,
+                   "C4.2,C4.15 (R-68)")
+        self.shot(page, "replanned-grid")
+        page.goto(self.a.base + "/lookup")
+        self.t(page, "lookup-reference-input").fill(b1["reference"])
+        self.t(page, "lookup-submit").click()
+        rt = self.text(page, "reservation-tables") if self.visible(page, "reservation-detail") else ""
+        self.check("lookup shows the moved booking's new tables", bool(new) and all(labels[t] in (rt or "") for t in new) and "Cedar" not in (rt or ""),
+                   [labels[t] for t in new], rt, "C4.2 (R-66)")
+        self.shot(page, "replanned-lookup")
+        self.t(page, "logout-button").first.click()
+
     def u_import_between_requests(self, page, prev: Client | None):
         """Signed-in browser and a pending retry survive an export/import between requests (and an upgrade from --prev)."""
         legacy = None
@@ -650,7 +683,7 @@ def main(argv=None):
     ui = UI(a)
     prev = Client(a.prev, ui.chk, "P") if a.prev else None
     order = ["u_routes", "u_auth", "u_grid", "u_click_rules", "u_booking", "u_conflict", "u_lost_after", "u_lost_before",
-             "u_out_of_order", "u_lookup", "u_states_distinct", "u_keyboard", "u_layout", "u_import"]
+             "u_out_of_order", "u_lookup", "u_states_distinct", "u_keyboard", "u_layout", "u_import", "u_replan"]
     if a.only:
         order = [x for x in order if x in a.only.split(",")]
     errors = []
@@ -663,7 +696,9 @@ def main(argv=None):
             page.set_default_timeout(TIMEOUT)
             try:
                 ui.reset()
-                if name == "u_lost_after":
+                if name == "u_replan":
+                    ui.u_replan(page)
+                elif name == "u_lost_after":
                     ui.u_lost(page, True, "lost after commit")
                 elif name == "u_lost_before":
                     ui.u_lost(page, False, "lost before commit")
