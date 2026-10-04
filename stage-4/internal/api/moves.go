@@ -77,7 +77,7 @@ func (s *Server) moveReservations(w http.ResponseWriter, r *http.Request, user *
 		if conflicts(st, changes) {
 			return nil, apperr.TableUnavailable()
 		}
-		apply(st, changes, now)
+		apply(st, changes, now, true)
 		out := make([]reservationView, len(changes))
 		for i, c := range changes {
 			out[i] = view(st, c.res)

@@ -172,10 +172,11 @@ func conflicts(st *state.State, changes []*change) bool {
 }
 
 // apply writes every real change of one operation; callers have checked all of them first.
-// Each changed booking adopts its new terms, gains one revision and one changed history entry
-// naming only the fields that changed, and becomes a permanent exception of its series. Each
-// affected series and the restaurant gain one revision for the whole operation.
-func apply(st *state.State, changes []*change, now time.Time) {
+// Each changed booking adopts its new terms and gains one revision and one changed history entry
+// naming only the fields that changed; with markExceptions (diner PATCH and moves, not series
+// amend) it also becomes a permanent exception of its series. Each affected series and the
+// restaurant gain one revision for the whole operation.
+func apply(st *state.State, changes []*change, now time.Time, markExceptions bool) {
 	series := map[*state.Series]bool{}
 	var rest *state.Restaurant
 	for _, c := range changes {
@@ -198,7 +199,9 @@ func apply(st *state.State, changes []*change, now time.Time) {
 		res.Revision++
 		res.Record(now, state.EventChanged, diff)
 		if s := st.SeriesOf(res); s != nil {
-			s.Occurrence(res.Reference).Exception = true
+			if markExceptions {
+				s.Occurrence(res.Reference).Exception = true
+			}
 			series[s] = true
 		}
 		rest = st.Restaurant(res.RestaurantID)

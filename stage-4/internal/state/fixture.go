@@ -135,7 +135,7 @@ func loadRestaurants(st *State, fx jsonin.Object) error {
 }
 
 func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
-	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}, Combinable: [][]string{}, Policies: []Policy{}}
+	r := &Restaurant{OpeningHours: []OpeningHours{}, Tables: []Table{}, Combinable: [][]string{}, Policies: []Policy{}, Closures: []Closure{}}
 	var err error
 	if r.ID, err = requiredID(o, "id", "restaurants[]"); err != nil {
 		return nil, err

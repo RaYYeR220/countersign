@@ -42,6 +42,7 @@ type Restaurant struct {
 	ManagerUserIDs             []string       `json:"manager_user_ids"`
 	Policies                   []Policy       `json:"policies"`
 	Revision                   int            `json:"revision"`
+	Closures                   []Closure      `json:"closures"` // applied closures, in application order
 }
 
 // Table returns the restaurant's table with the given id, or nil.

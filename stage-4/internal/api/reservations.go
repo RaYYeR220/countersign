@@ -237,7 +237,7 @@ func (s *Server) amendReservation(w http.ResponseWriter, r *http.Request, user *
 			err = apperr.TableUnavailable()
 			return
 		}
-		apply(st, []*change{c}, s.now())
+		apply(st, []*change{c}, s.now(), true)
 		out = view(st, res)
 	})
 	if err != nil {
