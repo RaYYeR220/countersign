@@ -84,6 +84,35 @@ CLAUSE_RULES_S2 = {
     "upgrade": [(r"replay|retry", "C2.36,C1.62 (R-37)"), (r"table_ids", "C2.48 (R-37)"), (r"pairs|available_options", "C2.41,C2.44 (R-37)"),
                 (r".", "C2.35,C2.36,C2.37 (R-37)")],
 }
+CLAUSE_RULES_S3 = {
+    "explain": [(r"exactly the stage-2 fields|without explain", "C3.4 (R-46)"), (r"explain=|repeated explain|beats bad explain|before 404", "C3.3 (R-46)"),
+                (r"every table once", "C3.5,C3.6,C3.7,C3.8"), (r"both false", "C3.2,C3.7"), (r"closed day|no available table", "C3.9"), (r".", "C3.2")],
+    "policies": [(r"manager_user_ids|restaurant detail includes", "C3.18 (R-59)"), (r"without token|non-manager|unknown restaurant|another restaurant only|non-object",
+                                                                              "C3.18,C3.19 (R-47)"),
+                 (r"Idempotency-Key|replay|same key|first use failed|reusable", "C3.19,C1.62 (R-47)"), (r"invalid policy", "C3.23 (R-47)"),
+                 (r"allocate no version", "C3.20,C3.23"), (r"exactly the policy fields|201: supplied|-> version", "C3.20 (R-48)"),
+                 (r"GET policies|listed policies", "C3.24 (R-48)"), (r"restaurant detail still", "C3.25"),
+                 (r"publication leaves|publication adds no history", "C3.29"), (r"^selection|capacity applies|hours apply", "C3.21,C3.22,C3.25"),
+                 (r"pair capacity", "C3.49"), (r"availability follows", "C3.25,C3.4"), (r"explain names policy_version", "C3.26"),
+                 (r"new booking carries|seeded booking", "C3.27,C3.28"), (r"real amendment|amendment validated|failed amendment", "C3.31,C3.33 (R-49)"),
+                 (r"no-op", "C3.32 (R-58)"), (r"cancel still|checks the old accepted cutoff|cutoff-0|made after publication|inside the old", "C3.30,C3.31"),
+                 (r".", "C3.18")],
+    "history": [(r"created entry|seeded booking|cancelled seed", "C3.13,C3.28 (R-51)"), (r"envelope", "C3.10"), (r"replay records nothing", "C3.16"),
+                (r"changed lists|history:", "C3.12,C3.14,C3.15 (R-58)"), (r"at order", "C3.12"), (r"keeps its history", "C3.10,C3.33"),
+                (r"history read by|history of an unknown", "C3.10 (R-56)"), (r"decision", "C3.36 (R-56)"),
+                (r"pair|reversed", "C3.50"), (r"old entries never", "C3.35,C3.29"), (r".", "C3.11")],
+    "revision": [(r"replay keeps", "C3.28"), (r"cancel", "C3.33 (R-50)"), (r".", "C3.34 (R-49)")],
+    "series": [(r"anchor history unchanged|occurrence 0 reservation", "C3.39"), (r"occurrence i on anchor|selects its date's policy", "C3.40"),
+               (r"spring-forward|fall-back", "C3.41"), (r"first failing|outside the selected|collides|created nothing|anchor's history unchanged", "C3.41 (R-52)"),
+               (r"adopt 201|exactly the R-53|series_id", "C3.42 (R-53)"), (r"references distinct", "C3.43"),
+               (r"ordinary reservation list|occupy|created history", "C3.44"), (r"GET", "C3.45 (R-53)"),
+               (r"exception|no-op and failed|cancel", "C3.46"), (r"replay|same key", "C3.47"),
+               (r"count|interval|anchor_reference|missing|no token|Idempotency-Key", "C3.37 (R-52)"), (r".", "C3.38 (R-52)")],
+    "s3moves": [(r"exception|series revision", "C3.51,C3.46 (R-57)"), (r".", "C3.51,C3.52 (R-57)")],
+    "s3burst": [(r"R1 ", "C3.34 (R-49)"), (r"R2 ", "C3.20"), (r"R3 ", "C3.38 (R-52)"), (r"R4 ", "C3.12"), (r"R5 .*publications", "C3.19"),
+                (r"R5 ", "C3.47"), (r".", "C3.1,C1.3")],
+    "upgrade3": [(r"retry", "C3.28,C3.48 (R-55)"), (r".", "C3.48 (R-55)")],
+}
 CLAUSE_RULES = {
     "core": [(r"^health", "C1.11"), (r"R-8|R-20|reset rejects|reset accepts", "C1.12,C1.18,C1.26 (R-8,R-20)"),
              (r"reset", "C1.12,C1.13"), (r"R-25", "C1.32,C1.38 (R-25)"), (r"405|unknown path", "C1.32,C1.38 (R-9)"),
@@ -146,9 +175,9 @@ CLAUSE_RULES = {
 
 
 def clause_for(group, name, section):
-    if isinstance(section, str) and section.startswith(("C1.", "C2.")):
+    if isinstance(section, str) and section.startswith(("C1.", "C2.", "C3.")):
         return section
-    for pat, ids in CROSS_RULES + CLAUSE_RULES_S2.get(group, []) + CLAUSE_RULES.get(group, []):
+    for pat, ids in CROSS_RULES + CLAUSE_RULES_S3.get(group, []) + CLAUSE_RULES_S2.get(group, []) + CLAUSE_RULES.get(group, []):
         if re.search(pat, name):
             return ids
     return section or "unmapped"
@@ -2021,6 +2050,8 @@ def fixture3(ctx: Ctx) -> dict:
         "reservations": [
             {"id": "s_p1", "reference": "SEEDP1", "user_id": "u_ada", "restaurant_id": "r_pol", "table_id": "p_3",
              "starts_at_local": f"{D + timedelta(days=3)}T18:00", "party_size": 4},
+            {"id": "s_c1", "reference": "SEEDC1", "user_id": "u_ada", "restaurant_id": "r_pol", "table_id": "p_1",
+             "starts_at_local": f"{D + timedelta(days=3)}T18:00", "party_size": 2, "status": "cancelled"},
         ],
     }
 
@@ -2349,6 +2380,9 @@ def g_history(s: S):
     chk.check("created entry 'at' = created_at, written in the restaurant's offset (R-51)", at0 is not None and ca is not None and at0 == ca
               and at0.utcoffset() == at0.astimezone(berlin).utcoffset(), "same instant, Berlin offset",
               [e[0].get("at") if e else None, (r1.json or {}).get("created_at")], None, "S3 History")
+    sc = s3.entries("SEEDC1", s.ada) or []
+    chk.check("cancelled seed: exactly one created entry, revision 1, no cancelled entry (R-51)", len(sc) == 1 and sc[0].get("event") == "created"
+              and sc[0].get("revision") == 1 and (s.get(s.ada, "SEEDC1").json or {}).get("revision") == 1, 1, sc, None, "S3 History")
     se = s3.entries("SEEDP1", s.ada) or []
     chk.check("seeded booking: exactly one created entry, revision 1, policy-0 terms (R-51)", len(se) == 1 and se[0].get("event") == "created"
               and se[0].get("revision") == 1 and terms_eq(se[0].get("accepted_terms"), T0_POL), 1, se, None, "S3 History")
