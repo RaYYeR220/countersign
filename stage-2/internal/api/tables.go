@@ -17,10 +17,14 @@ func combinationNotAllowed(msg string) error {
 }
 
 // tableFieldTypes is the wrong-type pass: table_id must be a string and table_ids an array of
-// strings (400).
+// strings (400). When table_id is present, table_ids is not type-checked: sending both is
+// reported as 422 by requestedTables, which R-35 puts ahead of the table_ids type.
 func tableFieldTypes(o jsonin.Object) error {
-	if o.Has("table_id") && o.Kind("table_id") != jsonin.String {
-		return apperr.Malformed("table_id must be a string")
+	if o.Has("table_id") {
+		if o.Kind("table_id") != jsonin.String {
+			return apperr.Malformed("table_id must be a string")
+		}
+		return nil
 	}
 	_, _, err := o.Strings("table_ids")
 	return err
@@ -29,15 +33,17 @@ func tableFieldTypes(o jsonin.Object) error {
 // hasTables reports whether either table field is present.
 func hasTables(o jsonin.Object) bool { return o.Has("table_id") || o.Has("table_ids") }
 
-// requestedTables is the value pass over the table fields: both present, an empty set or a
-// duplicate id → 422 validation_failed; more than two tables → 422 combination_not_allowed.
+// requestedTables is the value pass over the table fields in R-35 order: both present, an empty
+// set or a duplicate id → 422 validation_failed; more than two tables → 422 combination_not_allowed.
 // ok is false when neither field is present.
 func requestedTables(o jsonin.Object) (ids []string, ok bool, err error) {
 	single, hasSingle, _ := o.String("table_id")
-	ids, hasSet, _ := o.Strings("table_ids")
-	switch {
-	case hasSingle && hasSet:
+	hasSet := o.Has("table_ids")
+	if hasSingle && hasSet {
 		return nil, false, apperr.Validation("send table_id or table_ids, not both")
+	}
+	ids, _, _ = o.Strings("table_ids")
+	switch {
 	case hasSingle:
 		return []string{single}, true, nil
 	case !hasSet:

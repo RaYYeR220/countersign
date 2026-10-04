@@ -201,7 +201,7 @@ func loadRestaurant(o jsonin.Object) (*Restaurant, error) {
 	for _, raw := range pairs {
 		p, ok := jsonin.StringList(raw)
 		if !ok {
-			return nil, apperr.Malformed("combinable must be an array of arrays of table ids")
+			return nil, apperr.Validation("combinable entries must be arrays of two table ids") // R-34
 		}
 		r.Combinable = append(r.Combinable, p)
 	}
@@ -320,10 +320,12 @@ func loadReservations(st *State, fx jsonin.Object, createdAt time.Time) error {
 		if st.User(res.UserID) == nil || r == nil || !checkTableSet(r, res.TableIDs) {
 			return apperr.Validation("reservation " + res.ID + " refers to an unknown user, restaurant or table")
 		}
-		if len(res.TableIDs) == 2 {
-			if p := r.Pair(res.TableIDs[0], res.TableIDs[1]); p != nil {
-				res.TableIDs = slices.Clone(p)
+		if len(res.TableIDs) == 2 { // R-34: a seeded pair must be declared; stored in combinable order
+			p := r.Pair(res.TableIDs[0], res.TableIDs[1])
+			if p == nil {
+				return apperr.Validation("reservation " + res.ID + " combines tables that are not declared combinable")
 			}
+			res.TableIDs = slices.Clone(p)
 		}
 		if ids[res.ID] || st.ReservationByRef(res.Reference) != nil {
 			return apperr.Validation("duplicate reservation id or reference: " + res.ID)

@@ -68,15 +68,17 @@ func TestFromFixtureReferenceBounds(t *testing.T) {
 
 func TestFromFixtureSeedTablesAndStatus(t *testing.T) {
 	body := strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_2", "t_1"]`, 1)
+	body = strings.Replace(body, `"tables": [`, `"combinable": [["t_1", "t_2"]], "tables": [`, 1)
 	body = strings.Replace(body, `"party_size": 4}`, `"party_size": 4, "status": "cancelled"}`, 1)
 	st, err := load(t, body)
 	if err != nil {
 		t.Fatal(err)
 	}
 	res := st.ReservationByRef("SEED01")
-	if fmt.Sprint(res.TableIDs) != "[t_2 t_1]" || res.Status != Cancelled {
+	if fmt.Sprint(res.TableIDs) != "[t_1 t_2]" || res.Status != Cancelled {
 		t.Errorf("seed = %+v", res)
 	}
+	st, _ = load(t, sampleFixture)
 	if r := st.Restaurant("r_anker"); r.Combinable == nil || len(r.Combinable) != 0 {
 		t.Errorf("absent combinable = %#v, want empty", r.Combinable)
 	}
@@ -110,7 +112,7 @@ func TestFromFixtureErrors(t *testing.T) {
 		"reference empty":        {strings.Replace(sampleFixture, `"SEED01"`, `""`, 1), "validation_failed"},
 		"reference 65 chars":     {strings.Replace(sampleFixture, `"SEED01"`, `"`+strings.Repeat("A", 65)+`"`, 1), "validation_failed"},
 		"combinable not array":   {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":"a"}]}`, "malformed_request"},
-		"combinable item number": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a",2]]}]}`, "malformed_request"},
+		"combinable item number": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a",2]]}]}`, "validation_failed"},
 		"combinable single":      {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a"]]}]}`, "validation_failed"},
 		"combinable triple":      {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","b","a"]]}]}`, "validation_failed"},
 		"combinable self":        {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[["a","a"]]}]}`, "validation_failed"},
@@ -121,6 +123,8 @@ func TestFromFixtureErrors(t *testing.T) {
 		"seed table_ids string":  {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": "t_2"`, 1), "malformed_request"},
 		"seed three tables":      {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_2", "t_1"]`, 1), "validation_failed"},
 		"seed unknown in set":    {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_9"]`, 1), "validation_failed"},
+		"seed undeclared pair":   {strings.Replace(sampleFixture, `"table_id": "t_2"`, `"table_ids": ["t_1", "t_2"]`, 1), "validation_failed"},
+		"combinable item object": {`{"restaurants":[{"id":"r","timezone":"UTC","slot_minutes":30,"reservation_duration_minutes":90,"cancellation_cutoff_minutes":0,"tables":[{"id":"a","capacity":2},{"id":"b","capacity":2}],"combinable":[{"a":"b"}]}]}`, "validation_failed"},
 		"seed bad status":        {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": "pending"}`, 1), "validation_failed"},
 		"seed status number":     {strings.Replace(sampleFixture, `"party_size": 4}`, `"party_size": 4, "status": 1}`, 1), "malformed_request"},
 		"bad local start":        {strings.Replace(sampleFixture, `2026-09-24T19:00`, `2026-09-24T19:00+02:00`, 1), "validation_failed"},

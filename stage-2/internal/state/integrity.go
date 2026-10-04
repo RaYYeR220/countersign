@@ -62,7 +62,8 @@ func checkIntegrity(st *State) error {
 			return invalid("reservation entry incomplete")
 		}
 		r := restaurants[res.RestaurantID]
-		if !users[res.UserID] || r == nil || !checkTableSet(r, res.TableIDs) {
+		if !users[res.UserID] || r == nil || !checkTableSet(r, res.TableIDs) ||
+			(len(res.TableIDs) == 2 && r.Pair(res.TableIDs[0], res.TableIDs[1]) == nil) {
 			return invalid("reservation %s refers to an unknown user, restaurant or table", res.ID)
 		}
 		if ids[res.ID] || refs[res.Reference] {

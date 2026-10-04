@@ -121,6 +121,7 @@ func TestPairErrors(t *testing.T) {
 		{"table_ids number item", pairBooking(`[1]`, "2026-09-24T19:00", 2), 400, "malformed_request"},
 		{"table_ids null", pairBooking(`null`, "2026-09-24T19:00", 2), 400, "malformed_request"},
 		{"no tables", `{"restaurant_id":"r_anker","starts_at_local":"2026-09-24T19:00","party_size":2}`, 422, "validation_failed"},
+		{"both fields, table_ids wrong type", `{"restaurant_id":"r_anker","table_id":"t_1","table_ids":"t_1","starts_at_local":"2026-09-24T19:00","party_size":2}`, 422, "validation_failed"},
 		{"both fields", `{"restaurant_id":"r_anker","table_id":"t_1","table_ids":["t_1"],"starts_at_local":"2026-09-24T19:00","party_size":2}`, 422, "validation_failed"},
 		{"empty set", pairBooking(`[]`, "2026-09-24T19:00", 2), 422, "validation_failed"},
 		{"duplicate", pairBooking(`["t_1","t_1"]`, "2026-09-24T19:00", 2), 422, "validation_failed"},
@@ -193,5 +194,23 @@ func TestConcurrentOverlappingPairs(t *testing.T) {
 	}
 	if created != 1 {
 		t.Errorf("created %d bookings sharing t_2, want 1", created)
+	}
+}
+
+func TestResetAndImportRefuseUndeclaredPair(t *testing.T) {
+	e := newComboEnv(t)
+	before := do(e.h, "GET", "/_test/export", "").Body.String()
+	undeclared := strings.Replace(comboFixture, `["t_2", "t_1"]`, `["t_1", "t_3"]`, 1)
+	expect(t, do(e.h, "POST", "/_test/reset", undeclared), 422, "validation_failed")
+	if after := do(e.h, "GET", "/_test/export", "").Body.String(); after != before {
+		t.Error("refused reset changed state")
+	}
+	bad := strings.Replace(before, `"table_ids":["t_1","t_2"]`, `"table_ids":["t_1","t_3"]`, 1)
+	if bad == before {
+		t.Fatal("export does not contain the seeded pair")
+	}
+	expect(t, do(e.h, "POST", "/_test/import", bad), 422, "validation_failed")
+	if after := do(e.h, "GET", "/_test/export", "").Body.String(); after != before {
+		t.Error("refused import changed state")
 	}
 }
