@@ -16,6 +16,7 @@ Entry point: Model.handle(method, path, query, headers, body) -> (status, json_v
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import re
 import secrets
@@ -35,6 +36,7 @@ ID_MAX = 64
 TRACK = "tablekeeper"
 FORMAT_VERSION = 1
 STATE_MARKER = "oracle-model-v1"
+_SEQ = itertools.count(1)   # process-wide: ids and references are never reissued after a reset or import (C1.81, C1.112)
 
 
 class Err(Exception):
@@ -198,10 +200,13 @@ ROUTES = [  # (method, pattern as list of segments; "*" matches one segment)
 
 
 def match_route(method: str, parts: list[str]) -> Optional[bool]:
-    """True: method+path known. False: path known, method not. None: unknown path."""
+    """True: method+path known. False: path known, method not. None: unknown path.
+
+    R-25: segments are taken literally; an empty segment (trailing slash, doubled slash, empty id) never matches.
+    """
     path_known = False
     for m, pat in ROUTES:
-        if len(pat) == len(parts) and all(p == "*" or p == q for p, q in zip(pat, parts)):
+        if len(pat) == len(parts) and all((p == "*" and q != "") or p == q for p, q in zip(pat, parts)):
             path_known = True
             if m == method:
                 return True
@@ -233,8 +238,8 @@ class Model:
 
     # ------------------------------------------------------------------ id generation
     def _next(self, kind: str) -> int:
-        self.counters[kind] += 1
-        return self.counters[kind]
+        self.counters[kind] += 1          # kept in the exported state for information only
+        return next(_SEQ)
 
     def _new_user_id(self) -> str:
         while True:
@@ -253,7 +258,7 @@ class Model:
                 return rid
 
     def _new_reference(self) -> str:
-        n = self.counters["reservation"]
+        n = next(_SEQ)
         alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         while True:
             s, k_ = "", n
@@ -280,7 +285,9 @@ class Model:
 
     # ------------------------------------------------------------------ routing
     def _route(self, method: str, path: str, query: str, headers: dict, body: Any):
-        parts = [p for p in path.split("/") if p != ""]
+        if not path.startswith("/"):
+            raise Err(404, "not_found", "no such route")                     # R-25
+        parts = path[1:].split("/")
         known = match_route(method, parts)
         if known is None:
             raise Err(404, "not_found", "no such route")                     # R-9
@@ -560,32 +567,68 @@ class Model:
         state = doc.get("state")
         if not isinstance(state, dict) or state.get("schema") != STATE_MARKER:
             raise Err(422, "validation_failed", "state is not one this service produced")   # R-24
-        new = Model(self.now)
-        try:
-            for u in state["users"]:
-                new.users[u["id"]] = {"id": u["id"], "email": u["email"],
-                                      "password_hash": u["password_hash"], "display_name": u["display_name"]}
-                new.user_order.append(u["id"])
-            for t in state["tokens"]:
-                new.tokens[t["token"]] = t["user_id"]
-            for r in state["restaurants"]:
-                new.restaurants[r["id"]] = json.loads(json.dumps(r))
-                new.restaurant_order.append(r["id"])
-            for s in state["reservations"]:
-                rec = dict(s)
-                rec["start"] = datetime.fromisoformat(s["start"]).astimezone(UTC)
-                rec["end"] = datetime.fromisoformat(s["end"]).astimezone(UTC)
-                rec["created"] = datetime.fromisoformat(s["created"]).astimezone(UTC)
-                new.reservations[rec["reservation_id"]] = rec
-                new.reservation_order.append(rec["reservation_id"])
-                new.references.add(rec["reference"])
-            for i in state["idempotency"]:
-                new.idem[i["key"]] = {"body": i["body"], "status": i["status"], "response": i["response"]}
-            new.counters = {k_: int(state["counters"][k_]) for k_ in ("user", "reservation")}
-        except (KeyError, TypeError, ValueError, AttributeError):
-            raise Err(422, "validation_failed", "invalid state")
+        new = self._validated_state(state)
         self._adopt(new)
         return 204, None
+
+    def _validated_state(self, state: dict) -> "Model":
+        """R-24: every collection present, every record well-formed and referentially consistent, else 422."""
+        bad = Err(422, "validation_failed", "invalid state")
+
+        def need(cond: bool) -> None:
+            if not cond:
+                raise bad
+
+        def alist(name: str) -> list:
+            need(isinstance(state.get(name), list))
+            return state[name]
+
+        new = Model(self.now)
+        seen_emails: set[str] = set()
+        for u in alist("users"):
+            need(isinstance(u, dict))
+            for f in ("id", "email", "password_hash", "display_name"):
+                need(isinstance(u.get(f), str) and u[f] != "")
+            need(len(u["id"]) <= ID_MAX and valid_email(u["email"]) and u["password_hash"].startswith("sha256$"))
+            need(u["id"] not in new.users and u["email"].lower() not in seen_emails)
+            seen_emails.add(u["email"].lower())
+            new.users[u["id"]] = {f: u[f] for f in ("id", "email", "password_hash", "display_name")}
+            new.user_order.append(u["id"])
+        for t in alist("tokens"):
+            need(isinstance(t, dict) and isinstance(t.get("token"), str) and t["token"] != "")
+            need(t.get("user_id") in new.users and t["token"] not in new.tokens)
+            new.tokens[t["token"]] = t["user_id"]
+        try:   # restaurants: the same shape and referential checks as a reset fixture, every failure 422
+            new._load_fixture({"users": [], "restaurants": alist("restaurants"), "reservations": []})
+        except Err:
+            raise bad
+        for s_ in alist("reservations"):
+            need(isinstance(s_, dict))
+            for f in ("reservation_id", "reference", "user_id", "restaurant_id", "table_id", "status",
+                      "starts_at_local", "start", "end", "created"):
+                need(isinstance(s_.get(f), str) and s_[f] != "")
+            need(len(s_["reservation_id"]) <= ID_MAX and REFERENCE_RE.match(s_["reference"]))
+            need(s_["status"] in ("confirmed", "cancelled") and s_["user_id"] in new.users)
+            r = new.restaurants.get(s_["restaurant_id"])
+            need(r is not None and any(t["id"] == s_["table_id"] for t in r["tables"]))
+            need(is_json_int(s_.get("party_size")) and int(s_["party_size"]) >= 1)
+            need(parse_local(s_["starts_at_local"]) is not None)
+            start, end, created = (parse_rfc3339(s_[f]) for f in ("start", "end", "created"))
+            need(start is not None and end is not None and created is not None and end > start)
+            need(s_["reservation_id"] not in new.reservations and s_["reference"] not in new.references)
+            new._add_reservation(s_["reservation_id"], s_["reference"], s_["user_id"], s_["restaurant_id"],
+                                 s_["table_id"], int(s_["party_size"]), s_["starts_at_local"], start, end, created)
+            new.reservations[s_["reservation_id"]]["status"] = s_["status"]
+        for i in alist("idempotency"):
+            need(isinstance(i, dict) and isinstance(i.get("key"), str) and i["key"] not in new.idem)
+            need(isinstance(i.get("body"), dict) and is_json_int(i.get("status")) and i.get("response") is not None)
+            new.idem[i["key"]] = {"body": i["body"], "status": int(i["status"]), "response": i["response"]}
+        counters = state.get("counters")
+        need(isinstance(counters, dict))
+        for k_ in ("user", "reservation"):
+            need(is_json_int(counters.get(k_)) and int(counters[k_]) >= 0)
+        new.counters = {k_: int(counters[k_]) for k_ in ("user", "reservation")}
+        return new
 
     # ------------------------------------------------------------------ auth (R-4, R-19)
     def signup(self, obj: dict):
