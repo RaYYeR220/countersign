@@ -1,4 +1,4 @@
-[EVIDENCE] stage=2 wi=oracle-kit sha=<filled at commit>
+[EVIDENCE] stage=2 wi=oracle-kit sha=993cc7e
 
 # Evidence — Oracle stage-2 verification kit (model, HTTP suite, browser suite, differential runner)
 
