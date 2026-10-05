@@ -1,0 +1,62 @@
+{
+  "foreman": {
+    "sessions": 1,
+    "totalCost": 30.27,
+    "totalTokens": 102077902,
+    "inputTokens": 626,
+    "outputTokens": 283861,
+    "cacheReadTokens": 101250375,
+    "cacheCreationTokens": 543040,
+    "models": [
+      "claude-opus-5-5"
+    ]
+  },
+  "builder": {
+    "sessions": 1,
+    "totalCost": 42.7,
+    "totalTokens": 107563905,
+    "inputTokens": 596,
+    "outputTokens": 392161,
+    "cacheReadTokens": 105450913,
+    "cacheCreationTokens": 1720235,
+    "models": [
+      "claude-opus-5-5"
+    ]
+  },
+  "stylist": {
+    "sessions": 1,
+    "totalCost": 30.59,
+    "totalTokens": 73199586,
+    "inputTokens": 480,
+    "outputTokens": 271676,
+    "cacheReadTokens": 71572998,
+    "cacheCreationTokens": 1354432,
+    "models": [
+      "claude-opus-5-5"
+    ]
+  },
+  "oracle": {
+    "sessions": 1,
+    "totalCost": 123.41,
+    "totalTokens": 148772302,
+    "inputTokens": 7502,
+    "outputTokens": 671466,
+    "cacheReadTokens": 145423065,
+    "cacheCreationTokens": 2670269,
+    "models": [
+      "claude-fable-5-1"
+    ]
+  },
+  "auditor": {
+    "sessions": 1,
+    "totalCost": 69.28,
+    "totalTokens": 230320678,
+    "inputTokens": 1160,
+    "outputTokens": 715484,
+    "cacheReadTokens": 228444612,
+    "cacheCreationTokens": 1159422,
+    "models": [
+      "claude-opus-5-5"
+    ]
+  }
+}
