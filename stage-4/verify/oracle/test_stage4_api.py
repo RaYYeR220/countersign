@@ -647,6 +647,11 @@ def test_O17_import_refusals_closures_series_terms(c, ada, bob, mia):
     for bound in ("from", "to"):
         e = copy.deepcopy(exp); tamper_closures(e, lambda cl, b=bound: cl.__setitem__(b, None))
         cases.append((f"closure {bound} null", e))
+    for bad_table in ("t_1", "zzz", ""):                                                             # R-77: a table of its restaurant
+        e = copy.deepcopy(exp); tamper_closures(e, lambda cl, t=bad_table: cl.__setitem__("table_id", t))
+        cases.append((f"closure table {bad_table!r}", e))
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.__setitem__("from", "2027-09-24T18:00"))
+    cases.append(("closure from without offset", e))
     e = copy.deepcopy(exp); ser = series(e)
     owner_key = next((k_ for k_ in ser if "user" in k_ or "owner" in k_), None)
     if owner_key:
@@ -663,7 +668,7 @@ def test_O17_import_refusals_closures_series_terms(c, ada, bob, mia):
         assert r.status == 422 and r.code == "validation_failed", (name, r)
         assert _snapshot(c, [ada, bob]) | {"series": c.get(f"/series/{s['series_id']}", token=ada).json,
                                            "policies": c.get("/restaurants/r_anker/policies").json} == before, name
-    assert len(cases) >= 5, [n for n, _ in cases]
+    assert len(cases) >= 9, [n for n, _ in cases]
     assert c.import_(exp).status == 204
 
 

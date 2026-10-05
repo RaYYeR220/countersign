@@ -1019,6 +1019,7 @@ class Model:
             need(is_json_int(pl.get("revision_at_preview")) and isinstance(pl.get("applied"), bool))
             cl = pl.get("closure")
             need(isinstance(cl, dict) and isinstance(cl.get("table_id"), str))
+            need(any(t["id"] == cl["table_id"] for t in new.restaurants[pl["restaurant_id"]]["tables"]))   # R-77
             frm, to = parse_rfc3339(cl.get("from")), parse_rfc3339(cl.get("to"))
             need(frm is not None and to is not None and frm < to)
             need(isinstance(pl.get("assignments"), list) and isinstance(pl.get("response"), dict))
