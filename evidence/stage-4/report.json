@@ -1,0 +1,28 @@
+{
+  "stage": 4,
+  "outcome": "accepted",
+  "accepted_sha": "2621e7a648fe78b450f9a2e19c18139c55be1698",
+  "clauses": {"total": 24, "both": 24, "a_only": 0, "b_only": 0, "rulings": 17},
+  "work_items": 9,
+  "candidates": 4,
+  "rejections": [
+    {"sha": "06cdcd69b73e9de4af3f4dd5186ec3970c7de954", "findings": 1, "changed_work": true},
+    {"sha": "e00f6bb5f3f7f6343c10083cef014ff189c586ce", "findings": 2, "changed_work": true},
+    {"sha": "b26757c3d1c4a7e4fbd88cecc6071f2bf7863c51", "findings": 1, "changed_work": true}
+  ],
+  "mutation": {"tool": "mutate.py (containerised textual Go mutants; HTTP killers: audit battery + Oracle suites)", "killed": 34, "total": 38},
+  "race_proofs": [
+    {"guard": "G1 state.Store write lock", "test": "audit bursts B3/B5 + crash check", "red_without": true, "green_with": true},
+    {"guard": "G2 signup email re-check under write lock", "test": "audit burst B8", "red_without": true, "green_with": true},
+    {"guard": "G3 idempotency lookup/execute/store in one write section", "test": "audit bursts B3,B4", "red_without": true, "green_with": true},
+    {"guard": "G4 moves check-all-before-apply", "test": "audit moves atomicity", "red_without": true, "green_with": true},
+    {"guard": "G5 state.Store read lock", "test": "race detector + readwrite_load (10 rounds)", "red_without": true, "green_with": true},
+    {"guard": "G6 occupancy over every member of a table set", "test": "comboburst shared-table bids", "red_without": true, "green_with": true},
+    {"guard": "G7 already-in-series check", "test": "s3burst concurrent adoption", "red_without": true, "green_with": true},
+    {"guard": "G8 all-or-nothing series adoption", "test": "series failed adoption creates nothing", "red_without": true, "green_with": true},
+    {"guard": "G9 stale_plan revision check", "test": "s4burst two plans from one revision", "red_without": true, "green_with": true},
+    {"guard": "G10 plan_already_applied check", "test": "s4burst concurrent applications of one plan", "red_without": true, "green_with": true}
+  ],
+  "holdout": {"ran": true, "passed": 158, "failed": 0, "escapes": []},
+  "blockers": []
+}
