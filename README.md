@@ -12,6 +12,8 @@ liveness note when the band deadlocked at stage 4 ([FACTORY.md, section 8](FACTO
 - **Team:** solo, [RaYYeR220](https://github.com/RaYYeR220)
 - **Track:** `tablekeeper`
 - **Repository:** https://github.com/RaYYeR220/countersign
+- **Video (3:46):** [countersign-demo.mp4](https://github.com/RaYYeR220/countersign/releases/download/run-1/countersign-demo.mp4): the Band Desktop room, a handoff, the gate catching a wrong ruling, the app, cost and time.
+- **Slides:** [countersign-slides.pdf](https://github.com/RaYYeR220/countersign/releases/download/run-1/countersign-slides.pdf)
 - **Demo:** there is no hosted demo. Each `stage-<n>/` folder runs locally with one `docker` command (below).
 - **Factory:** [FACTORY.md](FACTORY.md) covers the seats, how to stand the factory up, design choices and their
   cost, measured time and spend, and how it catches bad work.
