@@ -1,0 +1,58 @@
+{
+ "guard": "G3 idempotency lookup+execute+store in one write section, split with a 5 ms window (api/idempotency.go)",
+ "edits": [
+  {
+   "file": "internal/api/idempotency.go",
+   "old": "\t\"net/http\"\n",
+   "new": "\t\"net/http\"\n\t\"time\"\n",
+   "occurrences": 1
+  },
+  {
+   "file": "internal/api/idempotency.go",
+   "old": "\ts.store.Write(func(st *state.State) {\n\t\tif rc := st.Receipt(rk); rc != nil {",
+   "new": "\tvar seen *state.Receipt\n\ts.store.Read(func(st *state.State) { seen = st.Receipt(rk) })\n\ttime.Sleep(5 * time.Millisecond)\n\ts.store.Write(func(st *state.State) {\n\t\tif rc := seen; rc != nil {",
+   "occurrences": 1
+  }
+ ],
+ "groups": "burst,s4burst",
+ "rounds": 2,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:burst/r0 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+     "audit:burst/r0 B4 exactly one booking created",
+     "audit:burst/r0 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+     "audit:burst/r0 B5 20 concurrent identical moves: one 201, 19x200, one body",
+     "audit:burst/r1 B3 30 concurrent identical keyed creates: one 201, 29x200, one body",
+     "audit:burst/r1 B4 exactly one booking created",
+     "audit:burst/r1 B4 same key two bodies: one 201, others 200 (same body) or 409 reuse",
+     "audit:burst/r1 B5 20 concurrent identical moves: one 201, 19x200, one body",
+     "audit:s4burst/r0 Q4 10 identical keyed previews: one 201, nine identical 200",
+     "audit:s4burst/r1 Q4 10 identical keyed previews: one 201, nine identical 200"
+    ],
+    "n": 10,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}
