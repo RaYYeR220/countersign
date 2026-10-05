@@ -27,5 +27,6 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 | 2 | e00f6bb | + WI-28 (69fd2b3) | REJECT (verdict 2: F-2 Oracle selector, F-3 R-75 → WI-30); superseded by 3 |
 | WI-29 | Builder | R-76: stage-2 API-cancelled bookings migrate with [created] and revision 1 | C3.28, C3.48, C4.24 | closed: Oracle withdrew F1 (its source image was a stage-3 build); regression test added |
 | WI-30 | Builder | R-75: exact arithmetic for fixture integers up to 2^31−1 (durations, cutoffs, capacities) | C1.4, C1.22, C1.23, C1.74 | evidence 6007e07, merged |
-| 3 | (this commit) | + WI-30 (6007e07), WI-29 regression test, oracle 7cca4c9 (selector fix, O-15b, O-16) | pending |
-| WI-31 | Builder | Oracle F4: imported closure with from:null accepted (unbounded closure); R-24/R-72/R-77 | C1.109, C4.24 | handed off |
+| 3 | b26757c | + WI-30 (6007e07), WI-29 regression test, oracle 7cca4c9 (selector fix, O-15b, O-16) | superseded by 4 (Oracle F4 closure-from-null → WI-31, R-77) |
+| WI-31 | Builder | Oracle F4: imported closure with from:null accepted (unbounded closure); R-24/R-72/R-77 | C1.109, C4.24 | evidence 8f8763a, merged |
+| 4 | (this commit) | + WI-31 (8f8763a), oracle 94707a7 (O-17, O-18, R-77 cases) | pending |
