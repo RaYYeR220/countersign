@@ -268,9 +268,10 @@ func checkSeries(st *State, users map[string]bool) error {
 	return nil
 }
 
-// validClosure requires a table of r and a non-empty interval.
+// validClosure requires a table of r and two real bounds with from < to (R-77). A JSON null
+// decodes to the zero time, so both bounds are checked for it alike; none is ever defaulted.
 func validClosure(r *Restaurant, c Closure) bool {
-	return r.Table(c.TableID) != nil && c.From.Before(c.To) && validID(c.PlanID)
+	return r.Table(c.TableID) != nil && !c.From.IsZero() && !c.To.IsZero() && c.From.Before(c.To) && validID(c.PlanID)
 }
 
 // checkPlans requires every closure and stored plan to name tables and bookings of its
