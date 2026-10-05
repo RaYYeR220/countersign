@@ -602,3 +602,81 @@ def test_O16_fixture_integers_at_2_pow_31(c, mia):
     assert c.reset(fx).status == 204
     bob = c.login("bob@example.com", "bob secret 1")
     assert c.get("/reservations/SEED01", token=bob).json["party_size"] == big
+
+
+# ============================================================ O-17, O-18
+def test_O17_import_refusals_closures_series_terms(c, ada, bob, mia):
+    from test_hardening import _records, _reservation_records, _snapshot, _walk
+    assert publish(c, mia, "r_anker", policy("2027-09-01")).status == 201                           # published policy v1
+    o = book_single(c, ada, "r_anker", "t_1", f"{FUT_FRI}T19:00", 2)                                # accepted under v1
+    assert o["accepted_terms"]["policy_version"] == 1
+    s = adopt(c, ada, o["reference"], 2, 1).json
+    p = preview(c, mia, "r_trio", "q_2", inst(FUT_FRI, "18:00"), inst(FUT_FRI, "23:00")).json
+    assert apply(c, mia, "r_trio", p["plan_id"]).status == 201                                       # one applied closure
+    exp = c.export().json
+    before = _snapshot(c, [ada, bob]) | {"series": c.get(f"/series/{s['series_id']}", token=ada).json,
+                                         "policies": c.get("/restaurants/r_anker/policies").json}
+
+    def closures(doc):
+        """Every closure record anywhere in the state: a dict with table_id/from/to and a plan_id (a stored request
+        body has no plan_id). Returned as a list so a tamper is applied to every copy, whichever is authoritative."""
+        found = [v for _, _, v in _walk(doc["state"])
+                 if isinstance(v, dict) and "table_id" in v and "from" in v and "to" in v and "plan_id" in v and "assignments" not in v]
+        assert found, "no closure record in the export"
+        return found
+
+    def tamper_closures(doc, fn):
+        for cl in closures(doc):
+            fn(cl)
+
+    def series(doc):
+        for v in doc["state"].values():
+            if isinstance(v, list) and v and isinstance(v[0], dict) and "occurrences" in v[0]:
+                return v[0]
+            if isinstance(v, dict):
+                for vv in v.values():
+                    if isinstance(vv, dict) and "occurrences" in vv:
+                        return vv
+        raise AssertionError("no series in the export")
+
+    cases = []
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.update({"from": cl["to"], "to": cl["from"]}))
+    cases.append(("closure from after to", e))
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.__setitem__("from", cl["to"]))
+    cases.append(("closure from equals to", e))
+    for bound in ("from", "to"):
+        e = copy.deepcopy(exp); tamper_closures(e, lambda cl, b=bound: cl.__setitem__(b, None))
+        cases.append((f"closure {bound} null", e))
+    for bad_table in ("t_1", "zzz", ""):                                                             # R-77: a table of its restaurant
+        e = copy.deepcopy(exp); tamper_closures(e, lambda cl, t=bad_table: cl.__setitem__("table_id", t))
+        cases.append((f"closure table {bad_table!r}", e))
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.__setitem__("from", "2027-09-24T18:00"))
+    cases.append(("closure from without offset", e))
+    e = copy.deepcopy(exp); ser = series(e)
+    owner_key = next((k_ for k_ in ser if "user" in k_ or "owner" in k_), None)
+    if owner_key:
+        ser[owner_key] = "u_nobody"
+        cases.append(("series owner unknown", e))
+    e = copy.deepcopy(exp)
+    for _, _, rec in _reservation_records(e["state"], reference=o["reference"]):
+        terms = next(v for v in rec.values() if isinstance(v, dict) and "policy_version" in v and "capacities" in v)
+        assert terms["policy_version"] == 1
+        terms["cancellation_cutoff_minutes"] = 10081
+    cases.append(("terms cutoff 10081 under a published policy", e))
+    for name, doc in cases:
+        r = c.import_(doc)
+        assert r.status == 422 and r.code == "validation_failed", (name, r)
+        assert _snapshot(c, [ada, bob]) | {"series": c.get(f"/series/{s['series_id']}", token=ada).json,
+                                           "policies": c.get("/restaurants/r_anker/policies").json} == before, name
+    assert len(cases) >= 9, [n for n, _ in cases]
+    assert c.import_(exp).status == 204
+
+
+def test_O18_policy_capacity_non_integral(c, mia):
+    err(publish(c, mia, "r_anker", policy("2027-09-01", capacities={"t_1": 4.5, "t_2": 4})), 422, "validation_failed")
+    err(publish(c, mia, "r_anker", policy("2027-09-01", capacities={"t_1": 2, "t_2": 0.5})), 422, "validation_failed")
+    assert c.get("/restaurants/r_anker/policies").json == {"policies": []}
+    r = publish(c, mia, "r_anker", policy("2027-09-01", capacities={"t_1": 4.0, "t_2": 4}))             # R-3: 4.0 is 4
+    assert r.status == 201 and r.json["policy_version"] == 1 and r.json["capacities"] == {"t_1": 4, "t_2": 4}, r
+    ada = c.login("ada@example.com", "correct horse")
+    assert c.book(ada, k(), "r_anker", "t_1", f"{FUT_FRI}T19:00", 4).json["accepted_terms"]["capacities"]["t_1"] == 4

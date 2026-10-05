@@ -67,3 +67,20 @@ OK: 50 runs, 4050 ops, seeds 1..50, 29.5s
 
 ## Known gaps
 - The product image's commit SHA is unknown to me (no label); findings are against "the local tablekeeper-stage4:latest of 2026-10-04T22:48Z".
+
+## Retraction of F1 (2026-10-04T23:55Z)
+The upgrade source tagged `tablekeeper-stage2:latest` on this machine (image 073ea585f84f, created 2026-10-04T20:37Z,
+during stage 3) is not a stage-2 build: after a reset with the stage-2 fixture it returns `revision` and
+`accepted_terms` on a booking, answers `GET /reservations/{reference}/history` with 200, and exports `state.schema: 3`
+with a `history` field on every record and a `series` collection. A booking cancelled through its API therefore
+carries `[created, cancelled]` in its own export, and the stage-4 import keeps that real history as R-55 requires for
+schema ≥ 3. F1 is withdrawn; R-76 was not violated by the product on the evidence I had. F3 (R-75) stands: it does not
+depend on any upgrade source.
+
+Check used:
+```
+reset(stage2_fixture) -> 204; POST /reservations -> keys include accepted_terms, revision; cancel -> 200;
+GET /reservations/{ref}/history -> 200; export state.schema = 3; collections receipts/reservations/restaurants/schema/series/tokens/users
+```
+Lesson recorded in the kit README: upgrade sources must be images built from the accepted folders (c0f2b7b, aa63cd2,
+c4a828e) and named by the Auditor; a local tag is not provenance.

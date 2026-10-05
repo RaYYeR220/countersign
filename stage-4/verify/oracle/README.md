@@ -36,7 +36,9 @@ python stage-4/verify/oracle/diff_runner.py --base-url http://127.0.0.1:18401 --
 
 When validating the kit against the model itself, the upgrade sources must be the stage-1, stage-2 and stage-3 *models*
 (`python stage-N/verify/oracle/serve_model.py --port 1841x`), because the model only reads its own state formats;
-against a candidate they are the accepted images.
+against a candidate they must be images built from the accepted stage folders (stage 1 c0f2b7b, stage 2 aa63cd2,
+stage 3 c4a828e) and named by the Auditor. A local `tablekeeper-stageN:latest` tag is not provenance: on one machine
+the `stage2` tag pointed at a stage-3 build (schema-3 export), which produced a false upgrade finding.
 
 The suite resets the service before every test with `POST /_test/reset`; it leaves state behind on purpose.
 
