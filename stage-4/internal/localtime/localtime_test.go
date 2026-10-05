@@ -273,3 +273,18 @@ func TestLocationErrors(t *testing.T) {
 		t.Error("weekday wrong")
 	}
 }
+
+func TestAddMinutesIsExactBeyondDuration(t *testing.T) {
+	start := time.Date(2027, 6, 3, 16, 0, 0, 0, time.UTC)
+	const big = 1<<31 - 1
+	want := time.Unix(start.Unix()+big*60, 0) // ≈ 4085 years: beyond any single time.Duration
+	if got := AddMinutes(start, big); !got.Equal(want) || !got.After(start) {
+		t.Errorf("AddMinutes(+2^31-1) = %v, want %v", got, want)
+	}
+	if got := AddMinutes(start, -big); !got.Equal(time.Unix(start.Unix()-big*60, 0)) {
+		t.Errorf("AddMinutes(-2^31-1) = %v", got)
+	}
+	if got := End(start, 90); !got.Equal(start.Add(90 * time.Minute)) {
+		t.Errorf("End(90) = %v", got)
+	}
+}

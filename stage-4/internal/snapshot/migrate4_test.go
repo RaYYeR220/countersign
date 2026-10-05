@@ -43,3 +43,20 @@ func TestImportEarlierExportsToSchema4(t *testing.T) {
 		}
 	}
 }
+
+// R-76: a booking the stage-2 service cancelled through its API migrates to revision 1 with a
+// single created entry (testdata/stage2-api-cancelled-export.json, from the accepted stage-2 image).
+func TestImportStage2APICancelledBooking(t *testing.T) {
+	st, err := Import(loadExport(t, "stage2-api-cancelled-export.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(st.Reservations) != 1 {
+		t.Fatalf("reservations = %d", len(st.Reservations))
+	}
+	res := st.Reservations[0]
+	if res.Status != "cancelled" || res.Revision != 1 || len(res.History) != 1 || res.History[0].Event != "created" ||
+		res.History[0].Revision != 1 || !res.History[0].At.Equal(res.CreatedAt) {
+		t.Errorf("migrated cancelled booking = %+v", res)
+	}
+}

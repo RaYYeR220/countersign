@@ -1,0 +1,43 @@
+{
+ "guard": "G10 apply refuses an already applied plan (api/replans.go plan_already_applied)",
+ "edits": [
+  {
+   "file": "internal/api/replans.go",
+   "old": "\t\tcase p.Applied:\n\t\t\treturn nil, apperr.New(http.StatusConflict, \"plan_already_applied\", \"the plan has already been applied\")\n",
+   "new": "",
+   "occurrences": 1
+  }
+ ],
+ "groups": "replan",
+ "rounds": 1,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:replan/same plan, second key -> 409 plan_already_applied"
+    ],
+    "n": 1,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}

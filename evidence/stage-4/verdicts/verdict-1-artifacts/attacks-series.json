@@ -1,0 +1,470 @@
+{
+ "meta": {
+  "base": "http://auditor-s4-a:8080",
+  "dest": "http://auditor-s4-b:8080",
+  "prev": null,
+  "now": "2026-10-04T23:34:41.599570+00:00",
+  "now_tz": "Asia/Tokyo",
+  "thu": "2026-10-29",
+  "near": "2026-10-05T09:00",
+  "far": "2026-10-05T12:45",
+  "past": "2026-10-04T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 55,
+ "hard_failures": 0,
+ "soft_failures": 0,
+ "per_group": {
+  "series": {
+   "pass": 55,
+   "fail": 0,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [],
+ "soft": [],
+ "results": [
+  {
+   "group": "series",
+   "name": "adopt 201: series_id, revision 1, 4 occurrences in index order, anchor is occurrence 0",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.42 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "occurrence references distinct",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.43"
+  },
+  {
+   "group": "series",
+   "name": "occurrence 0 reservation equals the unchanged anchor",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.39"
+  },
+  {
+   "group": "series",
+   "name": "anchor history unchanged by adoption",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.39"
+  },
+  {
+   "group": "series",
+   "name": "occurrence i on anchor date + 7i days, same clock time, table and party",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.40"
+  },
+  {
+   "group": "series",
+   "name": "occurrences appear in the ordinary reservation list",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.44"
+  },
+  {
+   "group": "series",
+   "name": "occurrences occupy their tables",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.44"
+  },
+  {
+   "group": "series",
+   "name": "each occurrence has an ordinary created history",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.44"
+  },
+  {
+   "group": "series",
+   "name": "GET /series/{id} owner -> same shape",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.45 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "GET series by another user -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.45 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "GET series without token -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.45 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "series replay 200 identical",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series/\u00a77",
+   "clause": "C3.47"
+  },
+  {
+   "group": "series",
+   "name": "series same key, different body -> 409",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.47"
+  },
+  {
+   "group": "series",
+   "name": "adopting the anchor again -> 409 already_in_series",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.38 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "adopting a generated occurrence -> 409 already_in_series",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.38 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count 1 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count 13 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count true -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count '4' -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count null -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series count 2.5 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series interval 0 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series interval 5 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series interval true -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series interval 1.5 -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "count 12 (maximum) accepted -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "C3.37",
+   "clause": "C3.37"
+  },
+  {
+   "group": "series",
+   "name": "interval_weeks 4 (maximum) accepted -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "C3.37",
+   "clause": "C3.37"
+  },
+  {
+   "group": "series",
+   "name": "series missing anchor_reference -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series no token -> 401",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "series without Idempotency-Key -> 400",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "unknown anchor -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.38 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "anchor_reference a number -> 400 (R-52)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "invalid count beats unknown anchor -> 422 (R-52)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.37 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "empty anchor_reference -> 422 before 404 (R-60)",
+   "ok": true,
+   "soft": false,
+   "section": "C3.37 (R-60)",
+   "clause": "C3.37 (R-60)"
+  },
+  {
+   "group": "series",
+   "name": "65-character anchor_reference -> 422 before 404 (R-60)",
+   "ok": true,
+   "soft": false,
+   "section": "C3.37 (R-60)",
+   "clause": "C3.37 (R-60)"
+  },
+  {
+   "group": "series",
+   "name": "GET unknown series id -> 404 (R-53)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.45 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "series_id is at most 64 characters (R-53)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.42 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "series body has exactly the R-53 keys",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.42 (R-53)"
+  },
+  {
+   "group": "series",
+   "name": "another user's anchor -> 404",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.38 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "cancelled anchor -> 409 reservation_cancelled",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.46"
+  },
+  {
+   "group": "series",
+   "name": "anchor inside its cutoff -> 409 cutoff_passed",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.38 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "occurrence 2 collides -> 409 table_unavailable",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "failed adoption created nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "failed adoption left the anchor's history unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "same key after the failure is a first use -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.47"
+  },
+  {
+   "group": "series",
+   "name": "occurrence on spring-forward night (02:30 missing) -> 422 invalid_local_time",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41"
+  },
+  {
+   "group": "series",
+   "name": "fall-back repeated time resolves to the first occurrence (+02:00)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41"
+  },
+  {
+   "group": "series",
+   "name": "real PATCH marks the occurrence exception and increments series revision once",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.46"
+  },
+  {
+   "group": "series",
+   "name": "no-op and failed PATCH change neither flag nor revision",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.46"
+  },
+  {
+   "group": "series",
+   "name": "cancel increments series revision once, keeps the occurrence, no exception; repeated cancel nothing",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.46"
+  },
+  {
+   "group": "series",
+   "name": "cancelling the anchor does not cancel its siblings",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.46"
+  },
+  {
+   "group": "series",
+   "name": "replay after later changes returns the original series response",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.47"
+  },
+  {
+   "group": "series",
+   "name": "each occurrence selects its date's policy (v4, v3, v2) incl. duration",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.40"
+  },
+  {
+   "group": "series",
+   "name": "first failing occurrence decides: occ 1 capacity (v3 cap 5) before occ 2 hours (v2)",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41 (R-52)"
+  },
+  {
+   "group": "series",
+   "name": "occurrence outside the selected policy's hours -> 422",
+   "ok": true,
+   "soft": false,
+   "section": "S3 Series",
+   "clause": "C3.41 (R-52)"
+  }
+ ]
+}

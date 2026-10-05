@@ -23,7 +23,7 @@ func cutoffPassed() error {
 // withinCutoff reports whether now is within the booking's accepted cutoff of its current start,
 // or later: changes are allowed only while starts_at − now > cutoff (R-6, stage 3).
 func withinCutoff(res *state.Reservation, now time.Time) bool {
-	return res.StartsAt.Sub(now) <= time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute
+	return !now.Before(localtime.AddMinutes(res.StartsAt, -res.Terms.CancellationCutoffMinutes))
 }
 
 func staleRevision() error {

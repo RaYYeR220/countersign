@@ -1,0 +1,706 @@
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 41,
+ "generated": 914,
+ "evaluated": 38,
+ "killed": 27,
+ "survived": 9,
+ "invalid": 2,
+ "kill_rate": 0.75,
+ "elapsed_s": 1796,
+ "baseline_failing": [
+  "oracle:test_C3_28_O14_tampered_stage3_records_are_refused"
+ ],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ],
+ "survivors": [
+  {
+   "id": 1,
+   "file": "internal/state/integrity.go",
+   "line": 176,
+   "op": "LOG",
+   "orig": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||",
+   "mutated": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil &&",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 6,
+   "file": "internal/api/series.go",
+   "line": 64,
+   "op": "CB",
+   "orig": "\tif n < min || n > max {",
+   "mutated": "\tif n < min || n >= max {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 16,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "CB",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 || c < o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 18,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "CB",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min || n >= 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 19,
+   "file": "internal/api/amend.go",
+   "line": 26,
+   "op": "CB",
+   "orig": "\treturn res.StartsAt.Sub(now) <= time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "mutated": "\treturn res.StartsAt.Sub(now) < time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 29,
+   "file": "internal/snapshot/schema3.go",
+   "line": 68,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 31,
+   "file": "internal/state/integrity.go",
+   "line": 34,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 34,
+   "file": "internal/state/integrity.go",
+   "line": 40,
+   "op": "LOG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil && !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 36,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "LOG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil && r.Tables == nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  }
+ ],
+ "results": [
+  {
+   "id": 1,
+   "file": "internal/state/integrity.go",
+   "line": 176,
+   "op": "LOG",
+   "orig": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil ||",
+   "mutated": "\t\tif e.Seq != i+1 || e.At.IsZero() || !validTerms(r, e.AcceptedTerms) || e.Changes == nil &&",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 2,
+   "file": "internal/state/integrity.go",
+   "line": 159,
+   "op": "BOOL",
+   "orig": "\t\treturn false",
+   "mutated": "\t\treturn true",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_O15_import_boundaries"
+   ]
+  },
+  {
+   "id": 3,
+   "file": "internal/api/series.go",
+   "line": 232,
+   "op": "NEG",
+   "orig": "\t\tif series == nil || series.UserID != user.ID {",
+   "mutated": "\t\tif series == nil || series.UserID == user.ID {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:samend/a changing amend increments the restaurant revision once (R-69)",
+    "audit:samend/all-no-op amend -> 201 without changing revisions (R-71)",
+    "audit:samend/amend 201: eligible occurrences (1, 4) move to 20:00 on their scheduled dates; exception (2), cancelled (3) and index 0 untouched",
+    "audit:samend/amend another owner's series -> 404",
+    "audit:samend/amend colliding at occurrence 4 -> 409 table_unavailable"
+   ]
+  },
+  {
+   "id": 0,
+   "file": "internal/api/idempotency.go",
+   "line": 39,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/GET pair reservation equals create response",
+    "audit:combo/POST both table_id and table_ids -> 422 validation_failed",
+    "audit:combo/POST both, consistent single -> 422 validation_failed",
+    "audit:combo/POST duplicate on a restaurant without combinable -> 422 validation_failed",
+    "audit:combo/POST duplicate table id -> 422 validation_failed"
+   ]
+  },
+  {
+   "id": 7,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 124,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"state could not be migrated: \" + err.Error())",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"state could not be migrated: \" - err.Error())",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/snapshot\ninternal/snapshot/snapshot.go:124:34: invalid operation: operator - not defined on \"state could not be migrated: \" (constant of type string)\n"
+  },
+  {
+   "id": 6,
+   "file": "internal/api/series.go",
+   "line": 64,
+   "op": "CB",
+   "orig": "\tif n < min || n > max {",
+   "mutated": "\tif n < min || n >= max {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 4,
+   "file": "internal/state/policyparse.go",
+   "line": 73,
+   "op": "NEG",
+   "orig": "\tif json.Unmarshal(o[\"capacities\"], &raw) != nil || len(raw) != len(r.Tables) {",
+   "mutated": "\tif json.Unmarshal(o[\"capacities\"], &raw) != nil || len(raw) == len(r.Tables) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:history/group ran to completion",
+    "audit:policies/GET policies in publication order, versions 1..4, policy 0 omitted",
+    "audit:policies/a booking made after publication accepts cutoff 0",
+    "audit:policies/amendment validated against the new policy: 20:30 outside v2 hours -> 422",
+    "audit:policies/availability follows the selected policy (v2: 10:00-19:00 every 15 min)"
+   ]
+  },
+  {
+   "id": 5,
+   "file": "internal/state/integrity.go",
+   "line": 20,
+   "op": "NEG",
+   "orig": "\tif err := checkIntegrity(st); err != nil {",
+   "mutated": "\tif err := checkIntegrity(st); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C1_107_C1_108_C1_110_C1_111_C1_112_round_trip",
+    "oracle:test_C1_107_C1_109_tampered_export_is_refused",
+    "oracle:test_C1_107_C1_18_round_trip_edge_values",
+    "oracle:test_C1_107_C1_81_imported_references_must_conform",
+    "oracle:test_C1_107_round_trip_duration_one_and_nines"
+   ]
+  },
+  {
+   "id": 8,
+   "file": "internal/api/series.go",
+   "line": 204,
+   "op": "NEG",
+   "orig": "\tif out == nil {",
+   "mutated": "\tif out != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:s3moves/batch replay 200 original, changes nothing",
+    "audit:s3moves/each affected series revision increases once; changed occurrences become exceptions; no-op anchor untouched",
+    "audit:s3moves/failed batch changes no revisions, histories or exception flags",
+    "audit:samend/failed amend changes nothing",
+    "audit:series/GET /series/{id} owner -> same shape"
+   ]
+  },
+  {
+   "id": 9,
+   "file": "internal/state/fixture.go",
+   "line": 335,
+   "op": "NEG",
+   "orig": "\t\t\tif t, perr := time.Parse(time.RFC3339, s); perr == nil {",
+   "mutated": "\t\t\tif t, perr := time.Parse(time.RFC3339, s); perr != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:core/seeded created_at kept from fixture",
+    "oracle:test_C1_105_C1_106_export_shape_unauthenticated",
+    "oracle:test_C1_107_C1_108_C1_110_C1_111_C1_112_round_trip",
+    "oracle:test_C1_107_C1_109_tampered_export_is_refused",
+    "oracle:test_C1_107_C1_18_round_trip_edge_values"
+   ]
+  },
+  {
+   "id": 10,
+   "file": "internal/state/integrity.go",
+   "line": 204,
+   "op": "NEG",
+   "orig": "\t\t\tif res == nil || res.UserID != s.UserID || res.SeriesID != id ||",
+   "mutated": "\t\t\tif res != nil || res.UserID != s.UserID || res.SeriesID != id ||",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_O15_import_boundaries"
+   ]
+  },
+  {
+   "id": 14,
+   "file": "internal/state/fixture.go",
+   "line": 40,
+   "op": "NEG",
+   "orig": "\tif err := loadReservations(st, fx, createdAt); err != nil {",
+   "mutated": "\tif err := loadReservations(st, fx, createdAt); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/group ran to completion",
+    "audit:combo/no-5xx",
+    "audit:core/group ran to completion",
+    "audit:core/no-5xx",
+    "audit:create/group ran to completion"
+   ]
+  },
+  {
+   "id": 15,
+   "file": "internal/state/fixture.go",
+   "line": 195,
+   "op": "NEG",
+   "orig": "\t\tif r.Table(tb.ID) != nil {",
+   "mutated": "\t\tif r.Table(tb.ID) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:core/group ran to completion",
+    "audit:core/reset 204",
+    "audit:core/reset 204 has empty body",
+    "audit:create/group ran to completion"
+   ]
+  },
+  {
+   "id": 11,
+   "file": "internal/state/integrity.go",
+   "line": 34,
+   "op": "NEG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts != nil || st.Series == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C1_105_C1_106_export_shape_unauthenticated",
+    "oracle:test_C1_107_C1_108_C1_110_C1_111_C1_112_round_trip",
+    "oracle:test_C1_107_C1_109_tampered_export_is_refused",
+    "oracle:test_C1_107_C1_18_round_trip_edge_values",
+    "oracle:test_C1_107_C1_81_imported_references_must_conform"
+   ]
+  },
+  {
+   "id": 12,
+   "file": "internal/api/series.go",
+   "line": 275,
+   "op": "LOG",
+   "orig": "\t\t\tif o.Exception || res == nil || res.Status != state.Confirmed {",
+   "mutated": "\t\t\tif o.Exception && res == nil || res.Status != state.Confirmed {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:samend/amend 201: eligible occurrences (1, 4) move to 20:00 on their scheduled dates; exception (2), cancelled (3) and index 0 untouched",
+    "audit:samend/occurrence 2 unchanged",
+    "oracle:test_C4_19_C4_21_amend_semantics"
+   ]
+  },
+  {
+   "id": 16,
+   "file": "internal/localtime/localtime.go",
+   "line": 216,
+   "op": "CB",
+   "orig": "\t\tif !ok1 || !ok2 || c <= o {",
+   "mutated": "\t\tif !ok1 || !ok2 || c < o {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 13,
+   "file": "internal/state/fixture.go",
+   "line": 243,
+   "op": "NEG",
+   "orig": "\tif oh.Opens, err = o.RequiredString(\"opens\"); err != nil {",
+   "mutated": "\tif oh.Opens, err = o.RequiredString(\"opens\"); err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/GET pair reservation equals create response",
+    "audit:combo/POST order: capacity beats 409 -> 422 party_exceeds_capacity",
+    "audit:combo/POST order: time rules beat summed capacity -> 422 not_on_slot_grid",
+    "audit:combo/POST party exceeds summed capacity -> 422 party_exceeds_capacity",
+    "audit:combo/POST table_ids pair 201: table_ids set, table_id omitted, times"
+   ]
+  },
+  {
+   "id": 18,
+   "file": "internal/state/fixture.go",
+   "line": 69,
+   "op": "CB",
+   "orig": "\tif n < min || n > 1<<31-1 {",
+   "mutated": "\tif n < min || n >= 1<<31-1 {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 19,
+   "file": "internal/api/amend.go",
+   "line": 26,
+   "op": "CB",
+   "orig": "\treturn res.StartsAt.Sub(now) <= time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "mutated": "\treturn res.StartsAt.Sub(now) < time.Duration(res.Terms.CancellationCutoffMinutes)*time.Minute",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 17,
+   "file": "internal/state/integrity.go",
+   "line": 237,
+   "op": "NEG",
+   "orig": "\t\tif p == nil || p.ID != id || !validID(id) || p.Assignments == nil || p.MovedCount < 0 || p.UnusedSeats < 0 || p.RestaurantRevision < 0 {",
+   "mutated": "\t\tif p != nil || p.ID != id || !validID(id) || p.Assignments == nil || p.MovedCount < 0 || p.UnusedSeats < 0 || p.RestaurantRevision < 0 {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C4_15_closures_block"
+   ]
+  },
+  {
+   "id": 21,
+   "file": "internal/api/auth.go",
+   "line": 31,
+   "op": "LOG",
+   "orig": "\tif ok && strings.EqualFold(scheme, \"Bearer\") && token != \"\" {",
+   "mutated": "\tif ok || strings.EqualFold(scheme, \"Bearer\") && token != \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C1_36_unauthenticated_variants"
+   ]
+  },
+  {
+   "id": 24,
+   "file": "internal/jsonin/jsonin.go",
+   "line": 157,
+   "op": "NEG",
+   "orig": "\tif len(raw) == 0 || raw[0] != '[' {",
+   "mutated": "\tif len(raw) != 0 || raw[0] != '[' {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/reset accepts combinable pairs, seeded table_ids and status",
+    "audit:explain/group ran to completion",
+    "audit:history/group ran to completion",
+    "audit:limits/group ran to completion",
+    "audit:optimal/group ran to completion"
+   ]
+  },
+  {
+   "id": 22,
+   "file": "internal/state/integrity.go",
+   "line": 158,
+   "op": "LOG",
+   "orig": "\t\t!validHours(t.OpeningHours) || len(t.Capacities) != len(r.Tables) {",
+   "mutated": "\t\t!validHours(t.OpeningHours) && len(t.Capacities) != len(r.Tables) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_O15_import_boundaries"
+   ]
+  },
+  {
+   "id": 23,
+   "file": "internal/snapshot/snapshot.go",
+   "line": 159,
+   "op": "INV",
+   "orig": "\t\tif !f.IsExported() || name == \"\" || name == \"-\" {",
+   "mutated": "\t\tif f.IsExported() || name == \"\" || name == \"-\" {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C1_105_C1_106_export_shape_unauthenticated",
+    "oracle:test_C1_107_C1_108_C1_110_C1_111_C1_112_round_trip",
+    "oracle:test_C1_107_C1_109_tampered_export_is_refused",
+    "oracle:test_C1_107_C1_18_round_trip_edge_values",
+    "oracle:test_C1_107_C1_81_imported_references_must_conform"
+   ]
+  },
+  {
+   "id": 25,
+   "file": "internal/api/tables.go",
+   "line": 92,
+   "op": "NEG",
+   "orig": "\tif pair == nil {",
+   "mutated": "\tif pair != nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/GET pair reservation equals create response",
+    "audit:combo/PATCH pair onto its own overlapping interval 200",
+    "audit:combo/PATCH single -> pair 200: table_ids set, table_id omitted",
+    "audit:combo/PATCH undeclared pair -> 422 combination_not_allowed",
+    "audit:combo/POST order: capacity beats 409 -> 422 party_exceeds_capacity"
+   ]
+  },
+  {
+   "id": 28,
+   "file": "internal/state/fixture.go",
+   "line": 175,
+   "op": "ARI",
+   "orig": "\t\t\treturn nil, apperr.Validation(\"duplicate opening hours for \" + oh.Weekday + \" in restaurant \" + r.ID)",
+   "mutated": "\t\t\treturn nil, apperr.Validation(\"duplicate opening hours for \" - oh.Weekday + \" in restaurant \" + r.ID)",
+   "status": "INVALID",
+   "note": "# tablekeeper/internal/state\ninternal/state/fixture.go:175:34: invalid operation: operator - not defined on \"duplicate opening hours for \" (constant of type string)\n"
+  },
+  {
+   "id": 26,
+   "file": "internal/state/integrity.go",
+   "line": 231,
+   "op": "INV",
+   "orig": "\t\t\tif !validClosure(r, c) {",
+   "mutated": "\t\t\tif validClosure(r, c) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C4_15_closures_block"
+   ]
+  },
+  {
+   "id": 27,
+   "file": "internal/state/history.go",
+   "line": 37,
+   "op": "ARI",
+   "orig": "\t\tSeq:           len(res.History) + 1,",
+   "mutated": "\t\tSeq:           len(res.History) - 1,",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:history/created entry: seq 1, all three fields from null, revision 1, accepted_terms",
+    "audit:history/history: changed lists only changed fields in order; no-op, same-set and failed PATCH record nothing; cancelled empty and last",
+    "oracle:test_C1_105_C1_106_export_shape_unauthenticated",
+    "oracle:test_C1_107_C1_108_C1_110_C1_111_C1_112_round_trip",
+    "oracle:test_C1_107_C1_109_tampered_export_is_refused"
+   ]
+  },
+  {
+   "id": 29,
+   "file": "internal/snapshot/schema3.go",
+   "line": 68,
+   "op": "NEG",
+   "orig": "\tif err != nil {",
+   "mutated": "\tif err == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 31,
+   "file": "internal/state/integrity.go",
+   "line": 34,
+   "op": "LOG",
+   "orig": "\tif st.Users == nil || st.Restaurants == nil || st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "mutated": "\tif st.Users == nil || st.Restaurants == nil && st.Reservations == nil || st.Tokens == nil || st.Receipts == nil || st.Series == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 30,
+   "file": "internal/api/replans.go",
+   "line": 84,
+   "op": "INV",
+   "orig": "\t\tif !from.Before(to) {",
+   "mutated": "\t\tif from.Before(to) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:limits/5 declared pairs -> 422 planning_limit (R-63)",
+    "audit:limits/7 considered bookings -> 422 planning_limit (R-63)",
+    "audit:limits/7 tables -> 422 planning_limit (R-63)",
+    "audit:limits/exactly 6 tables / 4 pairs / 6 considered: optimal plan (R-63)",
+    "audit:optimal/spot 0: preview equals brute force (6 tables, 4 pairs, 1 considered, 2 booked)"
+   ]
+  },
+  {
+   "id": 32,
+   "file": "internal/state/tables.go",
+   "line": 13,
+   "op": "LOG",
+   "orig": "\t\tif (p[0] == a && p[1] == b) || (p[0] == b && p[1] == a) {",
+   "mutated": "\t\tif (p[0] == a || p[1] == b) || (p[0] == b && p[1] == a) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/PATCH both table_id and table_ids: booking unchanged",
+    "audit:combo/PATCH duplicate ids: booking unchanged",
+    "audit:combo/PATCH pair -> single via table_id: table_id back, table_ids [t]",
+    "audit:combo/PATCH pair onto its own overlapping interval 200",
+    "audit:combo/PATCH party over summed capacity -> 422 party_exceeds_capacity"
+   ]
+  },
+  {
+   "id": 34,
+   "file": "internal/state/integrity.go",
+   "line": 40,
+   "op": "LOG",
+   "orig": "\t\tif u == nil || !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "mutated": "\t\tif u == nil && !validID(u.ID) || u.Email == \"\" || u.PasswordHash == \"\" {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 33,
+   "file": "internal/state/tables.go",
+   "line": 33,
+   "op": "LOG",
+   "orig": "\t\tif len(p) != 2 || p[0] == p[1] || r.Table(p[0]) == nil || r.Table(p[1]) == nil {",
+   "mutated": "\t\tif len(p) != 2 || p[0] == p[1] || r.Table(p[0]) == nil && r.Table(p[1]) == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/reset refuses fixture: combinable names an unknown table -> 422 (R-35)",
+    "audit:combo/reset refuses fixture: combinable names an unknown table: state unchanged",
+    "oracle:test_C2_40_combinable_fixture"
+   ]
+  },
+  {
+   "id": 36,
+   "file": "internal/state/integrity.go",
+   "line": 105,
+   "op": "LOG",
+   "orig": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil || r.Tables == nil || r.Combinable == nil {",
+   "mutated": "\t\tr.CancellationCutoffMinutes < 0 || r.OpeningHours == nil && r.Tables == nil || r.Combinable == nil {",
+   "note": "",
+   "crashed": false,
+   "status": "SURVIVED",
+   "killed_by": []
+  },
+  {
+   "id": 35,
+   "file": "internal/api/amend.go",
+   "line": 53,
+   "op": "LOG",
+   "orig": "\tif o.Has(\"starts_at_local\") && o.Kind(\"starts_at_local\") != jsonin.String {",
+   "mutated": "\tif o.Has(\"starts_at_local\") || o.Kind(\"starts_at_local\") != jsonin.String {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "audit:combo/PATCH both table_id and table_ids -> 422 validation_failed",
+    "audit:combo/PATCH duplicate ids -> 422 validation_failed",
+    "audit:combo/PATCH pair -> single via table_id: table_id back, table_ids [t]",
+    "audit:combo/PATCH pair onto its own overlapping interval 200",
+    "audit:combo/PATCH party over summed capacity -> 422 party_exceeds_capacity"
+   ]
+  },
+  {
+   "id": 37,
+   "file": "internal/state/integrity.go",
+   "line": 246,
+   "op": "NEG",
+   "orig": "\t\t\tif res == nil || res.RestaurantID != r.ID || !checkTableSet(r, a.TableIDs) {",
+   "mutated": "\t\t\tif res == nil || res.RestaurantID == r.ID || !checkTableSet(r, a.TableIDs) {",
+   "note": "",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": [
+    "oracle:test_C4_15_closures_block"
+   ]
+  },
+  {
+   "id": 20,
+   "file": "internal/state/accounts.go",
+   "line": 12,
+   "op": "INV",
+   "orig": "\t\tif !taken(id) {",
+   "mutated": "\t\tif taken(id) {",
+   "note": "audit produced no report (rc 143)",
+   "crashed": false,
+   "status": "KILLED",
+   "killed_by": []
+  }
+ ]
+}
