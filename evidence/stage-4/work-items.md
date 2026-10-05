@@ -29,4 +29,4 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 | WI-30 | Builder | R-75: exact arithmetic for fixture integers up to 2^31−1 (durations, cutoffs, capacities) | C1.4, C1.22, C1.23, C1.74 | evidence 6007e07, merged |
 | 3 | b26757c | + WI-30 (6007e07), WI-29 regression test, oracle 7cca4c9 (selector fix, O-15b, O-16) | REJECT (verdict 3: F-4 R-77 → WI-31); superseded by 4 |
 | WI-31 | Builder | Oracle F4: imported closure with from:null accepted (unbounded closure); R-24/R-72/R-77 | C1.109, C4.24 | evidence 8f8763a, merged |
-| 4 | (this commit) | + WI-31 (8f8763a), oracle 94707a7 (O-17, O-18, R-77 cases) | pending |
+| 4 | 2621e7a | + WI-31 (8f8763a), oracle 94707a7 (O-17, O-18, R-77 cases) | ACCEPT (verdict 4) |
