@@ -136,7 +136,7 @@
    "line": 31,
    "op": "NEG",
    "orig": "\tif ok && strings.EqualFold(scheme, \"Bearer\") && token != \"\" {",
-   "mutated": "\tif ok && strings.EqualFold(scheme, \"Bearer\") && token == \"\" {",
+   "mutated": "\tif ok && strings.EqualFold(scheme, \"Bearer\") && token \u003d= \"\" {",
    "note": "",
    "crashed": false,
    "status": "KILLED",

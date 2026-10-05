@@ -339,7 +339,7 @@
    "file": "internal/state/integrity.go",
    "line": 74,
    "op": "NEG",
-   "orig": "\t\tif token == \"\" || !users[userID] {",
+   "orig": "\t\tif token \u003d= \"\" || !users[userID] {",
    "mutated": "\t\tif token != \"\" || !users[userID] {",
    "note": "",
    "crashed": false,

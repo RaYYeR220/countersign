@@ -240,7 +240,7 @@
    "file": "internal/api/auth.go",
    "line": 163,
    "op": "NEG",
-   "orig": "\tif out.Token == \"\" {",
+   "orig": "\tif out.Token \u003d= \"\" {",
    "mutated": "\tif out.Token != \"\" {",
    "note": "",
    "crashed": false,

@@ -1034,7 +1034,7 @@
   },
   {
    "group": "auth",
-   "name": "signup password=12345678 wrong type 400",
+   "name": "signup password\u003d12345678 wrong type 400",
    "ok": true,
    "soft": false,
    "section": "\u00a75",
@@ -1058,7 +1058,7 @@
   },
   {
    "group": "auth",
-   "name": "signup password=True wrong type 400",
+   "name": "signup password\u003dTrue wrong type 400",
    "ok": true,
    "soft": false,
    "section": "\u00a75",
