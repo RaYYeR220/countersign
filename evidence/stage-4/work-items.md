@@ -28,3 +28,4 @@ stage-4 rulings R-61 …. Complete clause text travels in each `[HANDOFF]`.
 | WI-29 | Builder | R-76: stage-2 API-cancelled bookings migrate with [created] and revision 1 | C3.28, C3.48, C4.24 | closed: Oracle withdrew F1 (its source image was a stage-3 build); regression test added |
 | WI-30 | Builder | R-75: exact arithmetic for fixture integers up to 2^31−1 (durations, cutoffs, capacities) | C1.4, C1.22, C1.23, C1.74 | evidence 6007e07, merged |
 | 3 | (this commit) | + WI-30 (6007e07), WI-29 regression test, oracle 7cca4c9 (selector fix, O-15b, O-16) | pending |
+| WI-31 | Builder | Oracle F4: imported closure with from:null accepted (unbounded closure); R-24/R-72/R-77 | C1.109, C4.24 | handed off |
