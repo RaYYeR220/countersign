@@ -3337,6 +3337,25 @@ def g_s4rulings(s: S, prev: Client | None, prev2: Client | None):
     s.reset(other(capacity=big))
     r = c.req("POST", "/reservations", booking_body("r_other", "o_1", start, big), token=s.ada, key=uuid.uuid4().hex)
     chk.expect("R-75 capacity 2^31-1 seats a party of 2^31-1 -> 201", r, 201, section="C1.26 (R-75)")
+    # exactness: a seeded booking (not revalidated, C1.30) under a 2^31-1-minute duration ends exactly 2^31-1 minutes later
+    fx = other(reservation_duration_minutes=big)
+    fx["reservations"].append({"id": "s_big", "reference": "SEEDBG", "user_id": "u_ada", "restaurant_id": "r_other",
+                               "table_id": "o_1", "starts_at_local": start, "party_size": 2})
+    s.reset(fx)
+    g = s.get(s.ada, "SEEDBG")
+    j = g.json if isinstance(g.json, dict) else {}
+    try:
+        exact = parse_rfc(j["ends_at"]) - parse_rfc(j["starts_at"]) == timedelta(minutes=big)
+    except Exception:
+        exact = False
+    chk.check("R-75 seeded booking under duration 2^31-1 ends exactly 2^31-1 minutes after its start", g.status == 200 and exact,
+              "ends_at - starts_at == 2147483647 min", g.text(300), g.req, "C1.4,C1.22 (R-75)")
+    s.reset(other(reservation_duration_minutes=90, slot_minutes=big))
+    av = s.avail("r_other", ctx.thu, 2)
+    sl = [x.get("starts_at_local", "")[-5:] for x in ((av.json or {}).get("slots") or [])] if isinstance(av.json, dict) else None
+    opens = next((h["opens"] for h in ANKER_HOURS if h["weekday"] == WEEKDAYS[ctx.thu.weekday()]), None)
+    chk.check("R-75 slot_minutes 2^31-1: the only slot of a day is its opening time", av.status == 200 and sl == [opens], [opens], sl,
+              av.req, "C1.21,C1.72 (R-75)")
     for field in ("reservation_duration_minutes", "cancellation_cutoff_minutes", "slot_minutes", "capacity"):
         r = c.req("POST", "/_test/reset", other(**{field: big + 1}), timeout=12)
         chk.expect(f"R-75 {field} 2^31 -> reset 422", r, 422, "validation_failed", section="C1.26 (R-75)")

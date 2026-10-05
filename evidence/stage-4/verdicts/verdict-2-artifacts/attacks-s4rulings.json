@@ -1,0 +1,283 @@
+{
+ "meta": {
+  "base": "http://auditor-s4-a:8080",
+  "dest": "http://auditor-s4-b:8080",
+  "prev": "http://auditor-s4-p:8080",
+  "now": "2026-10-04T23:51:11.275708+00:00",
+  "now_tz": "Asia/Tokyo",
+  "thu": "2026-10-29",
+  "near": "2026-10-05T09:15",
+  "far": "2026-10-05T13:00",
+  "past": "2026-10-04T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0,
+  "health_P_s": 0.0,
+  "health_Q_s": 0.0
+ },
+ "checks": 16,
+ "hard_failures": 3,
+ "soft_failures": 0,
+ "per_group": {
+  "s4rulings": {
+   "pass": 13,
+   "fail": 3,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [
+  {
+   "group": "s4rulings",
+   "name": "R-75 duration 2^31-1: no slot fits -> 422 outside_opening_hours",
+   "ok": false,
+   "soft": false,
+   "section": "C1.22,C1.74 (R-75)",
+   "clause": "C1.22,C1.74 (R-75)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "outside_opening_hours"
+   },
+   "actual": {
+    "status": 201,
+    "body": "{\"reservation_id\":\"res_cbluguhvzyqa\",\"reference\":\"GSRDWR6L\",\"restaurant_id\":\"r_other\",\"table_id\":\"o_1\",\"table_ids\":[\"o_1\"],\"party_size\":2,\"status\":\"confirmed\",\"starts_at_local\":\"2026-10-29T19:00\",\"starts_at\":\"2026-10-29T19:00:00+01:00\",\"ends_at\":\"2018-01-05T00:05:04+01:00\",\"created_at\":\"2026-10-04T2"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "ac5eeb4e38db49d287bf42808ca9103a"
+    },
+    "body": "{\"restaurant_id\": \"r_other\", \"table_id\": \"o_1\", \"starts_at_local\": \"2026-10-29T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 duration 2^31-1: availability offers no slot",
+   "ok": false,
+   "soft": false,
+   "section": "C1.22,C1.74 (R-75)",
+   "clause": "C1.22,C1.74 (R-75)",
+   "expected": "slots []",
+   "actual": "{\"restaurant_id\":\"r_other\",\"date\":\"2026-10-29\",\"timezone\":\"Europe/Berlin\",\"slots\":[{\"starts_at_local\":\"2026-10-29T18:00\",\"starts_at\":\"2026-10-29T18:00:00+01:00\",\"available_table_ids\":[\"o_1\"],\"available_options\":[{\"table_ids\":[\"o_1\"],\"capacity\":8}]},{\"starts_at_local\":\"2026-10-29T18:30\",\"starts_at\":\"",
+   "request": {
+    "server": "A",
+    "method": "GET",
+    "path": "/availability?restaurant_id=r_other&date=2026-10-29&party_size=2",
+    "headers": {},
+    "body": ""
+   }
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 cutoff 2^31-1: future booking cannot be cancelled -> 409 cutoff_passed",
+   "ok": false,
+   "soft": false,
+   "section": "C1.23 (R-75)",
+   "clause": "C1.23 (R-75)",
+   "expected": {
+    "status": [
+     409
+    ],
+    "code": "cutoff_passed"
+   },
+   "actual": {
+    "status": 200,
+    "body": "{\"reservation_id\":\"res_ky3gawpi4vpi\",\"reference\":\"C2TULTGI\",\"restaurant_id\":\"r_other\",\"table_id\":\"o_1\",\"table_ids\":[\"o_1\"],\"party_size\":2,\"status\":\"cancelled\",\"starts_at_local\":\"2026-10-29T19:00\",\"starts_at\":\"2026-10-29T19:00:00+01:00\",\"ends_at\":\"2026-10-29T20:30:00+01:00\",\"created_at\":\"2026-10-04T2"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations/C2TULTGI/cancel",
+    "headers": {
+     "Authorization": "<token>"
+    },
+    "body": ""
+   }
+  }
+ ],
+ "soft": [],
+ "results": [
+  {
+   "group": "s4rulings",
+   "name": "R-75 duration 2^31-1: no slot fits -> 422 outside_opening_hours",
+   "ok": false,
+   "soft": false,
+   "section": "C1.22,C1.74 (R-75)",
+   "clause": "C1.22,C1.74 (R-75)",
+   "expected": {
+    "status": [
+     422
+    ],
+    "code": "outside_opening_hours"
+   },
+   "actual": {
+    "status": 201,
+    "body": "{\"reservation_id\":\"res_cbluguhvzyqa\",\"reference\":\"GSRDWR6L\",\"restaurant_id\":\"r_other\",\"table_id\":\"o_1\",\"table_ids\":[\"o_1\"],\"party_size\":2,\"status\":\"confirmed\",\"starts_at_local\":\"2026-10-29T19:00\",\"starts_at\":\"2026-10-29T19:00:00+01:00\",\"ends_at\":\"2018-01-05T00:05:04+01:00\",\"created_at\":\"2026-10-04T2"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8",
+     "Authorization": "<token>",
+     "Idempotency-Key": "ac5eeb4e38db49d287bf42808ca9103a"
+    },
+    "body": "{\"restaurant_id\": \"r_other\", \"table_id\": \"o_1\", \"starts_at_local\": \"2026-10-29T19:00\", \"party_size\": 2}"
+   }
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 duration 2^31-1: availability offers no slot",
+   "ok": false,
+   "soft": false,
+   "section": "C1.22,C1.74 (R-75)",
+   "clause": "C1.22,C1.74 (R-75)",
+   "expected": "slots []",
+   "actual": "{\"restaurant_id\":\"r_other\",\"date\":\"2026-10-29\",\"timezone\":\"Europe/Berlin\",\"slots\":[{\"starts_at_local\":\"2026-10-29T18:00\",\"starts_at\":\"2026-10-29T18:00:00+01:00\",\"available_table_ids\":[\"o_1\"],\"available_options\":[{\"table_ids\":[\"o_1\"],\"capacity\":8}]},{\"starts_at_local\":\"2026-10-29T18:30\",\"starts_at\":\"",
+   "request": {
+    "server": "A",
+    "method": "GET",
+    "path": "/availability?restaurant_id=r_other&date=2026-10-29&party_size=2",
+    "headers": {},
+    "body": ""
+   }
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 cutoff 2^31-1: future booking cannot be cancelled -> 409 cutoff_passed",
+   "ok": false,
+   "soft": false,
+   "section": "C1.23 (R-75)",
+   "clause": "C1.23 (R-75)",
+   "expected": {
+    "status": [
+     409
+    ],
+    "code": "cutoff_passed"
+   },
+   "actual": {
+    "status": 200,
+    "body": "{\"reservation_id\":\"res_ky3gawpi4vpi\",\"reference\":\"C2TULTGI\",\"restaurant_id\":\"r_other\",\"table_id\":\"o_1\",\"table_ids\":[\"o_1\"],\"party_size\":2,\"status\":\"cancelled\",\"starts_at_local\":\"2026-10-29T19:00\",\"starts_at\":\"2026-10-29T19:00:00+01:00\",\"ends_at\":\"2026-10-29T20:30:00+01:00\",\"created_at\":\"2026-10-04T2"
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/reservations/C2TULTGI/cancel",
+    "headers": {
+     "Authorization": "<token>"
+    },
+    "body": ""
+   }
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 capacity 2^31-1 seats a party of 2^31-1 -> 201",
+   "ok": true,
+   "soft": false,
+   "section": "C1.26 (R-75)",
+   "clause": "C1.26 (R-75)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 reservation_duration_minutes 2^31 -> reset 422",
+   "ok": true,
+   "soft": false,
+   "section": "C1.26 (R-75)",
+   "clause": "C1.26 (R-75)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 cancellation_cutoff_minutes 2^31 -> reset 422",
+   "ok": true,
+   "soft": false,
+   "section": "C1.26 (R-75)",
+   "clause": "C1.26 (R-75)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 slot_minutes 2^31 -> reset 422",
+   "ok": true,
+   "soft": false,
+   "section": "C1.26 (R-75)",
+   "clause": "C1.26 (R-75)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-75 capacity 2^31 -> reset 422",
+   "ok": true,
+   "soft": false,
+   "section": "C1.26 (R-75)",
+   "clause": "C1.26 (R-75)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 1] import -> 204",
+   "ok": true,
+   "soft": false,
+   "section": "C3.48 (R-76)",
+   "clause": "C3.48 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 1] confirmed booking migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 1] cancelled booking migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 1] every seeded booking (10, any status) migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 2] import -> 204",
+   "ok": true,
+   "soft": false,
+   "section": "C3.48 (R-76)",
+   "clause": "C3.48 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 2] confirmed booking migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 2] cancelled booking migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  },
+  {
+   "group": "s4rulings",
+   "name": "R-76 [stage 2] every seeded booking (3, any status) migrates with revision 1 and exactly one created entry",
+   "ok": true,
+   "soft": false,
+   "section": "C3.28,C3.48,C4.24 (R-76)",
+   "clause": "C3.28,C3.48,C4.24 (R-76)"
+  }
+ ]
+}

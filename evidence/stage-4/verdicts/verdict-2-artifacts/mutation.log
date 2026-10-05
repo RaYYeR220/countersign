@@ -1,0 +1,26 @@
+[1073s] #31 internal/snapshot/snapshot.go:184 NEG -> KILLED  (killed 26, survived 6)
+[1110s] #34 internal/state/integrity.go:157 LOG -> SURVIVED  (killed 26, survived 7)
+[1131s] #32 internal/api/reservations.go:229 NEG -> KILLED  (killed 27, survived 7)
+[1212s] #35 internal/state/replan.go:129 LOG -> KILLED  (killed 28, survived 7)
+[1220s] #36 internal/api/series.go:259 CB -> KILLED  (killed 29, survived 7)
+[1256s] #37 internal/api/auth.go:71 LOG -> KILLED  (killed 30, survived 7)
+[1275s] #38 internal/state/integrity.go:31 NEG -> KILLED  (killed 31, survived 7)
+{
+ "tool": "mutate.py (textual Go mutants, HTTP killers)",
+ "seed": 42,
+ "generated": 981,
+ "evaluated": 39,
+ "killed": 31,
+ "survived": 7,
+ "invalid": 1,
+ "kill_rate": 0.816,
+ "elapsed_s": 1276,
+ "baseline_failing": [
+  "oracle:test_C3_28_O14_tampered_stage3_records_are_refused"
+ ],
+ "killers": [
+  "audit.py",
+  "oracle pytest"
+ ]
+}
+[bg run] exit 0 after 1275.9s; full output: C:\countersign\tmp\aud-bg\run-1791158462564.log
