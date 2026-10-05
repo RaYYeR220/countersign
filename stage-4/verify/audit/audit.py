@@ -14,6 +14,7 @@ Exit code: 0 when every hard check passed, 1 otherwise, 2 on harness error.
 from __future__ import annotations
 
 import argparse
+import copy
 import http.client
 import json
 import os
@@ -3403,6 +3404,58 @@ def g_s4rulings(s: S, prev: Client | None, prev2: Client | None):
                   seen > 0 and not bad, "all rev 1 [created]", bad[:5], None, "C3.28,C3.48,C4.24 (R-76)")
 
 
+def _closure_records(state):
+    """Every stored closure record: restaurants[*].closures[*] and the closure of every stored plan (list or map of plans)."""
+    out = []
+    for r in state.get("restaurants") or []:
+        out += [x for x in (r.get("closures") or []) if isinstance(x, dict)]
+    plans = state.get("plans") or {}
+    for p in (plans.values() if isinstance(plans, dict) else plans):
+        if isinstance(p, dict) and isinstance(p.get("closure"), dict):
+            out.append(p["closure"])
+    return out
+
+
+def g_r77(s: S):
+    """R-77: imported restaurant and plan closures must name a known table and have two non-null bounds with from < to; otherwise
+    422 and the destination is unchanged (C1.109)."""
+    c, chk, ctx = s.c, s.chk, s.ctx
+    s4 = S4(s)
+    s4.reset4()
+    L = lambda h: f"{ctx.thu}T{h}"  # noqa: E731
+    s.book(s.ada, "r_rep", "a_3", L("18:00"), 4)
+    pv = s4.preview("r_rep", "a_3", iso(L("18:00")), iso(L("21:30")))
+    ap = s4.apply("r_rep", (pv.json or {}).get("plan_id"))
+    if ap.status != 201:
+        raise RuntimeError(f"R-77 setup apply: {ap.status} {ap.text(200)}")
+    E = c.req("GET", "/_test/export").json
+    recs = _closure_records(E["state"])
+    chk.check("R-77 setup: the export holds the applied closure (restaurant and plan copies)", len(recs) >= 2, ">= 2 records",
+              len(recs), None, "harness")
+
+    def swap(x):
+        x["from"], x["to"] = x["to"], x["from"]
+    cases = (("from null", lambda x: x.__setitem__("from", None)), ("to null", lambda x: x.__setitem__("to", None)),
+             ("from missing", lambda x: x.pop("from", None)), ("to missing", lambda x: x.pop("to", None)),
+             ("from == to", lambda x: x.__setitem__("from", x["to"])), ("from > to", swap),
+             ("from not a time", lambda x: x.__setitem__("from", "yesterday")),
+             ("unknown table", lambda x: x.__setitem__("table_id", "a_9")), ("table missing", lambda x: x.pop("table_id", None)))
+    for scope in ("restaurant", "every copy"):
+        for name, fn in cases:
+            e = copy.deepcopy(E)
+            rs = _closure_records(e["state"])
+            for x in (rs[:1] if scope == "restaurant" else rs):
+                fn(x)
+            c.req("POST", "/_test/import", E, timeout=12)
+            before = c.req("GET", "/_test/export").json
+            r = c.req("POST", "/_test/import", e, timeout=12)
+            after = c.req("GET", "/_test/export").json
+            chk.check(f"R-77 imported closure, {name} ({scope}) -> 422, destination unchanged",
+                      r.status == 422 and r.code() == "validation_failed" and after == before, "422 validation_failed, unchanged",
+                      {"status": r.status, "body": r.text(160), "unchanged": after == before}, r.req, "C1.109 (R-77)")
+    chk.expect("R-77 the untampered export still imports -> 204", c.req("POST", "/_test/import", E, timeout=12), 204, section="C1.109 (R-77)")
+
+
 SAVE_EXPORTS: dict | None = None
 STATIC_EXPORTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "static-exports.json")
 
@@ -3433,7 +3486,7 @@ def g_staticupgrade(s: S):
 
 GROUPS = ["core", "auth", "availability", "create", "reads", "cancel", "patch", "dst", "idem", "moves", "burst", "export",
           "combo", "comboburst", "upgrade", "explain", "policies", "history", "revision", "series", "s3moves", "s3burst", "upgrade3",
-          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4", "staticupgrade", "s4rulings"]
+          "replan", "limits", "optimal", "samend", "s4burst", "upgrade4", "staticupgrade", "s4rulings", "r77"]
 
 
 def wait_health(c: Client, seconds: float) -> float | None:

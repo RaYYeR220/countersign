@@ -1,0 +1,123 @@
+{
+  "revision": "2621e7a648fe78b450f9a2e19c18139c55be1698",
+  "track": "tablekeeper",
+  "stages": {
+    "1": "pass",
+    "2": "pass",
+    "3": "pass",
+    "4": "pass"
+  },
+  "highest_contiguous": 4,
+  "started_at": "2026-10-05T01:10:59.959929+00:00",
+  "finished_at": "2026-10-05T01:12:01.001497+00:00",
+  "schema_version": 2,
+  "run_id": "a7e2425ddf874933961f627a02b358c2",
+  "mode": "isolated",
+  "provenance": "working-tree",
+  "state": "completed",
+  "pytest_args": [],
+  "suite_digest": "04a50d354c9fdb4cb3e4340aae17b26349716f1b38ce0dec28e8737adbb16ac9",
+  "checks": {
+    "1": {
+      "collected": 120,
+      "passed": 120,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_1/test_health_reset_auth.py": {
+          "passed": 12,
+          "total": 12
+        },
+        "stage_1/test_reservations.py": {
+          "passed": 37,
+          "total": 37
+        },
+        "stage_1/test_restaurants_availability.py": {
+          "passed": 18,
+          "total": 18
+        },
+        "stage_1/test_retries_time_input.py": {
+          "passed": 20,
+          "total": 20
+        },
+        "stage_1/test_sample.py": {
+          "passed": 20,
+          "total": 20
+        },
+        "stage_1/test_seeded_state.py": {
+          "passed": 13,
+          "total": 13
+        }
+      }
+    },
+    "2": {
+      "collected": 25,
+      "passed": 25,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_2/test_sample.py": {
+          "passed": 8,
+          "total": 8
+        },
+        "stage_2/test_ui.py": {
+          "passed": 17,
+          "total": 17
+        }
+      }
+    },
+    "3": {
+      "collected": 7,
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_3/test_sample.py": {
+          "passed": 7,
+          "total": 7
+        }
+      }
+    },
+    "4": {
+      "collected": 6,
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "deselected": 0,
+      "xfailed": 0,
+      "files": {
+        "stage_4/test_sample.py": {
+          "passed": 6,
+          "total": 6
+        }
+      }
+    }
+  },
+  "overshoot": null,
+  "claimed_stage": "4",
+  "share": 1.0,
+  "upgrade_sources": {
+    "2": {
+      "folder": "C:\\countersign\\tmp\\aud-s4-v4\\stage-1",
+      "revision": "2621e7a648fe78b450f9a2e19c18139c55be1698"
+    },
+    "3": {
+      "folder": "C:\\countersign\\tmp\\aud-s4-v4\\stage-2",
+      "revision": "2621e7a648fe78b450f9a2e19c18139c55be1698"
+    },
+    "4": {
+      "folder": "C:\\countersign\\tmp\\aud-s4-v4\\stage-3",
+      "revision": "2621e7a648fe78b450f9a2e19c18139c55be1698"
+    }
+  }
+}
