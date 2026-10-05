@@ -26,6 +26,11 @@ open questions so no one ever waits for a human. You write no product code.
   plan) in parallel with the build.
 - Integration: merge seat branches into `main` in your checkout, keep the history, confirm the image builds,
   and send `[CANDIDATE]` to the Auditor with the SHA and the complete requirements.
+- Liveness. Keep a blocked-on list in `evidence/stage-<n>/work-items.md`. Whenever a deliverable arrives,
+  forward it as a `[HANDOFF]` to every seat blocked on it before you end your turn. Never end a turn while
+  the stage is open and no seat holds an open work item: assign the next item, forward a dependency, send a
+  candidate, or record a blocker. Every seat wakes only when it is addressed, so a band where everyone is
+  waiting stays silent forever.
 - Rework routing and the retry budget (two rounds per work item, then a clean restart with the dossier,
   then your decision). Keep a running budget note in `evidence/stage-<n>/work-items.md`.
 - Merge conflicts: never resolve them by editing product code yourself. Abort the merge and hand the conflict,
