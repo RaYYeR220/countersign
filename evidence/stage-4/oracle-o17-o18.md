@@ -1,4 +1,4 @@
-[EVIDENCE] stage=4 wi=O-17,O-18 sha=<filled at commit>
+[EVIDENCE] stage=4 wi=O-17,O-18 sha=98a46fa
 
 # Evidence — O-17/O-18 tests; full kit against the model and against candidate 3 (auditor-s4-c3, b26757c)
 
