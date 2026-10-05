@@ -1,4 +1,4 @@
-[EVIDENCE] stage=4 wi=oracle-candidate-4 sha=<filled at commit>
+[EVIDENCE] stage=4 wi=oracle-candidate-4 sha=5fa6c9e
 
 # Evidence — Oracle full kit against candidate 4 (2621e7a) with provenance-verified upgrade sources
 
