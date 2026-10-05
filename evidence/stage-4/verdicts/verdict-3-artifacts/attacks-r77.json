@@ -1,0 +1,343 @@
+{
+ "meta": {
+  "base": "http://auditor-s4-a:8080",
+  "dest": "http://auditor-s4-b:8080",
+  "prev": null,
+  "now": "2026-10-05T00:36:09.928735+00:00",
+  "now_tz": "Asia/Tokyo",
+  "thu": "2026-10-29",
+  "near": "2026-10-05T10:00",
+  "far": "2026-10-05T13:45",
+  "past": "2026-10-04T12:00",
+  "health_A_s": 0.02,
+  "health_B_s": 0.0
+ },
+ "checks": 20,
+ "hard_failures": 4,
+ "soft_failures": 0,
+ "per_group": {
+  "r77": {
+   "pass": 16,
+   "fail": 4,
+   "soft": 0
+  }
+ },
+ "errors": [],
+ "failures": [
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from null (restaurant) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": \"2026-10-29T18:00:00+01:00\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\"
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from missing (restaurant) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": \"2026-10-29T18:00:00+01:00\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\"
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from null (every copy) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": null, \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\\"table_id\\\":\\\"a_3\\\"}\", "
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from missing (every copy) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\\"table_id\\\":\\\"a_3\\\"}\", \"status\": 201,"
+   }
+  }
+ ],
+ "soft": [],
+ "results": [
+  {
+   "group": "r77",
+   "name": "R-77 setup: the export holds the applied closure (restaurant and plan copies)",
+   "ok": true,
+   "soft": false,
+   "section": "harness",
+   "clause": "harness"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from null (restaurant) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": \"2026-10-29T18:00:00+01:00\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\"
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, to null (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from missing (restaurant) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": \"2026-10-29T18:00:00+01:00\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\"
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, to missing (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from == to (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from > to (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from not a time (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, unknown table (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, table missing (restaurant) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from null (every copy) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"from\": null, \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\\"table_id\\\":\\\"a_3\\\"}\", "
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, to null (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from missing (every copy) -> 422, destination unchanged",
+   "ok": false,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)",
+   "expected": "422 validation_failed, unchanged",
+   "actual": {
+    "status": 204,
+    "body": "",
+    "unchanged": false
+   },
+   "request": {
+    "server": "A",
+    "method": "POST",
+    "path": "/_test/import",
+    "headers": {
+     "Content-Type": "application/json; charset=utf-8"
+    },
+    "body": "{\"format_version\": 1, \"state\": {\"plans\": {\"plan_bh7gmoyswh2h\": {\"id\": \"plan_bh7gmoyswh2h\", \"restaurant_id\": \"r_rep\", \"closure\": {\"table_id\": \"a_3\", \"to\": \"2026-10-29T21:30:00+01:00\", \"plan_id\": \"plan_bh7gmoyswh2h\"}, \"assignments\": [{\"reference\": \"CGSEHVHV\", \"table_ids\": [\"a_4\"], \"changed\": true}], \"moved_count\": 1, \"unused_seats\": 0, \"restaurant_revision\": 1, \"applied\": true}}, \"receipts\": {\"u_ada\\u0000POST /reservations\\u00006ae49303863a4aec9fc4efdb0b5a30d4\": {\"body\": \"{\\\"party_size\\\":4,\\\"restaurant_id\\\":\\\"r_rep\\\",\\\"starts_at_local\\\":\\\"2026-10-29T18:00\\\",\\\"table_id\\\":\\\"a_3\\\"}\", \"status\": 201,"
+   }
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, to missing (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from == to (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from > to (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, from not a time (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, unknown table (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 imported closure, table missing (every copy) -> 422, destination unchanged",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  },
+  {
+   "group": "r77",
+   "name": "R-77 the untampered export still imports -> 204",
+   "ok": true,
+   "soft": false,
+   "section": "C1.109 (R-77)",
+   "clause": "C1.109 (R-77)"
+  }
+ ]
+}

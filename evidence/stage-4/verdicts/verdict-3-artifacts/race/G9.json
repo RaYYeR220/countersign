@@ -1,0 +1,52 @@
+{
+ "guard": "G9 apply refuses a plan computed at another restaurant revision (api/replans.go stale_plan)",
+ "edits": [
+  {
+   "file": "internal/api/replans.go",
+   "old": "\t\tcase p.RestaurantRevision != rest.Revision:\n\t\t\treturn nil, apperr.New(http.StatusConflict, \"stale_plan\", \"the restaurant changed since the plan was made\")\n",
+   "new": "",
+   "occurrences": 1
+  }
+ ],
+ "groups": "replan,s4burst",
+ "rounds": 2,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:replan/a write at another restaurant does not invalidate; apply -> 201 with revision +1",
+     "audit:replan/apply after an intervening restaurant revision -> 409 stale_plan",
+     "audit:replan/restaurant_revision after the plan is 7 (once for the whole plan)",
+     "audit:replan/stale apply changed nothing",
+     "audit:replan/the original plan is stale too",
+     "audit:replan/unmoved I3PXAUKL gains nothing",
+     "audit:replan/unmoved ZFBBQKBM gains nothing",
+     "audit:s4burst/r0 Q2 two plans from one revision applied concurrently: exactly one 201, the other plan stale",
+     "audit:s4burst/r0 Q4 10 identical keyed previews: one 201, nine identical 200",
+     "audit:s4burst/r0 after plan bursts: no overlapping confirmed bookings"
+    ],
+    "n": 13,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}
