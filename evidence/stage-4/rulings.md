@@ -146,3 +146,9 @@ Q21 → R-66/R-67 (confirmed). Q22 → R-18 (confirmed). Q23 → R-72 (confirmed
   or cancelled — gets revision 1, policy-0 terms and a history of exactly one `created` entry (at = created_at). No
   `cancelled` entry and no revision 2 are synthesised for bookings cancelled before the upgrade.
 - Rationale: R-55's "revision 1 (whatever their status)"; earlier services kept no history to replay.
+
+## R-77 — Imported closures and plans (extends R-24/R-72)
+- Clauses: C1.109, C4.15, C4.24
+- Decision: an imported closure (or a stored plan's closure) must name a table of its restaurant and carry two
+  non-null RFC 3339 instants with `from < to`; otherwise the state is invalid → 422 `validation_failed`, destination
+  unchanged. Both bounds are validated identically; no bound is ever defaulted.
