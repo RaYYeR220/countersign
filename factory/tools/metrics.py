@@ -177,15 +177,21 @@ def _headers(msgs: list[dict]) -> list[tuple[dict, dict, datetime | None]]:
 
 def stage_timeline(msgs: list[dict]) -> dict[int, dict]:
     """{stage: {start, end, minutes}} from the first `[KICKOFF] stage=n` to the last
-    `[CLOSE] stage=n`; an unclosed stage has end and minutes None."""
+    `[CLOSE] stage=n`, or to the last `[VERDICT] stage=n ... result=ACCEPT` when the stage was
+    closed outside the room; an unclosed stage has end and minutes None."""
     starts: dict[int, tuple[datetime | None, str]] = {}
     ends: dict[int, tuple[datetime | None, str]] = {}
+    accepts: dict[int, tuple[datetime | None, str]] = {}
     for head, msg, stamp in _headers(msgs):
         raw = msg.get("insertedAt")
         if head["kind"] == "KICKOFF" and head["stage"] not in starts:
             starts[head["stage"]] = (stamp, raw)
         elif head["kind"] == "CLOSE":
             ends[head["stage"]] = (stamp, raw)
+        elif head["kind"] == "VERDICT" and head["result"] == "ACCEPT":
+            accepts[head["stage"]] = (stamp, raw)
+    for stage, accepted in accepts.items():
+        ends.setdefault(stage, accepted)
     timeline = {}
     for stage in sorted(starts):
         start_ts, start_raw = starts[stage]
