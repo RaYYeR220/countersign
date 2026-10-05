@@ -618,10 +618,16 @@ def test_O17_import_refusals_closures_series_terms(c, ada, bob, mia):
                                          "policies": c.get("/restaurants/r_anker/policies").json}
 
     def closures(doc):
-        for v in doc["state"].values():
-            if isinstance(v, list) and v and isinstance(v[0], dict) and "from" in v[0] and "to" in v[0] and "table_id" in v[0]:
-                return v
-        raise AssertionError("no closures collection in the export")
+        """Every closure record anywhere in the state: a dict with table_id/from/to and a plan_id (a stored request
+        body has no plan_id). Returned as a list so a tamper is applied to every copy, whichever is authoritative."""
+        found = [v for _, _, v in _walk(doc["state"])
+                 if isinstance(v, dict) and "table_id" in v and "from" in v and "to" in v and "plan_id" in v and "assignments" not in v]
+        assert found, "no closure record in the export"
+        return found
+
+    def tamper_closures(doc, fn):
+        for cl in closures(doc):
+            fn(cl)
 
     def series(doc):
         for v in doc["state"].values():
@@ -634,12 +640,12 @@ def test_O17_import_refusals_closures_series_terms(c, ada, bob, mia):
         raise AssertionError("no series in the export")
 
     cases = []
-    e = copy.deepcopy(exp); cl = closures(e)[0]; cl["from"], cl["to"] = cl["to"], cl["from"]
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.update({"from": cl["to"], "to": cl["from"]}))
     cases.append(("closure from after to", e))
-    e = copy.deepcopy(exp); cl = closures(e)[0]; cl["from"] = cl["to"]
+    e = copy.deepcopy(exp); tamper_closures(e, lambda cl: cl.__setitem__("from", cl["to"]))
     cases.append(("closure from equals to", e))
     for bound in ("from", "to"):
-        e = copy.deepcopy(exp); closures(e)[0][bound] = None
+        e = copy.deepcopy(exp); tamper_closures(e, lambda cl, b=bound: cl.__setitem__(b, None))
         cases.append((f"closure {bound} null", e))
     e = copy.deepcopy(exp); ser = series(e)
     owner_key = next((k_ for k_ in ser if "user" in k_ or "owner" in k_), None)
