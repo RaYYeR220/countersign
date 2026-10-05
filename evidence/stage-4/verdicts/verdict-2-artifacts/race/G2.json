@@ -1,0 +1,45 @@
+{
+ "guard": "G2 signup e-mail re-check under the write lock (api/auth.go)",
+ "edits": [
+  {
+   "file": "internal/api/auth.go",
+   "old": "\t\tif st.UserByEmail(email) != nil {\n\t\t\terr = emailTaken()\n\t\t\treturn\n\t\t}\n\t\tu := st.AddUser",
+   "new": "\t\tu := st.AddUser",
+   "occurrences": 1
+  }
+ ],
+ "groups": "burst",
+ "rounds": 3,
+ "red_without": true,
+ "green_with": true,
+ "without": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [
+     "audit:burst/r0 B8 20 concurrent signups same email: one 201, 19 email_taken",
+     "audit:burst/r1 B8 20 concurrent signups same email: one 201, 19 email_taken",
+     "audit:burst/r2 B8 20 concurrent signups same email: one 201, 19 email_taken"
+    ],
+    "n": 3,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": true
+ },
+ "with": {
+  "built": true,
+  "healthy": true,
+  "runs": [
+   {
+    "failing": [],
+    "n": 0,
+    "note": "",
+    "crashed": false
+   }
+  ],
+  "red": false
+ }
+}
